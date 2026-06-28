@@ -1,0 +1,21 @@
+[submodule "about"]
+	path = about
+	url = https://github.com/TIRBEO/about.git
+[submodule "accounts"]
+	path = accounts
+	url = https://github.com/TIRBEO/accounts-login.git
+[submodule "admin"]
+	path = admin
+	url = https://github.com/TIRBEO/admin.git
+[submodule "blog"]
+	path = blog
+	url = https://github.com/TIRBEO/blog.git
+[submodule "chat"]
+	path = chat
+	url = https://github.com/TIRBEO/chat.git
+[submodule "dashboard"]
+	path = dashboard
+	url = https://github.com/TIRBEO/dashboard.git
+[submodule "docs"]
+	path = docs
+	url = https://github.com/TIRBEO/docs.git
