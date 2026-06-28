@@ -1,0 +1,13 @@
+{
+  "name": "@tirbeo/config",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "devDependencies": {
+    "typescript": "~6.0.2"
+  }
+}

@@ -1,0 +1,33 @@
+{
+  "name": "tirbeo",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,json,css}\"",
+    "clean": "turbo run clean"
+  },
+  "workspaces": [
+    "about",
+    "accounts",
+    "admin",
+    "blog",
+    "chat",
+    "chatlanding",
+    "dashboard",
+    "docs",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "prettier": "^3.5.0",
+    "turbo": "^2.5.0"
+  },
+  "packageManager": "npm@10.9.0",
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

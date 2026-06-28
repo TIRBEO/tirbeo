@@ -1,0 +1,36 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  secrets-scan:
+    name: Secrets Leak Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: TruffleHog Scan
+        uses: trufflesecurity/trufflehog@v3
+        with:
+          extra_args: --only-verified
+
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+        continue-on-error: true
