@@ -4,3 +4,6 @@ export { Card } from "./Card";
 export { Modal } from "./Modal";
 export { Avatar } from "./Avatar";
 export { Skeleton } from "./Skeleton";
+export { ThemeProvider } from "./ThemeProvider";
+export { ThemeToggle } from "./ThemeToggle";
+export { useTheme } from "./useTheme";
