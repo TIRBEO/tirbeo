@@ -1,0 +1,103 @@
+TIRBEO PLATFORM — COMPLETED WORK
+===================================
+Last updated: 2026-06-30
+
+ARCHITECTURE
+------------
+Monorepo (npm workspaces) with 8 apps + shared packages:
+- chat/         — Real-time messaging client
+- about/        — About page (company story, team)
+- admin/        — Admin panel (black/white UI, Supabase-driven)
+- dashboard/    — User dashboard
+- accounts/     — Account settings
+- blog/         — Blog
+- chatlanding/  — Chat landing/marketing page
+- docs/         — Documentation (Supabase-driven content)
+
+All apps: Vite + TypeScript + Tailwind CSS 4 + React 19 + Supabase.
+Single supabase project for all apps.
+
+ADMIN APP (admin/)
+------------------
+5 core pages, all black/white theme:
+- Dashboard      — Stats overview (articles, categories, admins)
+- Site Config    — Manage site name, SEO, social links, logo
+- Docs           — CRUD for doc_categories + doc_articles
+- Content Approvals — Approve/reject pending content
+- Admins         — Manage admin_users (roles: super_admin/admin/manager/editor/viewer)
+- Users          — List all registered auth.users, add to admin_users
+
+Key files:
+- src/App.tsx           — Router with role-protected routes
+- src/AdminLayout.tsx   — Sidebar layout, role-based nav filtering
+- src/pages/*.tsx       — 6 page components
+- src/lib/session.ts    — Auth session management (localStorage)
+- src/lib/useAuth.ts    — React hook for auth state
+- src/lib/roles.ts      — Role hierarchy + permission helpers
+- src/lib/content.ts    — CRUD helpers + typed interfaces
+- src/lib/supabase.ts   — Supabase client singleton
+
+DOCS APP (docs/)
+----------------
+Supabase-driven documentation with local fallback:
+- Sidebar built from doc_categories + doc_articles tables
+- PageRenderer fetches from Supabase, falls back to content-local.ts
+- Hash-based routing (/#article-slug)
+- Clean black/white layout, markdown renderer with table support
+
+Key files:
+- src/App.tsx                          — Fetches categories/articles on mount
+- src/components/PageRenderer.tsx      — Supabase primary + local fallback
+- src/components/layout/Sidebar.tsx    — Category nav with search
+- src/lib/content.ts                   — Supabase queries
+- src/lib/content-local.ts             — 11 hardcoded doc pages fallback
+- src/lib/markdown.tsx                 — Markdown renderer
+
+DATABASE (Supabase - 18 migrations)
+------------------------------------
+001_content_schema.sql       — Core tables: site_config, nav, pages, sections,
+                               features, team, timeline, testimonials, faqs,
+                               pricing_plans, doc_categories, doc_articles,
+                               admin_users. RLS + seed data.
+002_admin_roles.sql          — Role hierarchy helpers (admin_role_at_least,
+                               admin_user_exists, admin_user_role), audit log,
+                               updated RLS policies with security definer.
+003_chat_docs_seed.sql       — Seed data: "Tirbeo Chat" category + 18 articles.
+004_chat_schema.sql          — Chat tables (messages, channels, etc.).
+005_main_db_missing.sql      — Missing indexes/constraints.
+006_apps_db_cleanup.sql      — Cleanup orphaned data.
+007_new_admin_tables.sql     — blog_posts, app_configs, announcements,
+                               content_approvals tables.
+008_admin_features.sql       — api_keys, backups, exports, integrations,
+                               reports, trash_items, system_health,
+                               impersonation_logs, auth_settings.
+009_consolidate_apps_db.sql  — DB consolidation.
+010_channels.sql             — Channel improvements.
+011_attachments.sql          — File attachments.
+012_reactions.sql            — Message reactions.
+013_account_settings.sql     — user_sessions, user_preferences, avatar bucket.
+014_admin_users_list.sql     — list_all_users(), lookup_user_by_email(),
+                               user_profiles table + auto-create trigger.
+015_blog_posts.sql           — Blog enhancements.
+016_user_profiles.sql        — Profile improvements, api_keys RLS fix.
+017_theme_column_to_user_preferences.sql — Theme column + index.
+018_admin_panel_consolidation.sql — Missing site_config columns, content_approvals
+                               RLS fix, impersonate_user(), indexes.
+
+BUILD & DEPLOY
+--------------
+- All 8 apps build cleanly (TypeScript + Vite)
+- deploy-all.ps1 at monorepo root deploys all apps sequentially with --no-wait
+- Vercel Hobby plan: 1 concurrent build limit
+- Node.js 24.x on Vercel
+
+BRANDING
+--------
+- Universal logo: /logos.png (3.7 KB PNG)
+- All apps reference /logos.png for favicon + nav logos
+- Admin site_config default logo_url updated to /logos.png
+
+ROLE HIERARCHY
+--------------
+super_admin (5) > admin (4) > manager (3) > editor (2) > viewer (1)
+Permission checks via security definer functions to avoid RLS recursion.

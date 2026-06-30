@@ -21,7 +21,7 @@ export function Footer() {
         <div className="md:col-span-2">
           <div className="flex items-center gap-2">
             <span className="grid h-8 w-8 place-items-center rounded-lg bg-primary">
-              <img src="/logo.png" alt="" className="h-6 w-6 object-contain brightness-0 invert" />
+              <img src="/logos.png" alt="" className="h-6 w-6 object-contain brightness-0 invert" />
             </span>
             <span className="font-display text-lg font-semibold tracking-tight">{siteName}</span>
           </div>

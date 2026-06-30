@@ -26,7 +26,7 @@ export default function Nav() {
         {/* Logo */}
         <a href="/" className="flex items-center gap-2.5 group">
           <div className="flex h-8 w-8 items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
-            <img src="/logo.png" alt="tirbeo" className="h-8 w-8 object-contain brightness-0 invert" />
+            <img src="/logos.png" alt="tirbeo" className="h-8 w-8 object-contain brightness-0 invert" />
           </div>
           <span className="font-display text-lg font-semibold tracking-tight text-foreground/90">
             tirbeo
