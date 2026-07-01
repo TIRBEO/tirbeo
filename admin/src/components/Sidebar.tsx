@@ -24,6 +24,7 @@ const navItems: NavItem[] = [
   { name: "Pricing", href: "/content/pricing", icon: Calculator, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "FAQ", href: "/content/faq", icon: HelpCircle, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Team", href: "/content/team", icon: Users, roles: ["super_admin", "admin", "editor"], section: "content" },
+  { name: "Testimonials", href: "/content/testimonials", icon: Award, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Timeline", href: "/content/timeline", icon: Clock, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Timeline Events", href: "/content/timeline-events", icon: Clock, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Sections", href: "/content/sections", icon: LayoutDashboard, roles: ["super_admin", "admin", "editor"], section: "content" },

@@ -33,6 +33,7 @@ import ContentNewsletterPage from "./pages/ContentNewsletterPage"
 import ContentAnnouncementsPage from "./pages/ContentAnnouncementsPage"
 import ContentAppsPage from "./pages/ContentAppsPage"
 import ContentShowcasePage from "./pages/ContentShowcasePage"
+import ContentTestimonialsPage from "./pages/ContentTestimonialsPage"
 import ContentFooterPage from "./pages/ContentFooterPage"
 import ContentNavLinksPage from "./pages/ContentNavLinksPage"
 import ContentBlogPostsPage from "./pages/ContentBlogPostsPage"
@@ -88,6 +89,7 @@ export default function App() {
         <Route path="/content/pricing" element={<ContentPricingPage />} />
         <Route path="/content/faq" element={<ContentFAQPage />} />
         <Route path="/content/team" element={<ContentTeamPage />} />
+        <Route path="/content/testimonials" element={<ContentTestimonialsPage />} />
         <Route path="/content/timeline" element={<ContentTimelinePage />} />
         <Route path="/content/marquee-logos" element={<ContentMarqueeLogosPage />} />
         <Route path="/content/landing-stats" element={<ContentLandingStatsPage />} />
