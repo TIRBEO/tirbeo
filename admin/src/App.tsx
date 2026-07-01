@@ -34,6 +34,18 @@ import ContentAnnouncementsPage from "./pages/ContentAnnouncementsPage"
 import ContentAppsPage from "./pages/ContentAppsPage"
 import ContentShowcasePage from "./pages/ContentShowcasePage"
 import ContentFooterPage from "./pages/ContentFooterPage"
+import ContentNavLinksPage from "./pages/ContentNavLinksPage"
+import ContentBlogPostsPage from "./pages/ContentBlogPostsPage"
+import ContentDocsArticlesPage from "./pages/ContentDocsArticlesPage"
+import ContentNewsletterCampaignsPage from "./pages/ContentNewsletterCampaignsPage"
+import ContentTimelineEventsPage from "./pages/ContentTimelineEventsPage"
+import ContentPagesSectionsPage from "./pages/ContentPagesSectionsPage"
+import AdminNotificationsPage from "./pages/AdminNotificationsPage"
+import AdminUserSessionsPage from "./pages/AdminUserSessionsPage"
+import AdminBackupsPage from "./pages/AdminBackupsPage"
+import AdminReportsPage from "./pages/AdminReportsPage"
+import AdminCommunitiesPage from "./pages/AdminCommunitiesPage"
+import SettingsSiteDomainsPage from "./pages/SettingsSiteDomainsPage"
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const session = sessionStorage.getItem("admin_session")
@@ -80,14 +92,28 @@ export default function App() {
         <Route path="/content/marquee-logos" element={<ContentMarqueeLogosPage />} />
         <Route path="/content/landing-stats" element={<ContentLandingStatsPage />} />
         <Route path="/content/newsletter" element={<ContentNewsletterPage />} />
+        <Route path="/content/newsletter-campaigns" element={<ContentNewsletterCampaignsPage />} />
         <Route path="/content/announcements" element={<ContentAnnouncementsPage />} />
         <Route path="/content/apps" element={<ContentAppsPage />} />
         <Route path="/content/showcase" element={<ContentShowcasePage />} />
         <Route path="/content/footer" element={<ContentFooterPage />} />
+        <Route path="/content/nav-links" element={<ContentNavLinksPage />} />
+        <Route path="/content/blog" element={<ContentBlogPostsPage />} />
+        <Route path="/content/docs" element={<ContentDocsArticlesPage />} />
+        <Route path="/content/sections" element={<ContentPagesSectionsPage />} />
+        <Route path="/content/timeline-events" element={<ContentTimelineEventsPage />} />
+
+        {/* Admin Management */}
+        <Route path="/admin/notifications" element={<AdminNotificationsPage />} />
+        <Route path="/admin/sessions" element={<AdminUserSessionsPage />} />
+        <Route path="/admin/backups" element={<AdminBackupsPage />} />
+        <Route path="/admin/reports" element={<AdminReportsPage />} />
+        <Route path="/admin/communities" element={<AdminCommunitiesPage />} />
 
         {/* Core Admin */}
         <Route path="/config" element={<UniversalConfigPage />} />
         <Route path="/settings/auth" element={<AuthSettingsPage />} />
+        <Route path="/settings/site-domains" element={<SettingsSiteDomainsPage />} />
         <Route path="/admin/content-approval" element={<ContentApprovalPage />} />
         <Route path="/sites" element={<SitesManagerPage />} />
       </Route>

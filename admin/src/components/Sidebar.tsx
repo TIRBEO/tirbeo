@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom"
-import { X, LayoutDashboard, Settings, Users, Shield, Globe, MessageSquare, FileText, Key, Link2, BarChart3, Sparkles, Activity, Mail, Database, Layers, CheckCircle, MessageCircle, Award, Box, Zap, Clock, Calculator, BookOpen, HelpCircle } from "lucide-react"
+import { X, LayoutDashboard, Settings, Users, Shield, Globe, MessageSquare, FileText, Key, Link2, BarChart3, Sparkles, Activity, Mail, Database, Layers, CheckCircle, MessageCircle, Award, Box, Zap, Clock, Calculator, BookOpen, HelpCircle, Menu, Bell, Radio, HardDrive, LineChart, Hash, Anchor, Navigation, ExternalLink } from "lucide-react"
 
 interface NavItem {
   name: string; href: string; icon: React.ComponentType<{ className?: string }>; roles: string[]; section: string
@@ -18,16 +18,22 @@ const navItems: NavItem[] = [
   { name: "Landing Pages", href: "/landing", icon: FileText, roles: ["super_admin", "admin", "manager", "editor"], section: "content" },
   { name: "Content Manager", href: "/chat-landing", icon: MessageSquare, roles: ["super_admin", "admin", "manager", "editor"], section: "content" },
   { name: "Documentation", href: "/docs", icon: BookOpen, roles: ["super_admin", "admin", "manager", "editor"], section: "content" },
+  { name: "Docs Articles", href: "/content/docs", icon: BookOpen, roles: ["super_admin", "admin", "editor"], section: "content" },
+  { name: "Blog", href: "/content/blog", icon: FileText, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Features", href: "/content/features", icon: Zap, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Pricing", href: "/content/pricing", icon: Calculator, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "FAQ", href: "/content/faq", icon: HelpCircle, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Team", href: "/content/team", icon: Users, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Timeline", href: "/content/timeline", icon: Clock, roles: ["super_admin", "admin", "editor"], section: "content" },
+  { name: "Timeline Events", href: "/content/timeline-events", icon: Clock, roles: ["super_admin", "admin", "editor"], section: "content" },
+  { name: "Sections", href: "/content/sections", icon: LayoutDashboard, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Showcase", href: "/content/showcase", icon: Award, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Logos", href: "/content/marquee-logos", icon: Award, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Landing Stats", href: "/content/landing-stats", icon: Activity, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Announcements", href: "/content/announcements", icon: MessageCircle, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Newsletter", href: "/content/newsletter", icon: Mail, roles: ["super_admin", "admin", "editor"], section: "content" },
+  { name: "Newsletter Campaigns", href: "/content/newsletter-campaigns", icon: Mail, roles: ["super_admin", "admin", "editor"], section: "content" },
+  { name: "Nav Links", href: "/content/nav-links", icon: Navigation, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Footer", href: "/content/footer", icon: FileText, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Apps", href: "/content/apps", icon: Box, roles: ["super_admin", "admin", "editor"], section: "content" },
   { name: "Chat", href: "/chat", icon: MessageSquare, roles: ["super_admin", "admin", "manager"], section: "communication" },
@@ -42,7 +48,13 @@ const navItems: NavItem[] = [
   { name: "API Keys", href: "/api-keys", icon: Key, roles: ["super_admin", "admin"], section: "settings" },
   { name: "Integrations", href: "/integrations", icon: Link2, roles: ["super_admin", "admin"], section: "settings" },
   { name: "Accounts", href: "/accounts", icon: Layers, roles: ["super_admin", "admin"], section: "settings" },
+  { name: "Site Domains", href: "/settings/site-domains", icon: Globe, roles: ["super_admin", "admin"], section: "settings" },
   { name: "Audit Log", href: "/security", icon: Shield, roles: ["super_admin", "admin"], section: "admin" },
+  { name: "Notifications", href: "/admin/notifications", icon: Bell, roles: ["super_admin", "admin"], section: "admin" },
+  { name: "Sessions", href: "/admin/sessions", icon: Radio, roles: ["super_admin", "admin"], section: "admin" },
+  { name: "Backups", href: "/admin/backups", icon: HardDrive, roles: ["super_admin", "admin"], section: "admin" },
+  { name: "Reports", href: "/admin/reports", icon: LineChart, roles: ["super_admin", "admin"], section: "admin" },
+  { name: "Communities", href: "/admin/communities", icon: Users, roles: ["super_admin", "admin"], section: "admin" },
   { name: "Nav Manager", href: "/admin/nav", icon: Layers, roles: ["super_admin"], section: "admin" },
   { name: "System Health", href: "/admin/system-health", icon: Activity, roles: ["super_admin", "admin"], section: "admin" },
 ]
