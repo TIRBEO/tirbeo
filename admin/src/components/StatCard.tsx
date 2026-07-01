@@ -8,7 +8,7 @@ interface StatCardProps {
 
 export default function StatCard({ title, value, change, trend, icon: Icon }: StatCardProps) {
   return (
-    <div className="rounded-xl border border-border/50 bg-[#0f1117] p-5 transition-all duration-300 hover:border-border/80">
+    <div className="rounded-xl border border-border/40 bg-card p-5 transition-all duration-300 hover:border-border/80">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
