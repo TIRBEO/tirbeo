@@ -18,25 +18,48 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
 
   --font-sans: "Inter", system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-slide-up: slide-up 0.25s ease-out;
+  --animate-scale-in: scale-in 0.15s ease-out;
 }
 
 :root {
-  --background: #0a0a0b;
-  --foreground: #e8e8e8;
-  --card: #121213;
-  --card-foreground: #e8e8e8;
-  --muted: #1c1c1e;
-  --muted-foreground: #8e8e93;
-  --accent: #5e5ce6;
+  --background: #08080a;
+  --foreground: #e4e4e7;
+  --card: #0d0d12;
+  --card-foreground: #e4e4e7;
+  --muted: #141418;
+  --muted-foreground: #7f7f8a;
+  --accent: #6b5cf7;
   --accent-foreground: #ffffff;
-  --border: #1c1c1e;
-  --primary: #5e5ce6;
+  --border: #1e1e26;
+  --primary: #6b5cf7;
   --primary-foreground: #ffffff;
-  --destructive: #ff453a;
+  --destructive: #ef4444;
   --destructive-foreground: #ffffff;
+  --success: #22c55e;
+  --warning: #eab308;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 html {
@@ -50,19 +73,101 @@ body {
   background: var(--background);
   color: var(--foreground);
   min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 ::selection {
-  background: var(--primary);
-  color: var(--primary-foreground);
+  background: color-mix(in srgb, var(--primary) 40%, transparent);
+  color: var(--foreground);
 }
 
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #2a2a2d; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #3a3a3e; }
+::-webkit-scrollbar-thumb { background: #2a2a30; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a44; }
 
 *:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+.glass {
+  background: color-mix(in srgb, var(--card) 70%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+}
+
+.card-hover {
+  transition: all 0.2s ease;
+}
+.card-hover:hover {
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent), 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.input-base {
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--foreground);
+  transition: all 0.15s ease;
+}
+.input-base::placeholder {
+  color: color-mix(in srgb, var(--muted-foreground) 60%, transparent);
+}
+.input-base:focus {
+  border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--primary) 25%, transparent);
+}
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted-foreground);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-ghost:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
 }

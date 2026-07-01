@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Outlet, useNavigate } from "react-router-dom"
-import { Menu, LogOut, ChevronDown } from "lucide-react"
+import { Menu, LogOut, ChevronDown, Settings } from "lucide-react"
 import Sidebar from "./Sidebar"
 import { supabase } from "../lib/supabase"
 
@@ -33,31 +33,46 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} userRole={role} />
-      <div className="lg:pl-60">
-        <header className="sticky top-0 z-30 border-b border-border/40 bg-background/80 backdrop-blur-lg">
-          <div className="flex h-12 items-center justify-between px-4">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
+      <div className="lg:pl-60 transition-all duration-300">
+        <header className="sticky top-0 z-30 border-b border-border/30 bg-background/90 backdrop-blur-xl">
+          <div className="flex h-12 items-center justify-between px-5">
+            <button onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors">
               <Menu className="h-4 w-4" />
             </button>
+            <div className="hidden lg:flex items-center gap-1.5">
+              <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="text-[10px] text-muted-foreground/50 font-medium">Online</span>
+            </div>
             <div className="flex-1" />
             <div className="relative" data-dd>
-              <button onClick={() => setDropdownOpen(!dropdownOpen)} className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-muted/50 transition-colors">
-                <div className="h-6 w-6 rounded-full bg-primary flex items-center justify-center text-[10px] font-medium text-primary-foreground">{initial}</div>
-                <span className="hidden sm:block text-xs text-foreground">{email ? email.split("@")[0] : "Admin"}</span>
-                <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${dropdownOpen ? "rotate-180" : ""}`} />
+              <button onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 hover:bg-muted/50 transition-colors group">
+                <div className="h-6 w-6 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-[10px] font-semibold text-primary-foreground shadow-sm">
+                  {initial}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="text-xs font-medium text-foreground leading-tight">{email ? email.split("@")[0] : "Admin"}</p>
+                  <p className="text-[9px] text-muted-foreground/50 capitalize leading-tight">{role.replace("_", " ")}</p>
+                </div>
+                <ChevronDown className={`h-3 w-3 text-muted-foreground/50 transition-transform duration-200 ${dropdownOpen ? "rotate-180" : ""}`} />
               </button>
               {dropdownOpen && (
-                <div className="absolute right-0 mt-1.5 w-48 rounded-lg border border-border/60 bg-card py-1 shadow-xl z-50">
-                  <div className="px-3 py-2 border-b border-border/30">
+                <div className="absolute right-0 mt-1.5 w-48 rounded-xl border border-border/50 bg-card py-1.5 shadow-2xl z-50 animate-scale-in">
+                  <div className="px-3 pb-2 mb-1 border-b border-border/30">
                     <p className="text-xs font-medium text-foreground truncate">{email || "admin@tirbeo.com"}</p>
-                    <p className="text-[10px] text-muted-foreground">{role}</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5 capitalize">{role.replace("_", " ")}</p>
                   </div>
-                  <div className="pt-1">
-                    <button onClick={() => { setDropdownOpen(false); navigate("/settings") }} className="flex w-full items-center px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30">Settings</button>
+                  <div className="px-1">
+                    <button onClick={() => { setDropdownOpen(false); navigate("/settings") }}
+                      className="flex w-full items-center px-2.5 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 rounded-lg transition-colors">
+                      <Settings className="h-3.5 w-3.5 mr-2" /> Settings
+                    </button>
                   </div>
-                  <div className="border-t border-border/30 mt-0.5 pt-0.5">
-                    <button onClick={handleLogout} className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10">
-                      <LogOut className="h-3 w-3" /> Logout
+                  <div className="border-t border-border/30 mt-1 pt-1 px-1">
+                    <button onClick={handleLogout}
+                      className="flex w-full items-center gap-2 px-2.5 py-1.5 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors">
+                      <LogOut className="h-3.5 w-3.5" /> Logout
                     </button>
                   </div>
                 </div>
@@ -65,10 +80,11 @@ export default function AdminLayout() {
             </div>
           </div>
         </header>
-        <main className="p-4 lg:p-5">
+        <main className="p-5 lg:p-6 animate-fade-in">
           <Outlet />
         </main>
       </div>
     </div>
   )
 }
+

@@ -28,31 +28,38 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-background overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
-      <div className="w-full max-w-xs mx-auto relative">
-        <div className="bg-card border border-border/60 rounded-xl p-6 shadow-xl">
-          <div className="flex flex-col items-center mb-6">
-            <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center mb-3">
-              <Sparkles className="h-4.5 w-4.5 text-primary-foreground" />
-            </div>
-            <h1 className="text-sm font-semibold text-foreground">Tirbeo</h1>
-            <p className="text-[11px] text-muted-foreground mt-0.5">Sign in to admin panel</p>
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.04] via-transparent to-transparent" />
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl" />
+      <div className="w-full max-w-sm mx-auto relative px-4">
+        <div className="text-center mb-8 animate-fade-in">
+          <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/20">
+            <Sparkles className="h-6 w-6 text-primary-foreground" />
           </div>
-          {error && <div className="mb-4 rounded-lg bg-destructive/10 border border-destructive/20 px-3 py-2 text-[11px] text-destructive">{error}</div>}
-          <form onSubmit={handleLogin} className="space-y-3">
+          <h1 className="text-lg font-semibold text-foreground">Tirbeo Admin</h1>
+          <p className="text-sm text-muted-foreground/70 mt-1">Sign in to your account</p>
+        </div>
+        <div className="rounded-xl border border-border/50 bg-card p-6 shadow-2xl animate-slide-up">
+          {error && (
+            <div className="mb-4 rounded-lg bg-destructive/10 border border-destructive/20 px-3.5 py-2.5 text-xs text-destructive flex items-center gap-2">
+              <div className="h-1.5 w-1.5 rounded-full bg-destructive shrink-0" />
+              {error}
+            </div>
+          )}
+          <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-[11px] text-muted-foreground mb-1">Email</label>
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@example.com" required autoFocus
-                className="w-full rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none transition-colors" />
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Email</label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="admin@tirbeo.com" required autoFocus
+                className="w-full rounded-lg border border-border/60 bg-muted/30 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none focus:ring-0 focus:shadow-[0_0_0_3px_rgba(107,92,247,0.12)] transition-all" />
             </div>
             <div>
-              <label className="block text-[11px] text-muted-foreground mb-1">Password</label>
-              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter password" required
-                className="w-full rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:border-primary/50 focus:outline-none transition-colors" />
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Password</label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Enter your password" required
+                className="w-full rounded-lg border border-border/60 bg-muted/30 px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/40 focus:border-primary/50 focus:outline-none focus:ring-0 focus:shadow-[0_0_0_3px_rgba(107,92,247,0.12)] transition-all" />
             </div>
             <button type="submit" disabled={loading}
-              className="w-full rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-1.5">
-              {loading && <Loader2 className="h-3 w-3 animate-spin" />}
+              className="w-full rounded-lg bg-gradient-to-r from-primary to-primary/90 px-3.5 py-2.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
+              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
               Sign In
             </button>
           </form>
