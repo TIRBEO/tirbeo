@@ -1,11 +1,6 @@
 export { cn } from "./lib/utils";
 export { Button, buttonVariants } from "./components/ui/button";
 export type { ButtonProps } from "./components/ui/button";
-export { default as AnimatedButton } from "./components/ui/animated-button";
-export { LiquidMetal, LiquidMetalButton } from "./components/ui/liquid-metal";
-export type { LiquidMetalProps, LiquidMetalButtonProps } from "./components/ui/liquid-metal";
-export { StaggeredGrid } from "./components/ui/staggered-grid";
-export type { StaggeredGridProps, BentoItem } from "./components/ui/staggered-grid";
 export {
   Card,
   CardHeader,

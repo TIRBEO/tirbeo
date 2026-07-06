@@ -16,5 +16,4 @@ export {
   getCookieDomain,
 } from "./domains";
 export type { Subdomain } from "./domains";
-export { getWorkspaceBySlug } from "./workspaceCache";
 export { getCache, setCache, delCache } from "./redis";
