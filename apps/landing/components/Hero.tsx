@@ -4,6 +4,7 @@ import { useRef, useEffect, useCallback } from "react";
 import gsap from "gsap";
 import { appUrl } from "@/lib/domains";
 import { useSiteConfig } from "./SiteConfigProvider";
+import { ParticleField3D } from "./ParticleField3D";
 
 export function Hero() {
   const config = useSiteConfig();
@@ -90,6 +91,7 @@ export function Hero() {
         <div className="hero-orb absolute right-[15%] top-[15%] h-96 w-96 rounded-full bg-gradient-to-br from-[#7A3EF2]/6 to-transparent blur-3xl" />
         <div className="hero-orb absolute bottom-[25%] left-[40%] h-80 w-80 rounded-full bg-gradient-to-br from-[#2F4FC4]/6 to-transparent blur-3xl" />
       </div>
+      <ParticleField3D />
 
       <div className="relative z-10 my-60 max-w-3xl text-center">
         <h1

@@ -1,4 +1,4 @@
-export const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.tirbeo.app';
+export const API = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_SUPABASE_URL?.replace('https://', 'https://api.')?.replace('.supabase.co', '.vercel.app') || 'https://api-tirbeo.vercel.app';
 
 const cache = new Map<string, { data: unknown; expiry: number }>();
 const TTL = 5000;

@@ -658,6 +658,11 @@ tr:hover td { background: var(--bg-hover); }
   color: var(--danger);
   font-size: 13px; line-height: 1.4;
 }
+.login-success-banner {
+  background: rgba(35,134,54,0.1);
+  border-color: rgba(35,134,54,0.2);
+  color: var(--success);
+}
 
 /* ─── Floating Label Input ─── */
 .login-field {
