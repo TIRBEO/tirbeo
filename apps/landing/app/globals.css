@@ -142,3 +142,53 @@ body {
 .animate-drift-slow { animation: drift-slow 16s ease-in-out infinite; }
 .animate-scroll-dot { animation: scroll-dot 2s ease-in-out infinite; }
 html { overscroll-behavior: none; }
+
+/* ─── StickyCards ─── */
+@keyframes cardReveal {
+  0% { opacity: 0; transform: translateY(40px) scale(0.96); filter: blur(8px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+.card-reveal {
+  animation: cardReveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ─── Marquee Fade Edges ─── */
+.marquee-fade-left,
+.marquee-fade-right {
+  position: relative;
+}
+.marquee-fade-left::before,
+.marquee-fade-right::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 60px;
+  z-index: 2;
+  pointer-events: none;
+}
+.marquee-fade-left::before {
+  left: 0;
+  background: linear-gradient(to right, #010006 0%, transparent 100%);
+}
+.marquee-fade-right::after {
+  right: 0;
+  background: linear-gradient(to left, #010006 0%, transparent 100%);
+}
+
+/* ─── Mobile Menu ─── */
+.mobile-menu-enter {
+  animation: mobileMenuIn 0.7s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+@keyframes mobileMenuIn {
+  0% { opacity: 0; backdrop-filter: blur(0px); }
+  100% { opacity: 1; backdrop-filter: blur(24px); }
+}
+.mobile-link-enter {
+  opacity: 0;
+  transform: translateY(24px);
+  animation: mobileLinkIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes mobileLinkIn {
+  0% { opacity: 0; transform: translateY(24px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
