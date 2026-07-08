@@ -4,7 +4,7 @@ export default function UnauthorizedPage() {
   return (
     <div className="login-page">
       <div className="login-container" style={{ textAlign: 'center' }}>
-        <div className="glass-card">
+        <div className="login-card">
           <div>
             <div style={{
               width: 56, height: 56, borderRadius: '50%', margin: '0 auto 16px',

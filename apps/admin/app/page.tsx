@@ -1,7 +1,8 @@
-'use client';
+﻿'use client';
 import React, { useEffect, useState } from 'react';
 import AdminSidebar from './sidebar';
-import { apiFetch } from './lib';
+import { apiFetch, isOnline } from './lib';
+import { OnlineDot } from './components';
 
 interface Stats { counts: { users: number; workspaces: number; routes: number; logs: number; blocked: number }; adminUsers: Array<{ id: string; email: string; name: string; adminRole: string }>; }
 interface Me { id: string; email: string; name: string | null; adminRole: string; permissions: Record<string, boolean>; roles: Array<{ id: string; name: string; color: string; icon: string }>; }
@@ -11,18 +12,7 @@ interface LogEntry { id: string; method: string; path: string; userId: string | 
 function UsersIcon() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>; }
 function ActivityIcon() { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>; }
 
-function OnlineDot({ active }: { active: boolean }) {
-  return <span style={{
-    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-    background: active ? '#22c55e' : '#3a3a44',
-    boxShadow: active ? '0 0 6px rgba(34,197,94,0.4)' : 'none',
-    display: 'inline-block',
-  }} />;
-}
 
-function isOnline(ua: string) {
-  return Date.now() - new Date(ua).getTime() < 5 * 60 * 1000;
-}
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -52,19 +42,19 @@ export default function AdminDashboard() {
   }, []);
 
   if (error) return <div className="admin-layout"><AdminSidebar /><div className="main"><p className="error">{error}</p></div></div>;
-  if (!stats) return <div className="admin-layout"><AdminSidebar /><div className="main"><p className="loading">Loading…</p></div></div>;
+  if (!stats) return <div className="admin-layout"><AdminSidebar /><div className="main"><p className="loading">Loadingâ€¦</p></div></div>;
 
   const { counts, adminUsers } = stats;
   const perms = me?.permissions || {};
 
   const quickActions = [
-    { href: '/routes', label: 'Manage Routes', perm: 'system.routes', emoji: '🔀' },
-    { href: '/users', label: 'Manage Users', perm: 'system.users', emoji: '👥' },
-    { href: '/workspaces', label: 'Workspaces', perm: 'system.workspaces', emoji: '📦' },
-    { href: '/monitor', label: 'Monitor', perm: 'system.monitor', emoji: '📊' },
-    { href: '/settings/roles', label: 'Roles & Permissions', perm: 'roles.view', emoji: '🛡️' },
-    { href: '/settings/domains', label: 'Domain Settings', perm: 'domains.view', emoji: '🌐' },
-    { href: '/settings/landing', label: 'Landing Settings', perm: 'landing.view', emoji: '🎨' },
+    { href: '/routes', label: 'Manage Routes', perm: 'system.routes', emoji: 'ðŸ”€' },
+    { href: '/users', label: 'Manage Users', perm: 'system.users', emoji: 'ðŸ‘¥' },
+    { href: '/workspaces', label: 'Workspaces', perm: 'system.workspaces', emoji: 'ðŸ“¦' },
+    { href: '/monitor', label: 'Monitor', perm: 'system.monitor', emoji: 'ðŸ“Š' },
+    { href: '/settings/roles', label: 'Roles & Permissions', perm: 'roles.view', emoji: 'ðŸ›¡ï¸' },
+    { href: '/settings/domains', label: 'Domain Settings', perm: 'domains.view', emoji: 'ðŸŒ' },
+    { href: '/settings/landing', label: 'Landing Settings', perm: 'landing.view', emoji: 'ðŸŽ¨' },
   ].filter(a => perms[a.perm]);
 
   return (
@@ -76,7 +66,7 @@ export default function AdminDashboard() {
             <h2 style={{ margin: 0 }}>Welcome{me?.name ? `, ${me.name}` : ''}</h2>
             {me && <span className={`badge badge-${me.adminRole}`}>{me.adminRole}</span>}
           </div>
-          <p className="desc" style={{ margin: 0 }}>System overview — {onlineUsers.length} online now</p>
+          <p className="desc" style={{ margin: 0 }}>System overview â€” {onlineUsers.length} online now</p>
         </div>
 
         {/* Stats + Online Users split */}
@@ -143,7 +133,7 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
-            <a href="/monitor" className="btn btn-outline btn-sm" style={{ marginTop: 10 }}>View All →</a>
+            <a href="/monitor" className="btn btn-outline btn-sm" style={{ marginTop: 10 }}>View All â†’</a>
           </div>
         )}
 
@@ -158,7 +148,7 @@ export default function AdminDashboard() {
                   const ou = onlineUsers.find(o => o.email === u.email);
                   return <tr key={u.id}>
                     <td>{u.email}</td>
-                    <td>{u.name || '—'}</td>
+                    <td>{u.name || 'â€”'}</td>
                     <td><span className={`badge badge-${u.adminRole}`}>{u.adminRole}</span></td>
                     <td><span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
                       <OnlineDot active={!!ou} />
@@ -195,3 +185,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

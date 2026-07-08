@@ -1,23 +1,12 @@
-'use client';
+﻿'use client';
 import React, { useEffect, useState } from 'react';
 import AdminSidebar from '../sidebar';
-import { apiFetch } from '../lib';
+import { apiFetch, isOnline } from '../lib';
+import { OnlineDot } from '../components';
 
 interface Role { id: string; name: string; color: string; icon: string; isSystem?: boolean; description?: string; }
 interface User { id: string; email: string; name: string | null; adminRole: string | null; photoUrl: string | null; phoneNumber: string | null; occupation: string | null; createdAt: string; lastActiveAt?: string; roles: Role[]; }
 
-function OnlineDot({ active }: { active: boolean }) {
-  return <span style={{
-    width: 7, height: 7, borderRadius: '50%', display: 'inline-block', flexShrink: 0,
-    background: active ? '#22c55e' : '#3a3a44',
-    boxShadow: active ? '0 0 5px rgba(34,197,94,0.4)' : 'none',
-  }} />;
-}
-
-function isOnline(ua?: string) {
-  if (!ua) return false;
-  return Date.now() - new Date(ua).getTime() < 5 * 60 * 1000;
-}
 
 function RoleAvatar({ role }: { role: Role }) {
   return <span style={{
@@ -97,7 +86,7 @@ export default function AdminUsersPage() {
         <p className="desc">{total} total users</p>
         {error && <p className="error">{error}</p>}
         <form onSubmit={handleSearch} className="search-form">
-          <input type="text" placeholder="Search by email or name…" value={search} onChange={e => setSearch(e.target.value)} />
+          <input type="text" placeholder="Search by email or nameâ€¦" value={search} onChange={e => setSearch(e.target.value)} />
           <button type="submit" className="btn btn-primary">Search</button>
           {search && <button type="button" className="btn btn-outline" onClick={() => { setSearch(''); setPage(1); loadUsers(1, ''); }}>Clear</button>}
         </form>
@@ -112,16 +101,16 @@ export default function AdminUsersPage() {
                   <tr key={u.id}>
                     <td><OnlineDot active={online} /></td>
                     <td style={{ fontSize: 12 }}>{u.email}</td>
-                    <td>{u.name || '—'}</td>
+                    <td>{u.name || 'â€”'}</td>
                     <td>{u.adminRole ? <span className={`badge badge-${u.adminRole}`}>{u.adminRole}</span> : <span className="badge badge-member">member</span>}</td>
                     <td>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                         {u.roles.map(r => <RoleAvatar key={r.id} role={r} />)}
-                        {u.roles.length === 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>}
+                        {u.roles.length === 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>â€”</span>}
                       </div>
                     </td>
-                    <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.phoneNumber || '—'}</td>
-                    <td style={{ fontSize: 12 }}>{u.occupation || '—'}</td>
+                    <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.phoneNumber || 'â€”'}</td>
+                    <td style={{ fontSize: 12 }}>{u.occupation || 'â€”'}</td>
                     <td style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(u.createdAt).toLocaleDateString()}</td>
                     <td><div className="flex gap-2"><button className="btn btn-sm btn-outline" onClick={() => setEditing(u)}>Edit</button>{myRole === 'super_admin' && <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u.id)}>Delete</button>}</div></td>
                   </tr>
@@ -210,3 +199,4 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+

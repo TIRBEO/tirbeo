@@ -1,0 +1,340 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WorkspaceRole {
+  ADMIN
+  MEMBER
+}
+
+model User {
+  id               String      @id @default(cuid())
+  email            String      @unique
+  passwordHash     String
+  name             String?
+  photoUrl         String?
+  secondaryEmail   String?
+  phoneNumber      String?
+  occupation       String?
+  googleId        String?      @unique
+  adminRole        String?     // 'super_admin' | 'admin' | 'manager' | 'editor' | null (legacy)
+  totpSecret       String?
+  is2FAEnabled     Boolean     @default(false)
+  lastActiveAt     DateTime?   // online/offline tracking
+  preferences      Json        @default("{}") // per-user admin prefs { sidebarCollapsed, theme, etc }
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  sessions             Session[]
+  memberships          Membership[]
+  ownedWorkspaces      Workspace[] @relation("WorkspaceOwner")
+  otps                 Otp[]
+  roleAssignments      UserRole[]
+  notifications        Notification[]
+  notificationPref     NotificationPreference?
+  contentReports       ContentReport[]     @relation("ContentReporter")
+  contentReviews       ContentReport[]     @relation("ContentReviewer")
+  mediaUploads         Media[]
+  auditEvents          AuditEvent[]
+  recoveryCodes        RecoveryCode[]
+
+  @@index([email])
+  @@index([adminRole])
+  @@index([lastActiveAt])
+}
+
+model Workspace {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  ownerId   String
+  owner     User     @relation("WorkspaceOwner", fields: [ownerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  memberships Membership[]
+
+  @@index([slug])
+}
+
+model Membership {
+  id          String   @id @default(cuid())
+  userId      String
+  workspaceId String
+  role        WorkspaceRole     @default(MEMBER)
+  createdAt   DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, workspaceId])
+  @@index([workspaceId])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+  ipAddress String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Route {
+  id           String   @id @default(cuid())
+  path         String
+  method       String   @default("GET")
+  target       String?
+  allowedRoles String[] @default(["member"])
+  internal     Boolean  @default(false)
+  enabled      Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([path, method])
+}
+
+model Log {
+  id        String   @id @default(cuid())
+  ip        String?
+  method    String
+  path      String
+  userId    String?
+  status    Int?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([ip])
+  @@index([userId])
+}
+
+model Blocklist {
+  id        String   @id @default(cuid())
+  ip        String?
+  userId    String?
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([ip])
+  @@index([userId])
+}
+
+model SiteConfig {
+  id        String   @id @default(cuid())
+  app       String   @unique              // 'landing' | 'accounts' | 'dashboard' | 'admin' | 'api'
+  config    Json                          // full JSON config blob per app
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+
+  @@index([app])
+}
+
+model AppRole {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  color       String   @default("#4f7aff")
+  icon        String   @default("shield")
+  isSystem    Boolean  @default(false) // built-in super_admin
+  permissions Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assignments UserRole[]
+
+  @@index([name])
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   AppRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // 'email' or 'phone'
+  otpHash   String   // hashed otp code
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+}
+
+// ─── Email System ──────────────────────────────────────
+
+model EmailConfig {
+  id        String   @id @default(cuid())
+  provider  String   @default("resend") // 'resend' | 'smtp'
+  apiKey    String?
+  smtpHost  String?
+  smtpPort  Int?
+  smtpUser  String?
+  smtpPass  String?
+  fromEmail String   @default("noreply@tirbeo.app")
+  fromName  String   @default("Tirbeo")
+  enabled   Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
+
+model EmailTemplate {
+  id           String   @id @default(cuid())
+  name         String   @unique               // 'signup_otp' | 'password_reset' | 'welcome' | 'notification_digest' | 'invoice'
+  label        String                         // Display name in admin
+  subject      String                         // "Your OTP is {{otp}}"
+  htmlBody     String                         // Full HTML with {{variable}} placeholders
+  variables    Json     @default("[]")         // [{name: 'otp', label: 'OTP Code', defaultValue: '123456'}]
+  fromEmail    String?                         // Override sender per template
+  fromName     String?                         // Override sender name per template
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([name])
+}
+
+// ─── Notifications ─────────────────────────────────────
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String                         // 'mention' | 'comment' | 'report' | 'system' | 'digest'
+  title     String
+  body      String?
+  link      String?                        // URL to click on
+  icon      String?
+  read      Boolean  @default(false)
+  emailSent Boolean  @default(false)        // Whether email digest was sent for this
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+model NotificationPreference {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  emailDigest      String  @default("daily")   // 'off' | 'instant' | 'daily' | 'weekly'
+  digestTime       String  @default("08:00")   // HH:MM in UTC
+  mention          Boolean @default(true)
+  comment          Boolean @default(true)
+  report           Boolean @default(true)
+  system           Boolean @default(true)
+  marketing        Boolean @default(false)
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Content Moderation ─────────────────────────────────
+
+model ContentReport {
+  id            String   @id @default(cuid())
+  reporterId    String
+  targetType    String                        // 'user' | 'post' | 'comment' | 'media'
+  targetId      String
+  reason        String                        // 'spam' | 'abuse' | 'harassment' | 'illegal' | 'other'
+  description   String?
+  status        String   @default("pending")  // 'pending' | 'reviewed' | 'dismissed' | 'actioned'
+  reviewedById  String?
+  reviewedAt    DateTime?
+  action        String?                       // 'warned' | 'suspended' | 'banned' | 'deleted' | null
+  notes         String?                       // Moderator notes
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reporter   User @relation("ContentReporter", fields: [reporterId], references: [id])
+  reviewedBy User? @relation("ContentReviewer", fields: [reviewedById], references: [id])
+
+  @@index([status])
+  @@index([targetType, targetId])
+  @@index([createdAt])
+}
+
+// ─── Media Library ──────────────────────────────────────
+
+model Media {
+  id          String   @id @default(cuid())
+  fileName    String
+  fileSize    Int                              // bytes
+  mimeType    String
+  url         String                           // CDN/storage URL
+  thumbnail   String?                          // Thumbnail URL for images
+  altText     String?
+  width       Int?
+  height      Int?
+  uploadedById String
+  folder      String   @default("general")     // 'general' | 'avatars' | 'banners' | 'email'
+  tags        Json     @default("[]")           // ['hero', 'logo', ...]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  uploadedBy User @relation(fields: [uploadedById], references: [id])
+
+  @@index([folder])
+  @@index([mimeType])
+  @@index([uploadedById])
+}
+
+// ─── Audit Trail ────────────────────────────────────────
+
+model AuditEvent {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String                           // 'user.login' | 'user.deleted' | 'role.created' | 'settings.updated' | etc
+  targetType String?                         // 'user' | 'role' | 'route' | 'settings' | 'email' | etc
+  targetId  String?
+  metadata  Json     @default("{}")           // { previous, current, ip, userAgent }
+  severity  String   @default("info")         // 'info' | 'warning' | 'error' | 'critical'
+  createdAt DateTime @default(now())
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([action])
+  @@index([actorId])
+  @@index([targetType, targetId])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+// ─── 2FA / Recovery Codes ───────────────────────────────
+
+model RecoveryCode {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  usedAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([code])
+}
+
+

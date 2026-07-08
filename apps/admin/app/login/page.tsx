@@ -11,6 +11,12 @@ export default function AdminLoginPage() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const [needs2FA, setNeeds2FA] = useState(false);
+  const [tempToken, setTempToken] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [useRecovery, setUseRecovery] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -19,7 +25,17 @@ export default function AdminLoginPage() {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/signup';
       const body: Record<string, string> = { email, password };
       if (mode === 'signup') body.name = name || email.split('@')[0];
-      await apiFetch(endpoint, { method: 'POST', body: JSON.stringify(body) });
+
+      const res = await apiFetch(endpoint, { method: 'POST', body: JSON.stringify(body) });
+
+      if (mode === 'login') {
+        const data = await res.json();
+        if (data.needs2FA) {
+          setNeeds2FA(true);
+          setTempToken(data.tempToken);
+          return;
+        }
+      }
       window.location.href = '/';
     } catch {
       setError(mode === 'login' ? 'Invalid email or password' : 'Signup failed');
@@ -28,14 +44,144 @@ export default function AdminLoginPage() {
     }
   };
 
+  const handle2faSubmit = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const endpoint = useRecovery ? '/api/auth/recovery-2fa' : '/api/auth/verify-2fa';
+      const body = useRecovery
+        ? { tempToken, recoveryCode }
+        : { tempToken, token: totpCode };
+      const res = await apiFetch(endpoint, { method: 'POST', body: JSON.stringify(body) });
+      if (!res.ok) {
+        const t = await res.text();
+        throw new Error(t || 'Verification failed');
+      }
+      window.location.href = '/';
+    } catch (e: any) {
+      setError(e.message || 'Verification failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const toggleMode = () => {
     setMode(m => (m === 'login' ? 'signup' : 'login'));
     setError('');
+    setNeeds2FA(false);
+    setTotpCode('');
+    setTempToken('');
+    setUseRecovery(false);
+    setRecoveryCode('');
   };
+
+  if (needs2FA) {
+    return (
+      <div className="login-page">
+        <div style={{
+          position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
+          width: 500, height: 500, borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(79,122,255,0.06) 0%, transparent 70%)',
+          pointerEvents: 'none',
+        }} />
+        <div className="login-container">
+          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 56, height: 56, borderRadius: 16,
+              background: 'linear-gradient(135deg, #4f7aff 0%, #3b6aff 100%)',
+              marginBottom: 16, boxShadow: '0 8px 24px rgba(79,122,255,0.25)',
+            }}>
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', marginBottom: 4 }}>Two-Factor Authentication</h1>
+            <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+              {useRecovery ? 'Enter a recovery code' : 'Enter the code from your authenticator app'}
+            </p>
+          </div>
+
+          <div className="login-card" style={{ padding: 28 }}>
+            {error && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
+                padding: '10px 14px', borderRadius: 8,
+                background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)',
+                color: '#f87171', fontSize: 13,
+              }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
+                  <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={e => { e.preventDefault(); handle2faSubmit(); }}>
+              {!useRecovery ? (
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, textAlign: 'center', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Authentication Code</label>
+                  <input type="text" placeholder="000000" maxLength={6} value={totpCode}
+                    onChange={e => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    autoFocus
+                    style={{
+                      width: '100%', padding: '14px', textAlign: 'center', fontSize: 28, letterSpacing: 8,
+                      background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+                      borderRadius: 10, outline: 'none', color: '#fff',
+                      fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                    }} />
+                </div>
+              ) : (
+                <div style={{ marginBottom: 20 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 8, textAlign: 'center', letterSpacing: '0.3px', textTransform: 'uppercase' }}>Recovery Code</label>
+                  <input type="text" placeholder="XXXX-XXXX-XXXX-XXXX" value={recoveryCode}
+                    onChange={e => setRecoveryCode(e.target.value)} autoFocus
+                    style={{
+                      width: '100%', padding: '14px', textAlign: 'center', fontSize: 16, letterSpacing: 2,
+                      background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+                      borderRadius: 10, outline: 'none', color: '#fff',
+                      fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                    }} />
+                </div>
+              )}
+
+              <button type="submit" disabled={loading || (!useRecovery && totpCode.length !== 6) || (useRecovery && !recoveryCode)} style={{
+                width: '100%', padding: '12px 16px', border: 'none', borderRadius: 10,
+                background: loading ? 'var(--accent-subtle)' : 'linear-gradient(135deg, #4f7aff 0%, #3b6aff 100%)',
+                color: loading ? 'var(--accent)' : '#fff',
+                fontSize: 14, fontWeight: 600, cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: loading ? 'none' : '0 4px 16px rgba(79,122,255,0.3)',
+                transition: 'all 0.15s',
+              }}>
+                {loading ? 'Verifying…' : 'Verify'}
+              </button>
+            </form>
+
+            <div style={{ textAlign: 'center', marginTop: 16 }}>
+              <button type="button" onClick={() => { setUseRecovery(!useRecovery); setError(''); setTotpCode(''); setRecoveryCode(''); }} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 13, color: 'var(--accent)',
+              }}>
+                {useRecovery ? 'Use authenticator app instead' : 'Use a recovery code instead'}
+              </button>
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: 12 }}>
+              <button type="button" onClick={() => { setNeeds2FA(false); setTotpCode(''); setTempToken(''); setUseRecovery(false); setRecoveryCode(''); }} style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                fontSize: 13, color: 'var(--text-muted)',
+              }}>
+                ← Back to login
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="login-page">
-      {/* Ambient glow */}
       <div style={{
         position: 'absolute', top: '20%', left: '50%', transform: 'translateX(-50%)',
         width: 500, height: 500, borderRadius: '50%',
@@ -50,7 +196,6 @@ export default function AdminLoginPage() {
       }} />
 
       <div className="login-container">
-        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <div style={{
             display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -68,11 +213,7 @@ export default function AdminLoginPage() {
           </p>
         </div>
 
-        {/* Card */}
-        <div style={{
-          background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
-          borderRadius: 16, padding: 28,
-        }}>
+        <div className="login-card" style={{ padding: 28 }}>
           {error && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
@@ -94,7 +235,7 @@ export default function AdminLoginPage() {
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   padding: '10px 14px', background: 'var(--bg-elevated)',
-                  border: '1px solid var(--border-subtle)', borderRadius: 10,
+                  border: '1px solid var(--border-default)', borderRadius: 10,
                   transition: 'border-color 0.15s',
                 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
@@ -111,7 +252,7 @@ export default function AdminLoginPage() {
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '10px 14px', background: 'var(--bg-elevated)',
-                border: '1px solid var(--border-subtle)', borderRadius: 10,
+                border: '1px solid var(--border-default)', borderRadius: 10,
                 transition: 'border-color 0.15s',
               }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
@@ -127,7 +268,7 @@ export default function AdminLoginPage() {
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '10px 14px', background: 'var(--bg-elevated)',
-                border: '1px solid var(--border-subtle)', borderRadius: 10,
+                border: '1px solid var(--border-default)', borderRadius: 10,
                 transition: 'border-color 0.15s',
               }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--text-muted)', flexShrink: 0 }}>
@@ -184,10 +325,7 @@ export default function AdminLoginPage() {
         </p>
       </div>
 
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .login-card .input-group label:focus-within { border-color: var(--accent) !important; box-shadow: 0 0 0 3px rgba(79,122,255,0.08) !important; }
-      `}</style>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

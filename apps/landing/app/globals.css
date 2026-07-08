@@ -1,0 +1,144 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --color-tirbeo-crimson-50: #fef2f4;
+  --color-tirbeo-crimson-100: #fde6e9;
+  --color-tirbeo-crimson-200: #fbd0d9;
+  --color-tirbeo-crimson-300: #f7a9b9;
+  --color-tirbeo-crimson-400: #f17894;
+  --color-tirbeo-crimson-500: #e84a6f;
+  --color-tirbeo-crimson-600: #d42a5a;
+  --color-tirbeo-crimson-700: #b31e4a;
+  --color-tirbeo-crimson-800: #961c42;
+  --color-tirbeo-crimson-900: #801b3c;
+  --color-tirbeo-crimson-950: #470a1e;
+
+  --color-tirbeo-blue-50: #e8eaf5;
+  --color-tirbeo-blue-100: #c2c8e8;
+  --color-tirbeo-blue-200: #99a3d9;
+  --color-tirbeo-blue-300: #6f7ecb;
+  --color-tirbeo-blue-400: #4f62c0;
+  --color-tirbeo-blue-500: #2f4fc4;
+  --color-tirbeo-blue-600: #243de6;
+  --color-tirbeo-blue-700: #2218b8;
+  --color-tirbeo-blue-800: #0a2472;
+  --color-tirbeo-blue-900: #051650;
+  --color-tirbeo-blue-950: #00072d;
+
+  --color-tirbeo-dark-50: #f6f6f6;
+  --color-tirbeo-dark-100: #e7e7e7;
+  --color-tirbeo-dark-200: #d1d1d1;
+  --color-tirbeo-dark-300: #b0b0b0;
+  --color-tirbeo-dark-400: #888888;
+  --color-tirbeo-dark-500: #6d6d6d;
+  --color-tirbeo-dark-600: #5d5d5d;
+  --color-tirbeo-dark-700: #4f4f4f;
+  --color-tirbeo-dark-800: #454545;
+  --color-tirbeo-dark-900: #3d3d3d;
+  --color-tirbeo-dark-950: #0f0f0f;
+
+  --color-tirbeo-gold-50: #fef9ee;
+  --color-tirbeo-gold-100: #fdf0d0;
+  --color-tirbeo-gold-200: #f9de9e;
+  --color-tirbeo-gold-300: #f5c663;
+  --color-tirbeo-gold-400: #f0ad35;
+  --color-tirbeo-gold-500: #ee9b1d;
+  --color-tirbeo-gold-600: #c77510;
+  --color-tirbeo-gold-700: #a65312;
+  --color-tirbeo-gold-800: #874116;
+  --color-tirbeo-gold-900: #6e3618;
+  --color-tirbeo-gold-950: #401b09;
+
+  --font-sans: "Inter", "SF Pro", system-ui, sans-serif;
+  --font-heading: "Inter", "SF Pro Display", system-ui, sans-serif;
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+  --radius-2xl: 2.5rem;
+}
+
+html {
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html, html * {
+    cursor: none !important;
+  }
+}
+
+body {
+  background-color: #010006;
+  color: var(--color-tirbeo-dark-50);
+}
+
+::selection {
+  background: #F25604;
+  color: #fff;
+}
+
+* {
+  border-color: var(--color-tirbeo-dark-700);
+}
+
+@keyframes card-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drift {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(30px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes drift-slow {
+  0% { transform: translateX(0); }
+  50% { transform: translateX(-20px); }
+  100% { transform: translateX(0); }
+}
+
+@keyframes scroll-dot {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(6px); opacity: 0.3; }
+}
+
+
+@keyframes lastGreeting {
+  0% { opacity: 0; transform: scale(0.8); }
+  40% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12px); }
+}
+.animate-lastGreeting {
+  animation: lastGreeting 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.animate-card-float { animation: card-float 4s ease-in-out infinite; }
+.animate-card-float-delayed { animation: card-float 4s ease-in-out 1s infinite; }
+.animate-fade-up { animation: fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.animate-drift { animation: drift 12s ease-in-out infinite; }
+.animate-drift-slow { animation: drift-slow 16s ease-in-out infinite; }
+.animate-scroll-dot { animation: scroll-dot 2s ease-in-out infinite; }
+html { overscroll-behavior: none; }
