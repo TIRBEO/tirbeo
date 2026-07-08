@@ -1,32 +1,45 @@
 'use client';
 import { useRef, useEffect, useState } from 'react';
 
-const GIFS_ROW1 = [
-  'https://motionsites.ai/assets/hero-space-voyage-preview-eECLH3Yc.gif',
-  'https://motionsites.ai/assets/hero-codenest-preview-Cgppc2qV.gif',
-  'https://motionsites.ai/assets/hero-vex-ventures-preview-BczMFIiw.gif',
-  'https://motionsites.ai/assets/hero-stellar-ai-v2-preview-DjvxjG3C.gif',
-  'https://motionsites.ai/assets/hero-asme-preview-B_nGDnTP.gif',
-  'https://motionsites.ai/assets/hero-transform-data-preview-Cx5OU29N.gif',
-  'https://motionsites.ai/assets/hero-vitara-preview-Cjz2QYyU.gif',
-  'https://motionsites.ai/assets/hero-terra-preview-BFjrCr7T.gif',
-  'https://motionsites.ai/assets/hero-skyelite-preview-DHaZIgUv.gif',
-  'https://motionsites.ai/assets/hero-aethera-preview-DknSlcTa.gif',
-  'https://motionsites.ai/assets/hero-designpro-preview-D8c5_een.gif',
+const FEATURES_ROW1 = [
+  { label: 'Real-time Chat', desc: 'Instant messaging with end-to-end encryption' },
+  { label: 'Community Spaces', desc: 'Create and join topic-based communities' },
+  { label: 'Voice Channels', desc: 'Crystal-clear voice conversations' },
+  { label: 'Media Sharing', desc: 'Share photos, videos, and files securely' },
+  { label: 'Smart Notifications', desc: 'Stay informed without the noise' },
+  { label: 'Profile Customization', desc: 'Express yourself with custom profiles' },
+  { label: 'Group Chats', desc: 'Connect with multiple people at once' },
+  { label: 'Private Messaging', desc: 'One-on-one conversations that matter' },
+  { label: 'Event Planning', desc: 'Organize meetups and virtual events' },
+  { label: 'Content Discovery', desc: 'Find content tailored to your interests' },
+  { label: 'Real-time Chat', desc: 'Instant messaging with end-to-end encryption' },
 ];
 
-const GIFS_ROW2 = [
-  'https://motionsites.ai/assets/hero-stellar-ai-preview-D3HL6bw1.gif',
-  'https://motionsites.ai/assets/hero-xportfolio-preview-D4A8maiC.gif',
-  'https://motionsites.ai/assets/hero-orbit-web3-preview-BXt4OttD.gif',
-  'https://motionsites.ai/assets/hero-nexora-preview-cx5HmUgo.gif',
-  'https://motionsites.ai/assets/hero-evr-ventures-preview-DZxeVFEX.gif',
-  'https://motionsites.ai/assets/hero-planet-orbit-preview-DWAP8Z1P.gif',
-  'https://motionsites.ai/assets/hero-new-era-preview-CocuDUm9.gif',
-  'https://motionsites.ai/assets/hero-wealth-preview-B70idl_u.gif',
-  'https://motionsites.ai/assets/hero-luminex-preview-CxOP7ce6.gif',
-  'https://motionsites.ai/assets/hero-celestia-preview-0yO3jXO8.gif',
+const FEATURES_ROW2 = [
+  { label: 'End-to-End Encryption', desc: 'Your conversations stay private, always' },
+  { label: 'Zero Data Tracking', desc: 'We never sell or share your data' },
+  { label: 'Open Source', desc: 'Transparent code, auditable by anyone' },
+  { label: 'No Algorithmic Feed', desc: 'You control what you see' },
+  { label: 'Ad-Free Experience', desc: 'No ads, no distractions, no tracking' },
+  { label: 'Data Portability', desc: 'Take your data anywhere, anytime' },
+  { label: 'Local Communities', desc: 'Connect with people near you' },
+  { label: 'Global Reach', desc: 'Find friends across borders' },
+  { label: 'Privacy First', desc: 'Built with privacy as a foundation' },
+  { label: 'User Controlled', desc: 'Full control over your experience' },
+  { label: 'End-to-End Encryption', desc: 'Your conversations stay private, always' },
 ];
+
+function FeatureCard({ label, desc }: { label: string; desc: string }) {
+  return (
+    <div className="shrink-0 w-[340px] md:w-[400px] rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 backdrop-blur-sm hover:bg-white/[0.06] transition-all duration-500">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="h-2 w-2 rounded-full bg-gradient-to-br from-[#F25604] to-[#F97316]" />
+        <span className="text-sm font-semibold text-white/90">{label}</span>
+      </div>
+      <p className="text-sm text-[#94A3B8] leading-relaxed">{desc}</p>
+    </div>
+  );
+}
 
 export function ScrollMarquee() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -50,24 +63,35 @@ export function ScrollMarquee() {
   const row1Style = { transform: `translateX(${offset - 200}px)`, willChange: 'transform' as const };
   const row2Style = { transform: `translateX(${-(offset - 200)}px)`, willChange: 'transform' as const };
 
-  const tripled1 = [...GIFS_ROW1, ...GIFS_ROW1, ...GIFS_ROW1];
-  const tripled2 = [...GIFS_ROW2, ...GIFS_ROW2, ...GIFS_ROW2];
+  const tripled1 = [...FEATURES_ROW1, ...FEATURES_ROW1, ...FEATURES_ROW1];
+  const tripled2 = [...FEATURES_ROW2, ...FEATURES_ROW2, ...FEATURES_ROW2];
 
   return (
     <section ref={sectionRef} className="relative overflow-hidden bg-[#010006] py-24 sm:py-32 md:py-40 pb-10">
-      <div className="flex flex-col gap-3">
-        <div className="flex gap-3" style={row1Style}>
-          {tripled1.map((src, i) => (
-            <div key={`r1-${i}`} className="shrink-0 w-[420px] h-[270px] rounded-2xl overflow-hidden">
-              <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
-            </div>
+      <div className="text-center mb-16 px-6">
+        <span className="inline-block text-xs font-mono tracking-[0.2em] text-[#F25604]/60 uppercase mb-4">
+          Features
+        </span>
+        <h2 className="text-3xl md:text-5xl lg:text-6xl font-semibold text-[#F8FAFC]">
+          Built with{" "}
+          <span className="bg-gradient-to-r from-[#F97316] to-[#F25604] bg-clip-text text-transparent">
+            purpose
+          </span>
+        </h2>
+        <p className="mt-4 text-[#94A3B8] max-w-xl mx-auto">
+          Every feature is designed to foster genuine connection — not to keep you hooked.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-4">
+        <div className="flex gap-4" style={row1Style}>
+          {tripled1.map((item, i) => (
+            <FeatureCard key={`r1-${i}`} label={item.label} desc={item.desc} />
           ))}
         </div>
-        <div className="flex gap-3" style={row2Style}>
-          {tripled2.map((src, i) => (
-            <div key={`r2-${i}`} className="shrink-0 w-[420px] h-[270px] rounded-2xl overflow-hidden">
-              <img src={src} alt="" className="w-full h-full object-cover" loading="lazy" />
-            </div>
+        <div className="flex gap-4" style={row2Style}>
+          {tripled2.map((item, i) => (
+            <FeatureCard key={`r2-${i}`} label={item.label} desc={item.desc} />
           ))}
         </div>
       </div>

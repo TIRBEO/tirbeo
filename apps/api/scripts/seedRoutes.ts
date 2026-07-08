@@ -16,6 +16,8 @@ const INTERNAL_ROUTES = [
   // Profile (any authenticated user)
   { path: 'users/me', method: 'GET', internal: true, allowedRoles: ['member'] },
   { path: 'users/me', method: 'PATCH', internal: true, allowedRoles: ['member'] },
+  // Newsletter (public)
+  { path: 'newsletter/subscribe', method: 'POST', internal: true, allowedRoles: ['guest'] },
   // Activity & Workspaces (any authenticated user)
   { path: 'activity', method: 'GET', internal: true, allowedRoles: ['member'] },
   { path: 'workspaces', method: 'GET', internal: true, allowedRoles: ['member'] },

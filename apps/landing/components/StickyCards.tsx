@@ -2,40 +2,31 @@
 import { useRef } from 'react';
 import { useScroll, useTransform, motion } from 'motion/react';
 
-const projects = [
+const features = [
   {
     num: '01',
-    label: 'Client',
-    name: 'Nextlevel Studio',
-    col1: [
-      'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055344_5eff02e0-87a5-41ce-b64f-eb08da8f33db.png&w=1280&q=85',
-      'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055431_11d841fd-8b41-46a5-82e4-b04f2407a7d8.png&w=1280&q=85',
-    ],
-    col2: 'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055451_e317bf2d-28d4-48cc-86b0-6f72f25b6327.png&w=1280&q=85',
+    label: 'Connect',
+    name: 'Real-time Conversation',
+    description: 'Instant messaging with end-to-end encryption. Every message is private, every conversation is yours. No tracking, no data mining, no compromises.',
+    color: '#F25604',
   },
   {
     num: '02',
-    label: 'Personal',
-    name: 'Aura Brand Identity',
-    col1: [
-      'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055654_911201c5-36d9-4bc6-bac7-331adfce159f.png&w=1280&q=85',
-      'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055723_5ceda0b8-d9c2-4665-b2e3-83ba19ba76d1.png&w=1280&q=85',
-    ],
-    col2: 'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055753_adc5dcbd-a8e6-49c0-b43a-9b030d835cea.png&w=1280&q=85',
+    label: 'Discover',
+    name: 'Communities & Spaces',
+    description: 'Find your people in topic-based communities. From local neighborhoods to global interests, discover spaces that feel like home.',
+    color: '#F97316',
   },
   {
     num: '03',
-    label: 'Client',
-    name: 'Solaris Digital',
-    col1: [
-      'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055759_963cfb0b-4bd1-4b0f-9d0a-09bd6cf95b2f.png&w=1280&q=85',
-      'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_060108_438f781a-9846-4dcc-89ab-c4e6cb830f5b.png&w=1280&q=85',
-    ],
-    col2: 'https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260412_055818_9d062121-ad7e-46b9-999a-1a6a692ef1ee.png&w=1280&q=85',
+    label: 'Create',
+    name: 'Share & Collaborate',
+    description: 'Share ideas, media, and moments that matter. Collaborate in real-time with tools designed for genuine interaction, not engagement metrics.',
+    color: '#7A3EF2',
   },
 ];
 
-function ProjectCard({ project, index, total }: { project: typeof projects[0]; index: number; total: number }) {
+function FeatureCard({ feature, index, total }: { feature: typeof features[0]; index: number; total: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -43,37 +34,50 @@ function ProjectCard({ project, index, total }: { project: typeof projects[0]; i
   });
 
   const scale = useTransform(scrollYProgress, [0, 1], [1 - (total - 1 - index) * 0.04, 1]);
+  const opacity = useTransform(scrollYProgress, [0, 0.3, 1], [0.6, 1, 1]);
 
   return (
     <div ref={ref} className="sticky" style={{ top: `${100 + index * 28}px`, height: '85vh' }}>
       <motion.div
-        className="w-full h-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] border-2 border-[#D7E2EA]/20 bg-[#010006] p-4 sm:p-6 md:p-8 flex flex-col overflow-hidden"
-        style={{ scale, transformOrigin: 'top center' }}
+        className="w-full h-full rounded-[40px] sm:rounded-[50px] md:rounded-[60px] border border-white/[0.08] bg-gradient-to-b from-[#0A0A14] to-[#010006] p-6 sm:p-8 md:p-10 flex flex-col overflow-hidden"
+        style={{ scale, opacity, transformOrigin: 'top center' }}
       >
-        <div className="flex items-start justify-between mb-4 sm:mb-6">
+        <div className="flex items-start justify-between mb-6 sm:mb-8">
           <div className="flex items-center gap-4 sm:gap-6">
-            <span className="font-black text-[clamp(2rem,8vw,100px)] text-white/10 leading-none">{project.num}</span>
+            <span className="font-black text-[clamp(2rem,8vw,100px)] text-white/5 leading-none">{feature.num}</span>
             <div>
-              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-widest text-white/40">{project.label}</span>
-              <h3 className="text-lg sm:text-2xl font-semibold text-white mt-1">{project.name}</h3>
+              <span className="text-[10px] sm:text-xs font-medium uppercase tracking-widest" style={{ color: feature.color }}>
+                {feature.label}
+              </span>
+              <h3 className="text-xl sm:text-3xl md:text-4xl font-semibold text-white mt-1">{feature.name}</h3>
             </div>
           </div>
-          <button className="shrink-0 rounded-full border-2 border-[#D7E2EA] px-6 sm:px-8 py-2 sm:py-3 text-[10px] sm:text-xs font-medium uppercase tracking-widest text-[#D7E2EA] hover:bg-white/10 transition-colors">
-            Live Project
-          </button>
+          <div
+            className="shrink-0 h-12 w-12 rounded-full flex items-center justify-center"
+            style={{ backgroundColor: `${feature.color}15` }}
+          >
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke={feature.color}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+          </div>
         </div>
 
-        <div className="flex-1 flex gap-3 sm:gap-4 min-h-0">
-          <div className="flex flex-col gap-3 sm:gap-4 w-[40%]">
-            <div className="flex-1 rounded-[40px] sm:rounded-[50px] md:rounded-[60px] overflow-hidden">
-              <img src={project.col1[0]} alt="" className="w-full h-full object-cover" loading="lazy" />
+        <div className="flex-1 flex items-center">
+          <div className="max-w-2xl">
+            <div className="h-1.5 w-16 rounded-full mb-6" style={{ backgroundColor: feature.color }} />
+            <p className="text-base sm:text-lg md:text-xl leading-relaxed text-[#CBD5E1]">
+              {feature.description}
+            </p>
+            <div className="mt-8 flex gap-3">
+              {['Private', 'Secure', 'Free'].map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs px-3 py-1.5 rounded-full border border-white/[0.08] text-white/50"
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
-            <div className="flex-1 rounded-[40px] sm:rounded-[50px] md:rounded-[60px] overflow-hidden">
-              <img src={project.col1[1]} alt="" className="w-full h-full object-cover" loading="lazy" />
-            </div>
-          </div>
-          <div className="w-[60%] rounded-[40px] sm:rounded-[50px] md:rounded-[60px] overflow-hidden">
-            <img src={project.col2} alt="" className="w-full h-full object-cover" loading="lazy" />
           </div>
         </div>
       </motion.div>
@@ -84,12 +88,20 @@ function ProjectCard({ project, index, total }: { project: typeof projects[0]; i
 export function StickyCards() {
   return (
     <section className="relative z-10 bg-[#010006] px-5 sm:px-8 md:px-10 pb-32">
-      <h2 className="text-center font-black uppercase leading-none tracking-tight text-[clamp(2.5rem,10vw,140px)] mb-16 sm:mb-20 md:mb-28 bg-gradient-to-b from-white/90 to-white/30 bg-clip-text text-transparent">
-        Projects
-      </h2>
+      <div className="text-center mb-16 sm:mb-20 md:mb-28 px-6">
+        <span className="inline-block text-xs font-mono tracking-[0.2em] text-[#F25604]/60 uppercase mb-4">
+          Platform
+        </span>
+        <h2 className="text-3xl md:text-5xl lg:text-6xl font-semibold text-[#F8FAFC]">
+          How it{" "}
+          <span className="bg-gradient-to-r from-[#F97316] to-[#F25604] bg-clip-text text-transparent">
+            works
+          </span>
+        </h2>
+      </div>
       <div className="max-w-6xl mx-auto">
-        {projects.map((project, i) => (
-          <ProjectCard key={project.num} project={project} index={i} total={projects.length} />
+        {features.map((feature, i) => (
+          <FeatureCard key={feature.num} feature={feature} index={i} total={features.length} />
         ))}
       </div>
     </section>

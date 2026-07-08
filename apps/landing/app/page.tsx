@@ -24,8 +24,10 @@ export default function LandingPage() {
         <ScrollAnimations>
           <StackedSection />
         </ScrollAnimations>
+        <ScrollAnimations>
+          <StickyCards />
+        </ScrollAnimations>
         <ScrollMarquee />
-        <StickyCards />
         <ScrollAnimations>
           <Pricing />
         </ScrollAnimations>
