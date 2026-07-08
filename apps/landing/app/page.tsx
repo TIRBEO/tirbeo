@@ -8,10 +8,17 @@ import { Pricing } from "../components/Pricing";
 import { Footer } from "../components/Footer";
 import { ScrollAnimations } from "../components/ScrollAnimations";
 import { Preloader } from "../components/Preloader";
+import { SiteConfigProvider } from "../components/SiteConfigProvider";
+import { getSiteConfig } from "../lib/site-config";
 
-export default function LandingPage() {
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function LandingPage() {
+  const config = await getSiteConfig();
+
   return (
-    <>
+    <SiteConfigProvider config={config}>
       <Preloader />
       <Header />
       <main>
@@ -35,6 +42,6 @@ export default function LandingPage() {
       <ScrollAnimations>
         <Footer />
       </ScrollAnimations>
-    </>
+    </SiteConfigProvider>
   );
 }

@@ -478,6 +478,16 @@ tr:hover td { background: var(--bg-hover); }
   background: var(--bg-canvas);
   overflow: hidden;
 }
+
+/* Cloud background image for the centered login look */
+.login-wrapper::before{
+  content: '';
+  position: absolute; inset: 0; z-index: 0;
+  background-image: url('/bgpc.png');
+  background-repeat: no-repeat; background-position: center top;
+  background-size: cover; opacity: 1; filter: blur(2px) saturate(120%);
+  pointer-events: none;
+}
 .login-bg-shapes {
   position: fixed; inset: 0; pointer-events: none; overflow: hidden;
 }
@@ -561,23 +571,17 @@ tr:hover td { background: var(--bg-hover); }
 }
 .login-panel {
   width: 100%;
-  max-width: 420px;
-  position: relative;
-  background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.04);
-  border-radius: 18px;
-  padding: 44px 36px;
-  box-shadow:
-    0 30px 60px rgba(6,10,20,0.6), /* deep ambient */
-    0 8px 30px rgba(12,18,30,0.4), /* soft rim */
-    inset 0 1px 0 rgba(255,255,255,0.03);
-  backdrop-filter: blur(8px) saturate(120%);
+  max-width: 480px;
+  position: relative; z-index: 10;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.92));
+  border: 1px solid rgba(0,0,0,0.06);
+  border-radius: 28px;
+  padding: 40px 40px 34px;
+  box-shadow: 0 40px 80px rgba(10,20,40,0.12), 0 8px 20px rgba(10,20,40,0.06);
+  backdrop-filter: blur(14px) saturate(120%);
   transform-style: preserve-3d;
-  perspective: 1200px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: background 0.3s, border-color 0.3s;
+  display: flex; flex-direction: column; align-items: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
 [data-theme="light"] .login-panel {
   box-shadow: 0 18px 36px rgba(20,28,40,0.12), 0 6px 20px rgba(12,18,30,0.06);
@@ -599,8 +603,8 @@ tr:hover td { background: var(--bg-hover); }
 }
 
 .login-panel:hover {
-  transform: translateY(-8px) rotateX(2deg) rotateY(-2deg);
-  box-shadow: 0 48px 90px rgba(6,10,20,0.65), 0 12px 34px rgba(12,18,30,0.45);
+  transform: translateY(-6px);
+  box-shadow: 0 48px 90px rgba(10,20,40,0.18), 0 14px 36px rgba(10,20,40,0.08);
 }
 .login-panel-header {
   text-align: center;
@@ -608,14 +612,13 @@ tr:hover td { background: var(--bg-hover); }
   width: 100%;
 }
 .login-panel-logo {
-  width: 48px; height: 48px; margin: 0 auto 16px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
-  display: flex; align-items: center; justify-content: center;
-  color: #fff;
-  box-shadow: 0 18px 36px rgba(58,111,200,0.28), inset 0 -6px 12px rgba(0,0,0,0.12);
-  transform: translateZ(60px);
+  width: 64px; height: 64px; margin: 0 auto 18px; display:flex; align-items:center; justify-content:center;
 }
+.login-top-icon {
+  width: 56px; height: 56px; border-radius: 14px; display:flex; align-items:center; justify-content:center;
+  background: linear-gradient(180deg,#ffffff,#f7fbff); box-shadow: 0 10px 30px rgba(20,40,80,0.08);
+}
+.login-brand-logo { width: 36px; height: 36px; object-fit:contain; }
 .login-panel-title {
   font-size: 22px; font-weight: 700;
   color: var(--text-primary);
@@ -627,6 +630,23 @@ tr:hover td { background: var(--bg-hover); }
   color: var(--text-secondary);
   line-height: 1.5;
 }
+
+/* Inputs: softer, rounded, light background */
+.login-input-wrap { border-radius: 12px; background: #f3f6f9; border: 1px solid rgba(0,0,0,0.04); }
+.login-input { padding: 16px 14px 12px 44px; color: #111827; }
+.login-input-icon { left: 12px; color: #6b7280; }
+.login-floating-label { left: 44px; }
+
+/* Primary button styled dark rounded */
+.login-btn-primary { background: linear-gradient(180deg,#111213 0%, #2b2b2b 100%); color: #fff; padding: 14px 18px; border-radius: 12px; box-shadow: 0 12px 30px rgba(10,20,40,0.18); }
+.login-btn-primary:hover { transform: translateY(-3px); box-shadow: 0 24px 60px rgba(10,20,40,0.22); }
+
+/* Divider and social buttons */
+.login-divider { display:flex; align-items:center; gap:12px; width:100%; margin:18px 0; }
+.login-divider::before, .login-divider::after { content:''; flex:1; height:1px; background: linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.02)); }
+.social-row { display:flex; gap:12px; width:100%; justify-content:space-between; }
+.social-btn { flex:1; padding:10px 8px; border-radius:10px; background:#fff; border:1px solid rgba(0,0,0,0.06); display:flex; align-items:center; justify-content:center; gap:8px; }
+
 
 /* ─── Error Banner ─── */
 .login-error-banner {

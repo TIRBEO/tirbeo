@@ -3,14 +3,20 @@
 import { useRef, useEffect, useCallback } from "react";
 import gsap from "gsap";
 import { appUrl } from "@/lib/domains";
+import { useSiteConfig } from "./SiteConfigProvider";
 
 export function Hero() {
+  const config = useSiteConfig();
+  const { hero } = config;
+
   const sectionRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const gradientParts = hero.headline2Gradient.split(",");
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -74,7 +80,7 @@ export function Hero() {
       <div
         ref={bgRef}
         className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 transition-transform duration-700 ease-out will-change-transform"
-        style={{ backgroundImage: "url(/bgpc.png)" }}
+        style={{ backgroundImage: `url(${hero.bgImage})` }}
         role="img"
         aria-label="Hero background"
       />
@@ -90,10 +96,13 @@ export function Hero() {
           ref={titleRef}
           className="font-heading text-4xl font-semibold leading-[1.05] tracking-[-0.03em] text-[#F8FAFC] md:text-6xl lg:text-7xl"
         >
-          One platform.
+          {hero.headline1}
           <br />
-          <span className="bg-gradient-to-r from-[#fff] via-[#F97316] to-[#F25604] bg-clip-text text-transparent">
-            Infinite possibilities.
+          <span
+            className="bg-clip-text text-transparent"
+            style={{ backgroundImage: `linear-gradient(to right, ${gradientParts.join(",")})` }}
+          >
+            {hero.headline2}
           </span>
         </h1>
 
@@ -101,15 +110,12 @@ export function Hero() {
           ref={subtitleRef}
           className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-[#CBD5E1] md:text-xl"
         >
-          Connect with people who inspire you, share the moments that matter, and become
-          part of communities that make the internet feel personal again. Tirbeo begins
-          with social experiences and evolves into an ecosystem built to bring every
-          part of your digital life together.
+          {hero.subtitle}
         </p>
 
         <div ref={buttonsRef} className="mt-12 flex flex-col items-center justify-center gap-4 sm:flex-row">
           <a
-            href={appUrl("accounts", "/login")}
+            href={appUrl("accounts", hero.cta1Url)}
             aria-label="Join"
             className="group relative inline-flex min-w-[220px] items-center justify-center overflow-hidden rounded-[16px] px-8 py-3.5 text-[15px] font-semibold text-white transition-all duration-300 hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#F25604]/25"
           >
@@ -117,7 +123,7 @@ export function Hero() {
             <div className="absolute inset-0 bg-gradient-to-br from-[#F97316] to-[#F25604] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
             <div className="absolute -inset-1 rounded-[16px] bg-gradient-to-br from-[#F25604]/40 to-[#F97316]/40 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-100 group-hover:blur-2xl" />
             <span className="relative z-10 flex items-center gap-2">
-              <span>Join the platform</span>
+              <span>{hero.cta1Text}</span>
               <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
               </svg>
@@ -125,13 +131,13 @@ export function Hero() {
           </a>
 
           <a
-            href="#about"
+            href={hero.cta2Url}
             aria-label="Explore"
             className="group relative inline-flex min-w-[220px] items-center justify-center overflow-hidden rounded-[16px] px-8 py-3 text-[15px] font-semibold text-[#94A3B8] backdrop-blur-[18px] transition-all duration-300 hover:scale-105 hover:text-[#F8FAFC] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
           >
             <div className="absolute inset-0 rounded-[16px] border border-white/[0.12] bg-white/[0.08]" />
             <span className="relative z-10 flex items-center gap-2">
-              <span>Explore the platform</span>
+              <span>{hero.cta2Text}</span>
               <svg className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m9 5.25 6 6-6 6" />
               </svg>
@@ -143,7 +149,7 @@ export function Hero() {
           <div className="flex h-8 w-5 rounded-full border-2 border-white/20 items-start justify-center pt-1.5">
             <div className="h-1.5 w-1 rounded-full bg-white/40 animate-scroll-dot" />
           </div>
-          <span className="text-xs text-white/30">Scroll to explore</span>
+          <span className="text-xs text-white/30">{hero.scrollText}</span>
         </div>
       </div>
     </section>

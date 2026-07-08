@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import { appUrl } from "@/lib/domains";
+import { useSiteConfig } from "./SiteConfigProvider";
 
 export function Footer() {
+  const config = useSiteConfig();
+  const { footer, newsletter } = config;
+
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
@@ -40,7 +44,7 @@ export function Footer() {
               <img src="/logo1.png" alt="Tirbeo" className="h-10 w-auto max-w-[180px] object-contain" />
             </a>
             <p className="max-w-xs text-sm leading-relaxed text-[#94A3B8]">
-              Connecting communities through meaningful conversations, real-time collaboration, and shared experiences.
+              {footer.tagline}
             </p>
           </div>
 
@@ -71,39 +75,39 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Newsletter */}
-          <div className="gsap-reveal flex flex-col items-start">
-            <h4 className="mb-5 text-sm font-semibold text-[#F97316]">Stay in the loop</h4>
-            <p className="mb-4 max-w-xs text-sm text-white/70">
-              Be first to hear about new Tirbeo features, early access opportunities, and community milestones.
-            </p>
-            <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
-                required
-                disabled={status === "loading"}
-                className="rounded bg-black/70 backdrop-blur-lg px-3 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none border border-white/20 disabled:opacity-50"
-              />
-              <button
-                type="submit"
-                disabled={status === "loading"}
-                className="rounded bg-gradient-to-r from-[#F25604] to-[#F97316] px-4 py-2 text-sm font-medium text-white hover:shadow-[0_12px_30px_rgba(242,86,4,0.25)] transition-all disabled:opacity-50"
-              >
-                {status === "loading" ? "Subscribing..." : "Subscribe"}
-              </button>
-              {status === "success" && <p className="text-xs text-green-400">Subscribed!</p>}
-              {status === "error" && <p className="text-xs text-red-400">Failed. Try again.</p>}
-              {status === "idle" && <p className="text-xs text-white/50">No spam. Unsubscribe anytime.</p>}
-            </form>
-          </div>
-
+          {footer.showNewsletterForm && (
+            <div className="gsap-reveal flex flex-col items-start">
+              <h4 className="mb-5 text-sm font-semibold text-[#F97316]">Stay in the loop</h4>
+              <p className="mb-4 max-w-xs text-sm text-white/70">
+                {newsletter.subtext}
+              </p>
+              <form onSubmit={handleSubscribe} className="flex flex-col gap-2">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={newsletter.placeholder}
+                  required
+                  disabled={status === "loading"}
+                  className="rounded bg-black/70 backdrop-blur-lg px-3 py-2 text-sm text-white placeholder:text-white/40 focus:outline-none border border-white/20 disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={status === "loading"}
+                  className="rounded bg-gradient-to-r from-[#F25604] to-[#F97316] px-4 py-2 text-sm font-medium text-white hover:shadow-[0_12px_30px_rgba(242,86,4,0.25)] transition-all disabled:opacity-50"
+                >
+                  {status === "loading" ? "Subscribing..." : newsletter.buttonLabel}
+                </button>
+                {status === "success" && <p className="text-xs text-green-400">Subscribed!</p>}
+                {status === "error" && <p className="text-xs text-red-400">Failed. Try again.</p>}
+                {status === "idle" && <p className="text-xs text-white/50">{newsletter.disclaimer}</p>}
+              </form>
+            </div>
+          )}
         </div>
 
         <div className="gsap-reveal mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/[0.06] pt-8 text-sm text-[#64748B] md:flex-row">
-          <p>&copy; {new Date().getFullYear()} Tirbeo. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Tirbeo. {footer.copyright}</p>
         </div>
       </div>
     </footer>

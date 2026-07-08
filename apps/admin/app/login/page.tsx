@@ -94,9 +94,10 @@ export default function AdminLoginPage() {
         <div className="login-panel-wrap">
           <div className="login-panel" onMouseMove={handleTilt} onMouseLeave={resetTilt} style={{ transform: `rotateX(${tilt.rx}deg) rotateY(${tilt.ry}deg)` }}>
             <div className="login-panel-shadow" />
-            <div className="login-panel-header"><div className="login-panel-logo"><ShieldIcon /></div>
-              <h1 className="login-panel-title">{mode === 'login' ? 'Sign in' : 'Create Account'}</h1>
-              <p className="login-panel-sub">{mode === 'login' ? 'Secure administrator access' : 'Create an administrative account'}</p>
+            <div className="login-panel-header">
+              <div className="login-panel-logo"><div className="login-top-icon"><BrandLogo /></div></div>
+              <h1 className="login-panel-title">Sign in with email</h1>
+              <p className="login-panel-sub">Make a new doc to bring your words, data, and teams together. For free</p>
             </div>
 
             {error && <div className="login-error-banner"><AlertCircle />{error}</div>}
@@ -108,10 +109,17 @@ export default function AdminLoginPage() {
 
               <div className="login-options"><label className="login-remember"><input type="checkbox" checked={remember} onChange={e => setRemember(e.target.checked)} /><span className="login-checkbox" /><span>Remember me</span></label><button type="button" className="login-link-btn" tabIndex={-1}>Forgot Password?</button></div>
 
-              <button type="submit" disabled={loading} className="login-btn-primary">{loading ? <><Spinner /> Please wait…</> : mode === 'login' ? 'Sign In' : 'Create Account'}</button>
+              <button type="submit" disabled={loading} className="login-btn-primary">{loading ? <><Spinner /> Please wait…</> : 'Get Started'}</button>
             </form>
 
-            <div className="login-footer-text">{mode === 'login' ? <>Don&apos;t have an account? <button type="button" onClick={toggleMode} className="login-link-btn">Get Started</button></> : <>Already have an account? <button type="button" onClick={toggleMode} className="login-link-btn">Sign in</button></>}</div>
+            <div className="login-divider">Or sign in with</div>
+            <div className="social-row">
+              <button className="social-btn" aria-label="Sign in with Google"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M21 12.3c0-.7-.1-1.3-.2-1.9H12v3.6h5.6c-.2 1.2-.9 2.3-1.9 3l3 2.4c1.8-1.6 2.8-4 2.8-6.9z" fill="#4285F4"/></svg></button>
+              <button className="social-btn" aria-label="Sign in with Facebook"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M22 12a10 10 0 1 0-11.5 9.9v-7H8v-3h2.5V9.5c0-2.5 1.5-3.9 3.8-3.9 1.1 0 2.2.2 2.2.2v2.4h-1.2c-1.2 0-1.6.8-1.6 1.6V12H19l-.5 3h-2v7A10 10 0 0 0 22 12z" fill="#1877F2"/></svg></button>
+              <button className="social-btn" aria-label="Sign in with Apple"><svg width="18" height="18" viewBox="0 0 24 24"><path d="M16.7 7.1c-.5.6-1.1 1.3-1.9 1.3-.8 0-1.3-.5-2-.5-.7 0-1.5.5-2.4.5-2.4 0-4.7-2.3-4.7-5.4 0-1 .3-2 1-2.7 1 .1 2 .6 2.9.6.7 0 1.7-.6 2.8-.6.3 0 1.9.1 3 .9-.1.1-.7.9-1.6 1.9z" fill="#111"/></svg></button>
+            </div>
+
+            <div className="login-footer-text">Forgot password? <button type="button" className="login-link-btn">Reset</button></div>
 
           </div>
         </div>
