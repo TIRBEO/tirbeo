@@ -184,6 +184,16 @@ model Otp {
   @@index([type])
 }
 
+model SignupOtp {
+  id        String   @id @default(cuid())
+  email     String
+  otpHash   String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+}
+
 // ─── Email System ──────────────────────────────────────
 
 model EmailConfig {

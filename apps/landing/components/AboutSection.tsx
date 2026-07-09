@@ -1,106 +1,230 @@
 "use client";
 
-import { useRef } from "react";
-import { useScroll, useTransform, motion } from "motion/react";
+import { useRef, useEffect } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-const paragraphs = [
+gsap.registerPlugin(ScrollTrigger);
+
+const stages = [
   {
-    text: "Tirbeo is built to make social networking feel personal again. We believe the best online experiences come from genuine conversations, shared interests, and communities where people feel welcome. Instead of endless scrolling, our platform encourages meaningful interactions that create real value and lasting connections. Every feature is designed with people in mind — not engagement metrics. Connection should be intentional, organic, and human.",
-    icon: "01",
+    body: "Tirbeo is built to make social networking feel personal again. We believe the best online experiences come from genuine conversations, shared interests, and communities where people feel welcome. Instead of endless scrolling, our platform encourages meaningful interactions that create real value and lasting connections.",
   },
   {
-    text: "Every feature is designed with people first. Whether you're discovering local communities that share your passions, meeting like-minded individuals who challenge your thinking, or sharing your own ideas with the world, Tirbeo provides a clean, distraction-free space where authentic conversations can naturally grow into something meaningful and lasting.",
-    icon: "02",
+    body: "Every feature is designed with people in mind. Whether you're discovering local communities, meeting like-minded individuals, or sharing your ideas with the world, Tirbeo provides a clean, distraction-free space where authentic conversations can naturally grow.",
   },
   {
-    text: "We prioritize privacy, performance, and simplicity above all else. From end-to-end secure messaging to a blazing-fast experience on every device, Tirbeo is engineered to be reliable, intuitive, and respectful of your time and attention. No dark patterns, no algorithmic manipulation, no noise. Just a platform that puts you back in control of your experience.",
-    icon: "03",
+    body: "We prioritize privacy, performance, and simplicity. From secure messaging and modern technology to a fast, responsive experience across every device, Tirbeo is built to be reliable, intuitive, and respectful of your time and attention.",
   },
   {
-    text: "Our mission is straightforward: create a platform where people connect because they genuinely want to, not because an algorithm tells them to. Connection should be intentional, organic, and human. As Tirbeo grows, we remain deeply committed to building a safer, more thoughtful social experience for everyone who joins our community.",
-    icon: "04",
-  },
-  {
-    text: "Tirbeo is just getting started. We're building toward a future where communities have real ownership over their spaces, conversations are meaningful by default, and the internet feels like a place you want to be — not a place you're trapped in. The next chapter of social is here, and it's built around you and the people who matter most.",
-    icon: "05",
-  },
-  {
-    text: "Technology should serve people, not the other way around. Every decision we make at Tirbeo starts with a simple question: does this make human connection better? From our architecture to our interface, we strip away complexity so that what remains is pure, meaningful interaction between real people who share genuine interests.",
-    icon: "06",
-  },
-  {
-    text: "We believe in the power of local communities amplified by global reach. Tirbeo connects you to people in your district, your city, and your country — building bridges between neighbors while opening doors to the world. Your community starts where you are and extends as far as your curiosity takes you.",
-    icon: "07",
-  },
-  {
-    text: "The future of social is not about more time spent online — it's about better time spent. Tirbeo measures success not in minutes of attention extracted, but in meaningful connections formed, ideas shared, and communities strengthened. We're building a platform you can feel good about using.",
-    icon: "08",
+    body: "Our mission is simple: create a platform where people connect because they genuinely want to—not because an algorithm tells them to. As Tirbeo grows, we remain committed to building a safer, more thoughtful, and more human social experience for everyone.",
   },
 ];
 
-function AboutParagraph({ text, icon, index }: { text: string; icon: string; index: number }) {
-  const ref = useRef<HTMLDivElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start 0.85", "end 0.15"],
-  });
-
-  const opacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0, 1, 1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [60, 0, 0, -40]);
-  const scale = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.92, 1, 1, 0.96]);
-  const blur = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], ["8px", "0px", "0px", "4px"]);
-
-  return (
-    <motion.div
-      ref={ref}
-      style={{ opacity, y, scale, filter: `blur(${blur})` }}
-      className="flex flex-col items-center text-center w-full px-6 py-24 md:py-32"
-    >
-      <span className="text-[#F25604]/20 text-sm font-mono tracking-widest mb-4">
-        {icon}
-      </span>
-      <div className="max-w-4xl">
-        <p className="text-lg font-normal leading-relaxed md:text-2xl md:leading-relaxed lg:text-3xl lg:leading-relaxed text-[#F97316]">
-          {text}
-        </p>
-      </div>
-    </motion.div>
-  );
-}
-
 export function AboutSection() {
-  return (
-    <section
-      id="about"
-      className="relative overflow-hidden bg-[#010006]"
-    >
-      <div className="absolute left-[5%] top-[20%] w-[500px] h-[500px] rounded-full bg-[#F25604]/5 blur-[150px] pointer-events-none" />
-      <div className="absolute right-[5%] bottom-[10%] w-[400px] h-[400px] rounded-full bg-[#7A3EF2]/4 blur-[120px] pointer-events-none" />
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const pinRef = useRef<HTMLDivElement>(null);
+  const panelsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const titleRef = useRef<HTMLDivElement>(null);
+  const blobARef = useRef<HTMLDivElement>(null);
+  const blobBRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const section = sectionRef.current;
+    const pin = pinRef.current;
+    const panels = panelsRef.current.filter(Boolean) as HTMLDivElement[];
+    if (!section || !pin || !panels.length) return;
+
+    const ctx = gsap.context(() => {
+      gsap.to(blobARef.current, {
+        x: 60,
+        y: -40,
+        duration: 14,
+        ease: "sine.inOut",
+        repeat: -1,
+        yoyo: true,
+      });
+      gsap.to(blobBRef.current, {
+        x: -50,
+        y: 50,
+        duration: 18,
+        ease: "sine.inOut",
+        repeat: -1,
+        yoyo: true,
+      });
+
+      gsap.fromTo(
+        titleRef.current,
+        { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
+        {
+          opacity: 0,
+          y: -60,
+          scale: 0.88,
+          filter: "blur(8px)",
+          scrollTrigger: {
+            trigger: section,
+            start: "top top",
+            end: "+=50%",
+            scrub: 0.6,
+          },
+        },
+      );
+
+      gsap.set(panels, { opacity: 0, y: 80, scale: 0.85, rotationY: -45, rotationX: 12, z: -100, filter: "blur(6px)", force3D: true });
+
+      const pinSt = ScrollTrigger.create({
+        trigger: pin,
+        start: "top top",
+        end: `+=${panels.length * 120}%`,
+        pin: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+      });
+
+      const total = panels.length;
+      const tl = gsap.timeline({ paused: true });
+
+      panels.forEach((panel, i) => {
+        const dir = i % 2 === 0 ? 1 : -1;
+        const start = i / total;
+        const mid = (i + 0.5) / total;
+        const end = (i + 1) / total;
+
+        tl.to(panel, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          rotationY: 0,
+          rotationX: 0,
+          z: 0,
+          filter: "blur(0px)",
+          duration: mid - start,
+          ease: "power2.out",
+          force3D: true,
+        }, start);
+
+        tl.to(panel, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          rotationY: 0,
+          rotationX: 0,
+          z: 0,
+          filter: "blur(0px)",
+          duration: end - mid - 0.05,
+          ease: "none",
+          force3D: true,
+        }, mid);
+
+        tl.to(panel, {
+          opacity: 0,
+          y: -60,
+          scale: 0.88,
+          rotationY: 45 * dir,
+          rotationX: -8,
+          z: -80,
+          filter: "blur(4px)",
+          duration: 0.05,
+          ease: "power2.in",
+          force3D: true,
+        }, end - 0.05);
+      });
+
+      ScrollTrigger.create({
+        trigger: pin,
+        start: "top top",
+        end: `+=${total * 120}%`,
+        scrub: 0.8,
+        invalidateOnRefresh: true,
+        onUpdate: (stSelf) => {
+          tl.progress(stSelf.progress);
+        },
+      });
+
+      ScrollTrigger.refresh();
+    });
+
+    return () => ctx.revert();
+  }, []);
+
+  return (
+    <section ref={sectionRef} id="about" className="relative overflow-hidden bg-[#010006]">
       <div
-        className="absolute inset-0 z-20 pointer-events-none"
-        style={{
-          maskImage: "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%)",
-        }}
+        ref={blobARef}
+        className="pointer-events-none absolute left-[8%] top-[10%] h-[38rem] w-[38rem] rounded-full opacity-[0.10] blur-[120px]"
+        style={{ background: "#F25604" }}
+      />
+      <div
+        ref={blobBRef}
+        className="pointer-events-none absolute bottom-[5%] right-[10%] h-[32rem] w-[32rem] rounded-full opacity-[0.08] blur-[120px]"
+        style={{ background: "#7A3EF2" }}
       />
 
-      <div className="relative w-full flex flex-col items-center py-16 md:py-24">
-        <div className="text-center mb-16 md:mb-24 px-6">
-          <span className="inline-block text-xs font-mono tracking-[0.2em] text-[#F25604]/60 uppercase mb-4">
-            About Tirbeo
+      <div className="relative h-screen flex items-center justify-center px-6">
+        <div ref={titleRef} className="text-center">
+          <span className="inline-block text-[10px] font-semibold uppercase tracking-[0.3em] text-white/20">
+            About
           </span>
-          <h2 className="text-3xl md:text-5xl lg:text-6xl font-semibold text-[#F8FAFC]">
-            Built for{" "}
-            <span className="bg-gradient-to-r from-[#F97316] to-[#F25604] bg-clip-text text-transparent">
-              meaningful connection
-            </span>
+          <h2
+            className="mt-3 text-6xl font-bold tracking-tight md:text-8xl lg:text-9xl"
+            style={{ color: "#F25604", textShadow: "0 0 120px rgba(242,86,4,0.3)" }}
+          >
+            Tirbeo
           </h2>
+          <p className="mt-3 text-xs uppercase tracking-[0.35em] text-white/15">
+            A new kind of social platform
+          </p>
         </div>
+      </div>
 
-        {paragraphs.map((p, i) => (
-          <AboutParagraph key={i} text={p.text} icon={p.icon} index={i} />
-        ))}
+      <div ref={pinRef} className="relative h-screen overflow-hidden">
+        <div className="absolute inset-0" style={{ perspective: 1200 }}>
+          <div
+            className="pointer-events-none absolute left-1/2 top-0 h-full w-px -translate-x-1/2"
+            style={{
+              background:
+                "linear-gradient(to bottom, transparent, rgba(242,86,4,0.16) 15%, rgba(242,86,4,0.16) 85%, transparent)",
+            }}
+          />
+
+          {stages.map((stage, i) => (
+            <div
+              key={`panel-${i}`}
+              className="absolute inset-0 flex items-center justify-center px-6"
+            >
+              <div
+                ref={(el) => {
+                  panelsRef.current[i] = el;
+                }}
+                className="relative w-full max-w-4xl text-center"
+                style={{
+                  willChange: "transform, opacity, filter",
+                  backfaceVisibility: "hidden",
+                  transformStyle: "preserve-3d",
+                }}
+              >
+                <div className="mb-6 flex items-center justify-center">
+                  <span
+                    className="block h-2 w-2 rounded-full"
+                    style={{ background: "#F25604", boxShadow: "0 0 20px rgba(242,86,4,0.6)" }}
+                  />
+                </div>
+
+                <span
+                  className="mx-auto mb-8 block h-px w-[120px]"
+                  style={{ background: "linear-gradient(90deg, transparent, #F25604, transparent)" }}
+                />
+
+                <p
+                  className="text-2xl leading-relaxed text-[#F25604] md:text-3xl md:leading-relaxed lg:text-4xl lg:leading-relaxed"
+                  style={{ textShadow: "0 0 60px rgba(0,0,0,0.4)" }}
+                >
+                  {stage.body}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

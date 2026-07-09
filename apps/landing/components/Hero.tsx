@@ -1,12 +1,12 @@
 "use client";
 
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { appUrl } from "@/lib/domains";
+import { HeroScene } from "./HeroScene";
 
 export function Hero() {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const bgRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const subtitleRef = useRef<HTMLParagraphElement>(null);
   const buttonsRef = useRef<HTMLDivElement>(null);
@@ -37,53 +37,34 @@ export function Hero() {
       );
 
       gsap.to(".hero-orb", {
-        x: "random(-30, 30)",
-        y: "random(-20, 20)",
-        scale: "random(0.85, 1.15)",
-        duration: "random(10, 16)",
+        x: "random(-40, 40)",
+        y: "random(-30, 30)",
+        scale: "random(0.8, 1.2)",
+        duration: "random(8, 14)",
         repeat: -1,
         yoyo: true,
         ease: "sine.inOut",
-        stagger: { each: 0.4, from: "random" },
+        stagger: { each: 0.3, from: "random" },
       });
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
-  const onMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!bgRef.current || !sectionRef.current) return;
-    const rect = sectionRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    bgRef.current.style.transform = `translate(${x * -20}px, ${y * -20}px) scale(1.08)`;
-  }, []);
-
-  const onMouseLeave = useCallback(() => {
-    if (!bgRef.current) return;
-    bgRef.current.style.transform = "translate(0, 0) scale(1.05)";
-  }, []);
-
   return (
-    <section
-      ref={sectionRef}
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6"
-    >
+    <section ref={sectionRef} className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6">
       <div
-        ref={bgRef}
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-105 transition-transform duration-700 ease-out will-change-transform"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 gsap-parallax"
         style={{ backgroundImage: "url(/bgpc.png)" }}
-        role="img"
-        aria-label="Hero background"
+        data-speed="0.08"
       />
 
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="hero-orb absolute left-[10%] top-[20%] h-72 w-72 rounded-full bg-gradient-to-br from-[#F25604]/8 to-transparent blur-3xl" />
-        <div className="hero-orb absolute right-[15%] top-[15%] h-96 w-96 rounded-full bg-gradient-to-br from-[#7A3EF2]/6 to-transparent blur-3xl" />
-        <div className="hero-orb absolute bottom-[25%] left-[40%] h-80 w-80 rounded-full bg-gradient-to-br from-[#2F4FC4]/6 to-transparent blur-3xl" />
+        <div className="hero-orb absolute left-[10%] top-[20%] h-72 w-72 rounded-full bg-gradient-to-br from-[#F25604]/10 to-transparent blur-3xl" />
+        <div className="hero-orb absolute right-[15%] top-[15%] h-96 w-96 rounded-full bg-gradient-to-br from-[#7A3EF2]/8 to-transparent blur-3xl" />
+        <div className="hero-orb absolute bottom-[25%] left-[40%] h-80 w-80 rounded-full bg-gradient-to-br from-[#2F4FC4]/8 to-transparent blur-3xl" />
       </div>
+      <HeroScene />
 
       <div className="relative z-10 my-60 max-w-3xl text-center">
         <h1

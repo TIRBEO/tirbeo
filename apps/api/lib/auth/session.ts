@@ -19,9 +19,9 @@ const COOKIE_OPTIONS: {
   maxAge: 60 * 60 * 24 * 7,
 };
 
-if (COOKIE_DOMAIN) {
-  COOKIE_OPTIONS.domain = COOKIE_DOMAIN;
-}
+// Domain intentionally omitted — host-only cookie works across
+// any API hostname (api.tirbeo.app, localhost, vercel.app)
+// without cross-origin cookie blocking.
 
 export async function createSession(
   userId: string,

@@ -51,13 +51,13 @@ export async function middleware(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || '' || 'unknown';
   const pathname = request.nextUrl.pathname;
 
-  const isAuth = pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/signup') || pathname.startsWith('/api/auth/verify-2fa') || pathname.startsWith('/api/auth/recovery-2fa');
+  const isAuth = pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/signup') || pathname.startsWith('/api/auth/verify-2fa') || pathname.startsWith('/api/auth/recovery-2fa') || pathname.startsWith('/api/auth/login-otp');
   const rateOk = await checkRateLimit(`${ip}:${pathname}`, isAuth);
   if (!rateOk) {
     return new NextResponse('Too many requests', { status: 429 });
   }
 
-  const publicPaths = ['/api/auth/login', '/api/auth/signup', '/api/auth/verify-2fa', '/api/auth/recovery-2fa', '/api/auth/google', '/api/auth/google/callback'];
+  const publicPaths = ['/api/auth/login', '/api/auth/signup', '/api/auth/signup-otp/request', '/api/auth/login-otp', '/api/auth/verify-2fa', '/api/auth/recovery-2fa', '/api/auth/google', '/api/auth/google/callback'];
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method) && !publicPaths.some(p => pathname.startsWith(p))) {
     const cookie = request.cookies.get('__session')?.value;
     if (!cookie) {

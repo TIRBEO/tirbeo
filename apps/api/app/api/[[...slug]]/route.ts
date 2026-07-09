@@ -19,6 +19,9 @@ import {
   activityHandler,
   listWorkspacesHandler,
   createWorkspaceHandler,
+  requestSignupOtpHandler,
+  requestLoginOtpHandler,
+  verifyLoginOtpHandler,
 } from '../../../lib/authHandlers';
 
 const appUrl = (subdomain: string, path: string) =>
@@ -28,6 +31,8 @@ const INTERNAL_ROUTES = [
   'auth/login', 'auth/signup', 'auth/logout',
   'auth/email-otp/request', 'auth/email-otp/verify',
   'auth/phone-otp/request', 'auth/phone-otp/verify',
+  'auth/signup-otp/request',
+  'auth/login-otp/request', 'auth/login-otp/verify',
   'auth/google', 'auth/google/callback',
   'auth/verify-2fa', 'auth/recovery-2fa',
   'users/me', 'activity', 'workspaces',
@@ -56,6 +61,9 @@ function matchRoute(slug: string[], method: string, routes: any[]) {
       'auth/email-otp/verify': ['POST'],
       'auth/phone-otp/request': ['POST'],
       'auth/phone-otp/verify': ['POST'],
+      'auth/signup-otp/request': ['POST'],
+      'auth/login-otp/request': ['POST'],
+      'auth/login-otp/verify': ['POST'],
       'auth/google': ['GET'],
       'auth/google/callback': ['GET'],
       'auth/verify-2fa': ['POST'],
@@ -140,6 +148,15 @@ async function handler(request: NextRequest, slug: string[], method: string) {
         break;
       case 'auth/phone-otp/verify':
         resp = await verifyPhoneOtpHandler(request);
+        break;
+      case 'auth/signup-otp/request':
+        resp = await requestSignupOtpHandler(request);
+        break;
+      case 'auth/login-otp/request':
+        resp = await requestLoginOtpHandler(request);
+        break;
+      case 'auth/login-otp/verify':
+        resp = await verifyLoginOtpHandler(request);
         break;
       case 'auth/google':
         resp = await googleAuthRedirectHandler(request);

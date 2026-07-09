@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from './db/prisma';
 import { generateOtpCode, storeOtp, verifyOtpCode, sendEmailOtp, sendPhoneOtp } from './auth/otp';
+import { generateOtpCode as genSignupOtp, storeSignupOtp, verifySignupOtp, sendSignupOtpEmail } from './auth/signup-otp';
 import { hashPassword, verifyPassword } from './auth/password';
 import { createSession, setSessionCookie, clearSessionCookie, revokeSession, getSession } from './session';
 import { signTemp2faToken, verifyTemp2faToken } from './auth/jwt';
@@ -108,6 +109,7 @@ const signupSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   name: z.string().min(1).optional(),
+  otpCode: z.string().length(6).optional(),
 });
 
 export async function signupHandler(request: NextRequest) {
@@ -116,11 +118,20 @@ export async function signupHandler(request: NextRequest) {
     if (!parsed.success) {
       return new NextResponse('Invalid request payload', { status: 400 });
     }
-    const { email, password, name } = parsed.data;
+    const { email, password, name, otpCode } = parsed.data;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return new NextResponse('Email already registered', { status: 409 });
+    }
+
+    if (!otpCode) {
+      return new NextResponse('Verification code required', { status: 400 });
+    }
+
+    const otpOk = await verifySignupOtp(email, otpCode);
+    if (!otpOk) {
+      return new NextResponse('Invalid or expired verification code', { status: 400 });
     }
 
     const passwordHash = await hashPassword(password);
@@ -134,8 +145,81 @@ export async function signupHandler(request: NextRequest) {
     const res = NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
     setSessionCookie(res, token);
     return res;
-  } catch {
+  } catch (err) {
+    console.error('[SIGNUP]', err);
     return new NextResponse('Signup failed', { status: 400 });
+  }
+}
+
+export async function requestSignupOtpHandler(request: NextRequest) {
+  try {
+    const { email } = await request.json();
+    if (!email || typeof email !== 'string') {
+      return new NextResponse('Email is required', { status: 400 });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    if (existing) {
+      return new NextResponse('Email already registered', { status: 409 });
+    }
+
+    const code = genSignupOtp();
+    await storeSignupOtp(email, code);
+    await sendSignupOtpEmail(email, code);
+    return new NextResponse('Verification code sent to email', { status: 200 });
+  } catch (err) {
+    console.error('[SIGNUP OTP REQUEST]', err);
+    return new NextResponse('Failed to send code', { status: 500 });
+  }
+}
+
+export async function requestLoginOtpHandler(request: NextRequest) {
+  try {
+    const { email } = await request.json();
+    if (!email || typeof email !== 'string') {
+      return new NextResponse('Email is required', { status: 400 });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    if (!user) {
+      return new NextResponse('No account found with this email', { status: 404 });
+    }
+
+    const code = genSignupOtp();
+    await storeSignupOtp(email, code);
+    await sendSignupOtpEmail(email, code);
+    return new NextResponse('Verification code sent to your email', { status: 200 });
+  } catch (err) {
+    console.error('[LOGIN OTP REQUEST]', err);
+    return new NextResponse('Failed to send code', { status: 500 });
+  }
+}
+
+export async function verifyLoginOtpHandler(request: NextRequest) {
+  try {
+    const { email, otpCode } = await request.json();
+    if (!email || typeof email !== 'string' || !otpCode || typeof otpCode !== 'string') {
+      return new NextResponse('Email and code are required', { status: 400 });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    if (!user) {
+      return new NextResponse('No account found with this email', { status: 404 });
+    }
+
+    const otpOk = await verifySignupOtp(email, otpCode);
+    if (!otpOk) {
+      return new NextResponse('Invalid or expired verification code', { status: 400 });
+    }
+
+    const ip = request.headers.get('x-forwarded-for') || '';
+    const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
+    const res = NextResponse.json({ id: user.id, email: user.email });
+    setSessionCookie(res, token);
+    return res;
+  } catch (err) {
+    console.error('[LOGIN OTP VERIFY]', err);
+    return new NextResponse('Verification failed', { status: 500 });
   }
 }
 

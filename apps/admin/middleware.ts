@@ -1,25 +1,10 @@
 import { NextResponse, NextRequest } from 'next/server';
 
-const LOGIN_PATH = '/login';
-const PUBLIC_PATHS = ['/login', '/unauthorized', '/_next/static', '/_next/image', '/favicon.ico'];
+// Session lives on the API domain (host-only cookie), not the admin domain.
+// Auth guard is handled client-side: 401 responses redirect to /login.
+// Middleware only passes through — no cookie check needed.
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
-
-  if (pathname.startsWith('/api/')) {
-    return NextResponse.next();
-  }
-
-  const session = request.cookies.get('__session')?.value;
-
-  if (!session) {
-    return NextResponse.redirect(new URL(LOGIN_PATH, request.url));
-  }
-
+export async function middleware(_request: NextRequest) {
   return NextResponse.next();
 }
 
