@@ -1,5 +1,5 @@
 {
-  "installCommand": "npx pnpm@latest install",
+  "installCommand": "npx pnpm@latest install --ignore-scripts",
   "buildCommand": "npx next build",
   "outputDirectory": ".next"
 }
