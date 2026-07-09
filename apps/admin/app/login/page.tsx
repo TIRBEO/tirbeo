@@ -1,10 +1,11 @@
 'use client';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { API } from '../lib';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -26,83 +27,122 @@ export default function AdminLoginPage() {
         setError(text || 'Login failed');
       }
     } catch (err: any) {
-      setError(err?.message || 'Connection error. Check your API connection.');
+      setError(err?.message || 'Connection error');
     } finally {
       setLoading(false);
     }
   }, [email, password]);
 
   return (
-    <div style={{
-      display: 'flex', minHeight: '100vh', width: '100%',
-      background: '#0d1117', color: '#e6edf3',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-    }}>
-      <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center', padding: '48px 16px',
-      }}>
-        <div style={{ width: '100%', maxWidth: 400 }}>
-          <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#2f81f7" strokeWidth="1.5" style={{ marginBottom: 16 }}>
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="rgba(47,129,247,0.1)"/>
-            </svg>
-            <h1 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.02em', margin: 0 }}>Admin Login</h1>
-            <p style={{ fontSize: 14, color: 'rgba(230,237,243,0.5)', marginTop: 6 }}>Sign in to manage your platform.</p>
+    <div className="login-wrapper">
+      <div className="login-bg-shapes">
+        <div className="login-shape-1" />
+        <div className="login-shape-2" />
+      </div>
+      <div className="login-split">
+        <div className="login-brand-col">
+          <div className="login-brand-content">
+            <div className="login-brand-header">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D8B36A" strokeWidth="1.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="rgba(216,179,106,0.15)"/>
+              </svg>
+              <span className="login-brand-name">tirbeo</span>
+            </div>
+            <div className="login-brand-join">
+              <div className="login-brand-heading">Admin Panel</div>
+              <div className="login-brand-sub">Manage your platform, users, routes, and configurations with full control.</div>
+            </div>
+            <div className="login-steps">
+              <div className="step-item step-active">
+                <div className="step-circle step-circle-active">01</div>
+                <div><strong>Sign In</strong><span className="step-desc">with admin credentials</span></div>
+              </div>
+              <div className="step-item step-idle">
+                <div className="step-circle step-circle-idle">02</div>
+                <div><span>Dashboard</span><span className="step-desc">Overview &amp; analytics</span></div>
+              </div>
+              <div className="step-item step-idle">
+                <div className="step-circle step-circle-idle">03</div>
+                <div><span>Manage</span><span className="step-desc">Users, routes &amp; more</span></div>
+              </div>
+            </div>
           </div>
+        </div>
 
-          {error && (
-            <div style={{
-              fontSize: 13, color: '#f85149', background: 'rgba(248,81,73,0.1)',
-              border: '1px solid rgba(248,81,73,0.3)', borderRadius: 8, padding: '10px 14px', marginBottom: 16,
-            }}>{error}</div>
-          )}
+        <div className="login-form-col">
+          <div className="login-panel-wrap">
+            <div className="login-panel">
+              <div className="login-panel-header">
+                <div className="login-panel-logo">
+                  <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#D8B36A" strokeWidth="1.5">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" fill="rgba(216,179,106,0.15)"/>
+                    <circle cx="12" cy="11" r="3" stroke="#D8B36A" fill="rgba(216,179,106,0.1)"/>
+                  </svg>
+                </div>
+                <div className="login-panel-title">Welcome back</div>
+                <div className="login-panel-sub">Sign in to your admin account</div>
+              </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }} noValidate>
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 500, color: '#e6edf3', display: 'block', marginBottom: 6 }}>Email</label>
-              <input
-                type="email" value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="admin@tirbeo.app"
-                required
-                style={{
-                  width: '100%', height: 40, padding: '0 12px',
-                  background: '#151b23', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 8, color: '#e6edf3', fontSize: 14, outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-                onFocus={e => e.target.style.borderColor = '#2f81f7'}
-                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-              />
+              {error && (
+                <div className="login-error-banner">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+                <div className="login-field">
+                  <div className={`login-input-wrap${email ? ' has-value' : ''}${error ? ' has-error' : ''}`}>
+                    <span className="login-input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                    </span>
+                    <input
+                      type="email" value={email} onChange={e => setEmail(e.target.value)}
+                      className="login-input" placeholder="Email" required
+                      autoFocus
+                    />
+                    <label className="login-floating-label">Email</label>
+                  </div>
+                </div>
+
+                <div className="login-field">
+                  <div className={`login-input-wrap${password ? ' has-value' : ''}${error ? ' has-error' : ''}`}>
+                    <span className="login-input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                    </span>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password} onChange={e => setPassword(e.target.value)}
+                      className="login-input" placeholder="Password" required minLength={8}
+                    />
+                    <label className="login-floating-label">Password</label>
+                    <button
+                      type="button" className="login-toggle-vis"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showPassword ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" disabled={loading} className="login-btn-primary" style={{ marginTop: 8 }}>
+                  {loading ? (
+                    <><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}><circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round"/></svg> Signing in...</>
+                  ) : (
+                    <>Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg></>
+                  )}
+                </button>
+              </form>
+
+              <div className="login-panel-shadow" />
             </div>
-
-            <div>
-              <label style={{ fontSize: 13, fontWeight: 500, color: '#e6edf3', display: 'block', marginBottom: 6 }}>Password</label>
-              <input
-                type="password" value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                required minLength={8}
-                style={{
-                  width: '100%', height: 40, padding: '0 12px',
-                  background: '#151b23', border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: 8, color: '#e6edf3', fontSize: 14, outline: 'none',
-                  boxSizing: 'border-box',
-                }}
-                onFocus={e => e.target.style.borderColor = '#2f81f7'}
-                onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
-              />
-            </div>
-
-            <button
-              type="submit" disabled={loading}
-              style={{
-                width: '100%', height: 40, marginTop: 8,
-                background: loading ? '#238636' : '#238636', color: '#fff',
-                border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600,
-                cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1,
-              }}
-            >{loading ? 'Signing in...' : 'Sign In'}</button>
-          </form>
+          </div>
         </div>
       </div>
     </div>
