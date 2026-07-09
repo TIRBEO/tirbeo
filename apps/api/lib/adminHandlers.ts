@@ -277,16 +277,20 @@ export async function seedAdminHandler(request: NextRequest) {
     return new NextResponse('Unauthorized', { status: 403 });
   }
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return new NextResponse('User not found', { status: 404 });
+  const { hashPassword: hashPw } = await import('./auth/password');
+  const passwordHash = password ? await hashPw(password) : undefined;
 
-  const data: Record<string, unknown> = { adminRole };
-  if (password) {
-    const { hashPassword } = await import('./auth/password');
-    data.passwordHash = await hashPassword(password);
+  let user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    user = await prisma.user.create({
+      data: { email, passwordHash: passwordHash || '', name: email.split('@')[0], adminRole },
+    });
+    return NextResponse.json({ message: `User ${email} created with role ${adminRole}` });
   }
 
-  await prisma.user.update({ where: { email }, data });
+  const updateData: Record<string, unknown> = { adminRole };
+  if (passwordHash) updateData.passwordHash = passwordHash;
+  await prisma.user.update({ where: { email }, data: updateData });
 
   return NextResponse.json({ message: `User ${email} promoted to ${adminRole}${password ? ' with new password' : ''}` });
 }
