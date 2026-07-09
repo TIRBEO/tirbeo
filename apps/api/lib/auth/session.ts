@@ -2,26 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../db/prisma';
 import { signToken, verifyToken, COOKIE_NAME } from './jwt';
 
-const COOKIE_DOMAIN = process.env.NEXT_PUBLIC_COOKIE_DOMAIN;
+const COOKIE_DOMAIN = process.env.NEXT_PUBLIC_COOKIE_DOMAIN || '.tirbeo.app';
 
 const COOKIE_OPTIONS: {
   httpOnly: boolean;
   secure: boolean;
   sameSite: 'lax' | 'none';
   path: string;
-  domain?: string;
   maxAge: number;
+  domain?: string;
 } = {
   httpOnly: true,
   secure: true,
-  sameSite: 'lax' as const,
+  sameSite: 'lax',
   path: '/',
   maxAge: 60 * 60 * 24 * 7,
+  domain: COOKIE_DOMAIN,
 };
-
-// Domain intentionally omitted — host-only cookie works across
-// any API hostname (api.tirbeo.app, localhost, vercel.app)
-// without cross-origin cookie blocking.
 
 export async function createSession(
   userId: string,

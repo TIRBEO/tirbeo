@@ -1,4 +1,4 @@
-export const API = process.env.NEXT_PUBLIC_API_URL || 'https://api-tirbeo.vercel.app';
+export const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.tirbeo.app';
 
 const cache = new Map<string, { data: unknown; expiry: number }>();
 const TTL = 5000;

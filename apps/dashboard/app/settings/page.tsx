@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import Link from "next/link";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "https://api-tirbeo.vercel.app";
+const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 
 type SettingsUser = {
   id: string;
