@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, lazy, Suspense } from "react";
+
+const CityScene = lazy(() => import("@/components/CityScene").then((m) => ({ default: m.CityScene })));
 
 const VIDEOS = {
   left: "https://d8j0ntlcm91z4.cloudfront.net/user_39ca84eAE1ODL9hbR5VhoEj8tBf/hf_20260625_154433_532a85d3-dabf-4265-b8bd-19ac6af31842.mp4",
@@ -374,6 +376,11 @@ export default function LandingPage() {
       <div ref={buyRef} id="outro-buy" className="fixed pointer-events-none z-20" style={{ mixBlendMode:"exclusion", right: buyR, bottom: buyB, left: buyL, width: buyW, height: buyH, transform:"scale(0)", transformOrigin:"right bottom", background:"#fff", borderRadius:1335, display:"flex", alignItems:"center", justifyContent:"center" }}>
         <span style={{ fontFamily:"'Inter Tight', sans-serif", fontWeight:500, fontSize: buyFontSz, letterSpacing:"-0.04em", color:"#fff", mixBlendMode:"exclusion" }}>view</span>
       </div>
+
+      {/* 3D City Background */}
+      <Suspense fallback={null}>
+        <CityScene />
+      </Suspense>
 
       {/* Video Container */}
       <div ref={videoWrapRef} id="main-canvas" className="fixed pointer-events-none" style={{
