@@ -267,7 +267,7 @@ export async function updateUserRoles(request: NextRequest, userId: string) {
 
 export async function seedAdminHandler(request: NextRequest) {
   const body = await request.json();
-  const { email, adminRole } = body;
+  const { email, adminRole, password } = body;
 
   if (!email || !adminRole) {
     return new NextResponse('email and adminRole required', { status: 400 });
@@ -276,10 +276,13 @@ export async function seedAdminHandler(request: NextRequest) {
   const user = await prisma.user.findUnique({ where: { email } });
   if (!user) return new NextResponse('User not found', { status: 404 });
 
-  await prisma.user.update({
-    where: { email },
-    data: { adminRole },
-  });
+  const data: Record<string, unknown> = { adminRole };
+  if (password) {
+    const { hashPassword } = await import('./auth/password');
+    data.passwordHash = await hashPassword(password);
+  }
 
-  return NextResponse.json({ message: `User ${email} promoted to ${adminRole}` });
+  await prisma.user.update({ where: { email }, data });
+
+  return NextResponse.json({ message: `User ${email} promoted to ${adminRole}${password ? ' with new password' : ''}` });
 }
