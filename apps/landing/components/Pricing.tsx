@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { appUrl } from "@/lib/domains";
-import { useSiteConfig } from "./SiteConfigProvider";
 
 const faqItems = [
   {
@@ -23,9 +22,6 @@ const faqItems = [
 ];
 
 export function Pricing() {
-  const config = useSiteConfig();
-  const { newsletter } = config;
-
   const [openIndex, setOpenIndex] = useState(0);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -83,12 +79,12 @@ export function Pricing() {
                   className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left text-white transition duration-300 hover:bg-white/[0.08]"
                 >
                   <span className="text-sm font-semibold sm:text-base">{item.question}</span>
-                  <span className={`flex-shrink-0 text-lg text-[${newsletter.accentColor}] transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}>
+                  <span className={`flex-shrink-0 text-lg text-[#F97316] transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}>
                     ▾
                   </span>
                 </button>
                 <div className={`overflow-hidden px-6 transition-[max-height,opacity] duration-300 ${isOpen ? "max-h-44 opacity-100" : "max-h-0 opacity-0"}`}>
-                  <p className="pb-5 text-sm leading-relaxed" style={{ color: newsletter.accentColor }}>{item.answer}</p>
+                  <p className="pb-5 text-sm leading-relaxed text-[#F97316]">{item.answer}</p>
                 </div>
               </div>
             );
@@ -98,10 +94,10 @@ export function Pricing() {
         <div className="gsap-reveal mt-14 rounded-3xl border border-white/10 bg-white/5 shadow-xl backdrop-blur-2xl">
           <div className="rounded-[1.75rem] bg-black/80 px-6 py-8 sm:px-8">
             <div className="text-left">
-              <p className="text-sm uppercase tracking-[0.32em] opacity-90" style={{ color: newsletter.accentColor }}>{newsletter.badge}</p>
-              <h3 className="mt-3 text-3xl font-bold text-white sm:text-4xl">{newsletter.headline}</h3>
+              <p className="text-sm uppercase tracking-[0.32em] text-[#F97316] opacity-90">Newsletter</p>
+              <h3 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Never miss an update</h3>
               <p className="mt-3 max-w-2xl text-sm text-[#94a3b8] sm:text-base">
-                {newsletter.subtext}
+                Subscribe for launch announcements, feature drops, and exclusive early access.
               </p>
             </div>
 
@@ -110,7 +106,7 @@ export function Pricing() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={newsletter.placeholder}
+                placeholder="Enter your email"
                 required
                 disabled={status === "loading"}
                 className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 text-sm text-white outline-none transition duration-300 placeholder:text-[#94a3b8] focus:border-[#F25604]/40 focus:ring-2 focus:ring-[#F25604]/15 disabled:opacity-50"
@@ -121,7 +117,7 @@ export function Pricing() {
                 disabled={status === "loading"}
                 className="rounded-2xl bg-gradient-to-r from-[#F25604] to-[#F97316] px-7 py-4 text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_24px_60px_rgba(242,86,4,0.28)] disabled:opacity-50"
               >
-                {status === "loading" ? "Subscribing..." : newsletter.buttonLabel}
+                {status === "loading" ? "Subscribing..." : "Subscribe"}
               </button>
             </form>
 
@@ -132,7 +128,7 @@ export function Pricing() {
               <p className="mt-4 text-sm text-red-400">{message}</p>
             )}
             {status === "idle" && (
-              <p className="mt-4 text-xs text-[#94A3B8]">{newsletter.disclaimer}</p>
+              <p className="mt-4 text-xs text-[#94A3B8]">No spam. Unsubscribe anytime.</p>
             )}
           </div>
         </div>

@@ -1,6 +1,33 @@
-'use client';
-import { useRef, useEffect, useState } from 'react';
-import { useSiteConfig } from './SiteConfigProvider';
+"use client";
+import { useRef, useEffect, useState } from "react";
+
+const FEATURES_ROW1 = [
+  { label: "Real-time Chat", desc: "Instant messaging with end-to-end encryption" },
+  { label: "Community Spaces", desc: "Create and join topic-based communities" },
+  { label: "Voice Channels", desc: "Crystal-clear voice conversations" },
+  { label: "Media Sharing", desc: "Share photos, videos, and files securely" },
+  { label: "Smart Notifications", desc: "Stay informed without the noise" },
+  { label: "Profile Customization", desc: "Express yourself with custom profiles" },
+  { label: "Group Chats", desc: "Connect with multiple people at once" },
+  { label: "Private Messaging", desc: "One-on-one conversations that matter" },
+  { label: "Event Planning", desc: "Organize meetups and virtual events" },
+  { label: "Content Discovery", desc: "Find content tailored to your interests" },
+  { label: "Real-time Chat", desc: "Instant messaging with end-to-end encryption" },
+];
+
+const FEATURES_ROW2 = [
+  { label: "End-to-End Encryption", desc: "Your conversations stay private, always" },
+  { label: "Zero Data Tracking", desc: "We never sell or share your data" },
+  { label: "Open Source", desc: "Transparent code, auditable by anyone" },
+  { label: "No Algorithmic Feed", desc: "You control what you see" },
+  { label: "Ad-Free Experience", desc: "No ads, no distractions, no tracking" },
+  { label: "Data Portability", desc: "Take your data anywhere, anytime" },
+  { label: "Local Communities", desc: "Connect with people near you" },
+  { label: "Global Reach", desc: "Find friends across borders" },
+  { label: "Privacy First", desc: "Built with privacy as a foundation" },
+  { label: "User Controlled", desc: "Full control over your experience" },
+  { label: "End-to-End Encryption", desc: "Your conversations stay private, always" },
+];
 
 function FeatureCard({ label, desc }: { label: string; desc: string }) {
   return (
@@ -15,9 +42,6 @@ function FeatureCard({ label, desc }: { label: string; desc: string }) {
 }
 
 export function ScrollMarquee() {
-  const config = useSiteConfig();
-  const { features } = config;
-
   const sectionRef = useRef<HTMLElement>(null);
   const [offset, setOffset] = useState(0);
 
@@ -31,20 +55,16 @@ export function ScrollMarquee() {
       const scrollProgress = (-top + h) * 0.3;
       setOffset(scrollProgress);
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const row1Style = { transform: `translateX(${offset - 200}px)`, willChange: 'transform' as const };
-  const row2Style = { transform: `translateX(${-(offset - 200)}px)`, willChange: 'transform' as const };
+  const row1Style = { transform: `translateX(${offset - 200}px)`, willChange: "transform" as const };
+  const row2Style = { transform: `translateX(${-(offset - 200)}px)`, willChange: "transform" as const };
 
-  const mid = Math.ceil(features.items.length / 2);
-  const row1Items = features.items.slice(0, mid);
-  const row2Items = features.items.slice(mid);
-
-  const tripled1 = [...row1Items, ...row1Items, ...row1Items];
-  const tripled2 = [...row2Items, ...row2Items, ...row2Items];
+  const tripled1 = [...FEATURES_ROW1, ...FEATURES_ROW1, ...FEATURES_ROW1];
+  const tripled2 = [...FEATURES_ROW2, ...FEATURES_ROW2, ...FEATURES_ROW2];
 
   return (
     <section ref={sectionRef} className="relative overflow-hidden bg-[#010006] py-24 sm:py-32 md:py-40 pb-10">
@@ -53,13 +73,13 @@ export function ScrollMarquee() {
           Features
         </span>
         <h2 className="text-3xl md:text-5xl lg:text-6xl font-semibold text-[#F8FAFC]">
-          {features.headline.split(" ").slice(0, -1).join(" ")}{" "}
+          Built with{" "}
           <span className="bg-gradient-to-r from-[#F97316] to-[#F25604] bg-clip-text text-transparent">
-            {features.headline.split(" ").pop()}
+            purpose
           </span>
         </h2>
         <p className="mt-4 text-[#94A3B8] max-w-xl mx-auto">
-          {features.subtitle}
+          Every feature is designed to foster genuine connection — not to keep you hooked.
         </p>
       </div>
 
