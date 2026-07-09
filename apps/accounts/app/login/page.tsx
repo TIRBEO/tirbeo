@@ -9,21 +9,25 @@ import { Chrome, Github, Eye, EyeOff, ArrowLeft } from "lucide-react";
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api-tirbeo.vercel.app";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+function GlowOrb({ className }: { className: string }) {
+  return <div className={`absolute rounded-full blur-[120px] pointer-events-none ${className}`} />;
+}
+
 function StepItem({ number, text, active }: { number: number; text: string; active?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${active ? "bg-white text-black border border-white" : "bg-brand-gray text-white border-none"}`}>
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${active ? "bg-black text-white" : "bg-white/10 text-white/40"}`}>
+    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${active ? "bg-gradient-to-r from-[#F25604] to-[#F97316] text-white border-none" : "glass text-[#EAF3F3]"}`}>
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${active ? "bg-white text-[#F25604]" : "bg-[rgba(255,255,255,0.1)] text-[#94A3B8]"}`}>
         {String(number).padStart(2, "0")}
       </div>
-      <span className={`text-sm font-medium ${active ? "" : "text-white/60"}`}>{text}</span>
+      <span className={`text-sm font-medium ${active ? "" : "text-[#CBD5E1]"}`}>{text}</span>
     </div>
   );
 }
 
 function SocialButton({ icon: Icon, label, onClick }: { icon: React.ElementType; label: string; onClick?: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex items-center justify-center gap-2 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white hover:bg-white/5 transition-all duration-200">
-      <Icon className="w-5 h-5" />
+    <button type="button" onClick={onClick} className="flex items-center justify-center gap-2 glass rounded-xl px-4 py-3 text-sm font-medium text-[#EAF3F3] hover:bg-[rgba(255,255,255,0.08)] transition-all duration-200 hover:border-[#F97316]/30">
+      <Icon className="w-5 h-5 text-[#F97316]" />
       <span>{label}</span>
     </button>
   );
@@ -41,22 +45,22 @@ function InputGroup({ label, placeholder, type, value, onChange, error }: {
   const isPwd = type === "password";
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-white">{label}</label>
+      <label className="text-sm font-medium text-[#CBD5E1]">{label}</label>
       <div className="relative">
         <input
           type={isPwd ? (show ? "text" : "password") : type}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-brand-gray border-none rounded-xl h-11 px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-white/20 outline-none text-sm"
+          className="w-full bg-[rgba(255,255,255,0.05)] border border-white/[0.08] rounded-xl h-11 px-4 text-[#EAF3F3] placeholder:text-[#94A3B8]/50 focus:ring-2 focus:ring-[#F97316]/20 focus:border-[#F97316]/50 outline-none text-sm transition-all"
         />
         {isPwd && (
-          <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60">
+          <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#94A3B8] hover:text-[#EAF3F3]">
             {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
           </button>
         )}
       </div>
-      {isPwd && <p className="text-xs text-white/30">Requires at least 8 symbols.</p>}
+      {isPwd && <p className="text-xs text-[#94A3B8]/60">Requires at least 8 symbols.</p>}
       {error && <p className="text-xs text-red-400/80">{error}</p>}
     </div>
   );
@@ -104,7 +108,7 @@ function OtpInput({ length = 6, value, onChange }: { length?: number; value: str
           value={value[i] || ""}
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKey(i, e)}
-          className="w-12 h-14 rounded-xl border border-white/10 bg-white/5 text-white text-xl font-medium text-center outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10 transition-all"
+          className="w-12 h-14 rounded-xl border border-white/[0.12] bg-[rgba(255,255,255,0.05)] text-[#EAF3F3] text-xl font-medium text-center outline-none focus:border-[#F97316]/50 focus:ring-2 focus:ring-[#F97316]/20 transition-all"
           autoComplete="one-time-code"
         />
       ))}
@@ -224,16 +228,16 @@ function LoginForm() {
           <button
             type="button"
             onClick={() => { setStep(isSignUp ? "signup" : "login"); setOtpCode(""); setError(null); }}
-            className="text-white/40 hover:text-white/80 transition-colors"
+            className="text-[#94A3B8] hover:text-[#EAF3F3] transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
         )}
         <div>
-          <h1 className="text-3xl font-medium tracking-tight">
-            {isOtpStep ? "Check Your Email" : isSignUp ? "Create New Profile" : "Welcome Back"}
+          <h1 className="text-3xl font-bold tracking-tight">
+            {isOtpStep ? "Check Your Email" : isSignUp ? <span className="gradient-text">Create Account</span> : <span className="gradient-text">Welcome Back</span>}
           </h1>
-          <p className="text-white/40 text-sm mt-1">
+          <p className="text-[#94A3B8] text-sm mt-1">
             {isOtpStep
               ? `We sent a code to ${email}`
               : isSignUp
@@ -251,9 +255,9 @@ function LoginForm() {
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs font-medium text-white/40 uppercase tracking-widest">Or</span>
-            <div className="flex-1 h-px bg-white/10" />
+            <div className="flex-1 h-px bg-white/[0.08]" />
+            <span className="text-xs font-medium text-[#94A3B8] uppercase tracking-widest">Or</span>
+            <div className="flex-1 h-px bg-white/[0.08]" />
           </div>
         </>
       )}
@@ -262,9 +266,9 @@ function LoginForm() {
         {isOtpStep ? (
           <div className="space-y-6 pt-4">
             <OtpInput length={6} value={otpCode} onChange={setOtpCode} />
-            <p className="text-center text-sm text-white/30">
+            <p className="text-center text-sm text-[#94A3B8]/60">
               Didn&apos;t receive the code?{" "}
-              <button type="button" onClick={handleOtpLogin} className="text-white/60 underline hover:text-white/80">
+              <button type="button" onClick={handleOtpLogin} className="text-[#F97316] underline hover:text-[#F25604]">
                 Resend
               </button>
             </p>
@@ -302,7 +306,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading || otpCode.length < 6}
-            className="w-full h-14 bg-white text-black font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-14 bg-gradient-to-r from-[#F25604] to-[#F97316] text-white font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all duration-200 mt-4 glow-orange disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -320,7 +324,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-14 bg-white text-black font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-14 bg-gradient-to-r from-[#F25604] to-[#F97316] text-white font-semibold rounded-xl hover:opacity-90 active:scale-[0.98] transition-all duration-200 mt-4 glow-orange disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -339,7 +343,7 @@ function LoginForm() {
             type="button"
             onClick={handleOtpLogin}
             disabled={loading}
-            className="w-full h-12 glass rounded-xl text-sm font-medium text-white/80 hover:text-white transition-all disabled:opacity-50"
+            className="w-full h-12 glass rounded-xl text-sm font-medium text-[#CBD5E1] hover:text-[#EAF3F3] transition-all disabled:opacity-50"
           >
             Send one-time code
           </button>
@@ -347,9 +351,9 @@ function LoginForm() {
       </form>
 
       {!isOtpStep && (
-        <p className="text-center text-sm text-white/40">
+        <p className="text-center text-sm text-[#94A3B8]">
           {isSignUp ? "Already have an account? " : "Don't have an account? "}
-          <button type="button" onClick={() => { setStep(isSignUp ? "login" : "signup"); setError(null); setFieldErrors({}); }} className="text-white underline hover:text-white/80 transition-colors">
+          <button type="button" onClick={() => { setStep(isSignUp ? "login" : "signup"); setError(null); setFieldErrors({}); }} className="text-[#F97316] underline hover:text-[#F25604] transition-colors">
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
         </p>
@@ -360,11 +364,20 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen w-full bg-black selection:bg-white/30 transition-all duration-500 lg:h-screen lg:overflow-hidden">
-      <div className="hidden lg:flex relative flex-col items-center justify-end pb-32 px-12 rounded-3xl overflow-hidden shadow-2xl h-full w-[52%]">
+    <main className="flex min-h-screen w-full bg-black selection:bg-[#F25604]/40 relative overflow-hidden">
+      {/* Gradient mesh bg */}
+      <div className="fixed inset-0 bg-mesh opacity-60 pointer-events-none" />
+
+      {/* Glow orbs */}
+      <GlowOrb className="w-[40%] h-[40%] top-[-15%] right-[-10%] bg-[#7A3EF2]/20" />
+      <GlowOrb className="w-[35%] h-[35%] bottom-[-15%] left-[-10%] bg-[#F25604]/15" />
+      <GlowOrb className="w-[25%] h-[25%] top-[30%] left-[30%] bg-[#0A2472]/20" />
+
+      <div className="hidden lg:flex relative flex-col items-center justify-end pb-32 px-12 rounded-3xl overflow-hidden shadow-2xl h-full w-[52%] z-10">
         <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover">
           <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260506_081238_406ed0e3-5d83-436e-a512-0bbff7ec5b95.mp4" type="video/mp4" />
         </video>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -372,8 +385,8 @@ export default function LoginPage() {
           className="relative z-10 w-full max-w-xs space-y-8"
         >
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
-            <h2 className="text-4xl font-medium tracking-tight whitespace-nowrap">Join Tirbeo</h2>
-            <p className="text-white/60 text-sm leading-relaxed px-4 mt-2">
+            <h2 className="text-4xl font-bold tracking-tight shimmer whitespace-nowrap">Join Tirbeo</h2>
+            <p className="text-[#CBD5E1] text-sm leading-relaxed px-4 mt-2">
               Follow these 3 quick phases to activate your space.
             </p>
           </motion.div>
@@ -385,11 +398,11 @@ export default function LoginPage() {
         </motion.div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center py-12 lg:py-6 px-4 sm:px-12 lg:px-16 xl:px-24 overflow-y-auto lg:overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center py-12 lg:py-6 px-4 sm:px-12 lg:px-16 xl:px-24 overflow-y-auto lg:overflow-hidden relative z-10">
         <div className="w-full max-w-xl">
           <Suspense fallback={
             <div className="flex items-center justify-center h-full">
-              <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-[#F25604]/20 border-t-[#F97316] rounded-full animate-spin" />
             </div>
           }>
             <LoginForm />
