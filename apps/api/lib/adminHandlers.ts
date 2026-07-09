@@ -267,10 +267,14 @@ export async function updateUserRoles(request: NextRequest, userId: string) {
 
 export async function seedAdminHandler(request: NextRequest) {
   const body = await request.json();
-  const { email, adminRole, password } = body;
+  const { email, adminRole, password, key } = body;
 
   if (!email || !adminRole) {
     return new NextResponse('email and adminRole required', { status: 400 });
+  }
+
+  if (process.env.ADMIN_SEED_EMAIL && email !== process.env.ADMIN_SEED_EMAIL) {
+    return new NextResponse('Unauthorized', { status: 403 });
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
