@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { AuthProvider } from "@tirbeo/auth";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -18,7 +17,7 @@ export default function AccountsLayout({ children }: { children: React.ReactNode
   return (
     <html lang="en" className={inter.variable}>
       <body suppressHydrationWarning className="font-sans">
-        <AuthProvider>{children}</AuthProvider>
+        {children}
       </body>
     </html>
   );

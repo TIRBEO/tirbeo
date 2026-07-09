@@ -11,18 +11,18 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function StepItem({ number, text, active }: { number: number; text: string; active?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${active ? "bg-white/10 border border-white/20 backdrop-blur-xl" : "bg-white/[0.03] border border-white/5"}`}>
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${active ? "bg-gradient-to-br from-[#F25604] to-[#F97316] text-white" : "bg-white/10 text-white/40"}`}>
+    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${active ? "bg-white text-black border border-white" : "bg-brand-gray text-white border-none"}`}>
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${active ? "bg-black text-white" : "bg-white/10 text-white/40"}`}>
         {String(number).padStart(2, "0")}
       </div>
-      <span className={`text-sm font-medium ${active ? "text-[#EAF3F3]" : "text-white/40"}`}>{text}</span>
+      <span className={`text-sm font-medium ${active ? "" : "text-white/60"}`}>{text}</span>
     </div>
   );
 }
 
 function SocialButton({ icon: Icon, label, onClick }: { icon: React.ElementType; label: string; onClick?: () => void }) {
   return (
-    <button type="button" onClick={onClick} className="flex items-center justify-center gap-2 bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3.5 text-sm font-medium text-[#CBD5E1] hover:bg-white/10 hover:text-[#EAF3F3] hover:border-white/20 transition-all duration-200">
+    <button type="button" onClick={onClick} className="flex items-center justify-center gap-2 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white hover:bg-white/5 transition-all duration-200">
       <Icon className="w-5 h-5" />
       <span>{label}</span>
     </button>
@@ -41,14 +41,14 @@ function InputGroup({ label, placeholder, type, value, onChange, error }: {
   const isPwd = type === "password";
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-[#CBD5E1]">{label}</label>
+      <label className="text-sm font-medium text-white">{label}</label>
       <div className="relative">
         <input
           type={isPwd ? (show ? "text" : "password") : type}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-white/[0.06] border border-white/10 rounded-xl h-11 px-4 text-[#EAF3F3] placeholder:text-white/20 outline-none focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316]/30 transition-all text-sm"
+          className="w-full bg-brand-gray border-none rounded-xl h-11 px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-white/20 outline-none text-sm"
         />
         {isPwd && (
           <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60">
@@ -104,7 +104,7 @@ function OtpInput({ length = 6, value, onChange }: { length?: number; value: str
           value={value[i] || ""}
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKey(i, e)}
-          className="w-12 h-14 rounded-xl border border-white/10 bg-white/[0.06] text-[#EAF3F3] text-xl font-medium text-center outline-none focus:border-[#F97316] focus:ring-1 focus:ring-[#F97316]/30 transition-all"
+          className="w-12 h-14 rounded-xl border border-white/10 bg-white/5 text-white text-xl font-medium text-center outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10 transition-all"
           autoComplete="one-time-code"
         />
       ))}
@@ -230,10 +230,10 @@ function LoginForm() {
           </button>
         )}
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-3xl font-medium tracking-tight">
             {isOtpStep ? "Check Your Email" : isSignUp ? "Create New Profile" : "Welcome Back"}
           </h1>
-          <p className="text-[#94A3B8] text-sm mt-1">
+          <p className="text-white/40 text-sm mt-1">
             {isOtpStep
               ? `We sent a code to ${email}`
               : isSignUp
@@ -252,7 +252,7 @@ function LoginForm() {
 
           <div className="flex items-center gap-4">
             <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs font-medium text-[#94A3B8] uppercase tracking-widest">Or</span>
+            <span className="text-xs font-medium text-white/40 uppercase tracking-widest">Or</span>
             <div className="flex-1 h-px bg-white/10" />
           </div>
         </>
@@ -264,7 +264,7 @@ function LoginForm() {
             <OtpInput length={6} value={otpCode} onChange={setOtpCode} />
             <p className="text-center text-sm text-white/30">
               Didn&apos;t receive the code?{" "}
-              <button type="button" onClick={handleOtpLogin} className="text-[#F97316] hover:text-[#F25604] transition-colors underline">
+              <button type="button" onClick={handleOtpLogin} className="text-white/60 underline hover:text-white/80">
                 Resend
               </button>
             </p>
@@ -302,7 +302,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading || otpCode.length < 6}
-            className="btn-primary w-full h-12 justify-center text-sm mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-14 bg-white text-black font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -320,7 +320,7 @@ function LoginForm() {
           <button
             type="submit"
             disabled={loading}
-            className="btn-primary w-full h-12 justify-center text-sm mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-14 bg-white text-black font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -339,7 +339,7 @@ function LoginForm() {
             type="button"
             onClick={handleOtpLogin}
             disabled={loading}
-            className="btn-secondary w-full h-12 justify-center text-sm disabled:opacity-50"
+            className="w-full h-12 glass rounded-xl text-sm font-medium text-white/80 hover:text-white transition-all disabled:opacity-50"
           >
             Send one-time code
           </button>
@@ -347,9 +347,9 @@ function LoginForm() {
       </form>
 
       {!isOtpStep && (
-        <p className="text-center text-sm text-[#94A3B8]">
+        <p className="text-center text-sm text-white/40">
           {isSignUp ? "Already have an account? " : "Don't have an account? "}
-          <button type="button" onClick={() => { setStep(isSignUp ? "login" : "signup"); setError(null); setFieldErrors({}); }} className="text-[#F97316] hover:text-[#F25604] transition-colors underline">
+          <button type="button" onClick={() => { setStep(isSignUp ? "login" : "signup"); setError(null); setFieldErrors({}); }} className="text-white underline hover:text-white/80 transition-colors">
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
         </p>
@@ -360,16 +360,11 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen w-full bg-[#00072D] relative overflow-hidden">
-      {/* Glow orbs */}
-      <div className="glow-orb-orange w-[35%] h-[35%] top-[-10%] right-[-10%]" />
-      <div className="glow-orb-purple w-[30%] h-[30%] bottom-[-10%] left-[-10%]" />
-
-      <div className="hidden lg:flex relative flex-col items-center justify-end pb-32 px-12 overflow-hidden shadow-2xl h-screen w-[52%]">
+    <main className="flex min-h-screen w-full bg-black selection:bg-white/30 transition-all duration-500 lg:h-screen lg:overflow-hidden">
+      <div className="hidden lg:flex relative flex-col items-center justify-end pb-32 px-12 rounded-3xl overflow-hidden shadow-2xl h-full w-[52%]">
         <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover">
           <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260506_081238_406ed0e3-5d83-436e-a512-0bbff7ec5b95.mp4" type="video/mp4" />
         </video>
-        <div className="absolute inset-0 bg-gradient-to-t from-[#00072D] via-transparent to-transparent" />
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -377,8 +372,8 @@ export default function LoginPage() {
           className="relative z-10 w-full max-w-xs space-y-8"
         >
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
-            <h2 className="text-4xl font-bold tracking-tight">Join Tirbeo</h2>
-            <p className="text-[#94A3B8] text-sm leading-relaxed px-4 mt-2">
+            <h2 className="text-4xl font-medium tracking-tight whitespace-nowrap">Join Tirbeo</h2>
+            <p className="text-white/60 text-sm leading-relaxed px-4 mt-2">
               Follow these 3 quick phases to activate your space.
             </p>
           </motion.div>
@@ -390,11 +385,11 @@ export default function LoginPage() {
         </motion.div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center py-12 lg:py-6 px-4 sm:px-12 lg:px-16 xl:px-24 overflow-y-auto lg:overflow-hidden relative z-10">
+      <div className="flex-1 flex flex-col items-center justify-center py-12 lg:py-6 px-4 sm:px-12 lg:px-16 xl:px-24 overflow-y-auto lg:overflow-hidden">
         <div className="w-full max-w-xl">
           <Suspense fallback={
             <div className="flex items-center justify-center h-full">
-              <div className="w-6 h-6 border-2 border-[#F25604]/20 border-t-[#F97316] rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
             </div>
           }>
             <LoginForm />
