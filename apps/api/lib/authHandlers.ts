@@ -36,7 +36,8 @@ export async function loginHandler(request: NextRequest) {
     const res = NextResponse.json({ id: user.id, email: user.email });
     setSessionCookie(res, token);
     return res;
-  } catch {
+  } catch (err: any) {
+    console.error('[LOGIN]', err?.message || err);
     return new NextResponse('Login failed', { status: 400 });
   }
 }

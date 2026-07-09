@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     setSessionCookie(res, token);
     return res;
   } catch (err) {
-    console.error('[ADMIN LOGIN]', err);
+    console.error('[ADMIN LOGIN]', err?.message || err);
     return new NextResponse('Login failed', { status: 400 });
   }
 }

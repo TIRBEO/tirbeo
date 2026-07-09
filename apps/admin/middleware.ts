@@ -11,15 +11,6 @@ export async function middleware(request: NextRequest) {
   const token = request.cookies.get(COOKIE_NAME)?.value;
   if (!token) return NextResponse.redirect(new URL('/login', request.url));
 
-  try {
-    const { jwtVerify } = await import('jose');
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret-change-me');
-    const { payload } = await jwtVerify(token, secret, { algorithms: ['HS256'] });
-    if (!payload.sub) return NextResponse.redirect(new URL('/login', request.url));
-  } catch {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
-
   return NextResponse.next();
 }
 
