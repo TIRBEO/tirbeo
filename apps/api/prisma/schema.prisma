@@ -28,10 +28,6 @@ model User {
   is2FAEnabled     Boolean     @default(false)
   lastActiveAt     DateTime?   // online/offline tracking
   preferences      Json        @default("{}") // per-user admin prefs { sidebarCollapsed, theme, etc }
-  bannedAt         DateTime?
-  bannedUntil      DateTime?
-  banReason        String?
-  isLocked         Boolean     @default(false)
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 

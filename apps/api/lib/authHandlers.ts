@@ -26,14 +26,6 @@ export async function loginHandler(request: NextRequest) {
       return new NextResponse('Invalid email or password', { status: 401 });
     }
 
-    if (user.isLocked) {
-      return new NextResponse('Account is locked. Contact support.', { status: 403 });
-    }
-
-    if (user.bannedAt && (!user.bannedUntil || user.bannedUntil > new Date())) {
-      return new NextResponse('Account is banned. Contact support.', { status: 403 });
-    }
-
     if (user.is2FAEnabled) {
       const tempToken = await signTemp2faToken(user.id);
       return NextResponse.json({ needs2FA: true, tempToken, userId: user.id });

@@ -9,8 +9,7 @@ interface User {
   id: string; email: string; name: string | null; adminRole: string | null;
   photoUrl: string | null; phoneNumber: string | null; occupation: string | null;
   createdAt: string; lastActiveAt?: string; roles: Role[];
-  isBanned?: boolean; bannedAt?: string; bannedUntil?: string; banReason?: string | null;
-  isLocked?: boolean;
+  isBanned?: boolean;
 }
 
 function RoleAvatar({ role }: { role: Role }) {
@@ -30,8 +29,6 @@ export default function AdminUsersPage() {
   const [editing, setEditing] = useState<User | null>(null);
   const [myRole, setMyRole] = useState<string>('');
   const [allRoles, setAllRoles] = useState<Role[]>([]);
-  const [banning, setBanning] = useState<User | null>(null);
-  const [banForm, setBanForm] = useState({ reason: '', durationDays: 0 });
   const limit = 100;
 
   const loadUsers = async (p: number, s: string) => {
@@ -74,22 +71,6 @@ export default function AdminUsersPage() {
     if (res.ok) loadUsers(page, search); else setError('Failed to delete user');
   };
 
-  const handleBan = async () => {
-    if (!banning) return;
-    const body: Record<string, unknown> = {};
-    if (banForm.reason) body.reason = banForm.reason;
-    if (banForm.durationDays > 0) body.durationDays = banForm.durationDays;
-    const res = await apiFetch(`/api/admin/users/${banning.id}/ban`, { method: 'POST', body: JSON.stringify(body) });
-    if (res.ok) { setBanning(null); setBanForm({ reason: '', durationDays: 0 }); loadUsers(page, search); }
-    else setError('Failed to ban user');
-  };
-
-  const handleUnban = async (user: User) => {
-    if (!confirm(`Unban ${user.email}?`)) return;
-    const res = await apiFetch(`/api/admin/users/${user.id}/unban`, { method: 'POST' });
-    if (res.ok) loadUsers(page, search); else setError('Failed to unban user');
-  };
-
   const handleRoleToggle = async (userId: string, roleId: string, hasRole: boolean) => {
     const user = users.find(u => u.id === userId);
     if (!user) return;
@@ -109,7 +90,6 @@ export default function AdminUsersPage() {
 
   function getStatusLabel(user: User): { label: string; color: string } {
     if (user.isBanned) return { label: 'Banned', color: '#da3633' };
-    if (user.isLocked) return { label: 'Locked', color: '#d29922' };
     if (isOnline(user.lastActiveAt)) return { label: 'Online', color: '#238636' };
     return { label: 'Offline', color: 'rgba(255,255,255,0.2)' };
   }
@@ -156,12 +136,6 @@ export default function AdminUsersPage() {
                     <td>
                       <div className="flex gap-2" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                         <button className="btn btn-sm btn-outline" onClick={() => setEditing(u)}>Edit</button>
-                        {isAdmin && !u.isBanned && (
-                          <button className="btn btn-sm btn-outline" style={{ borderColor: '#da363366', color: '#da3633' }} onClick={() => { setBanning(u); setBanForm({ reason: '', durationDays: 0 }); }}>Ban</button>
-                        )}
-                        {isAdmin && u.isBanned && (
-                          <button className="btn btn-sm btn-outline" style={{ borderColor: '#23863666', color: '#238636' }} onClick={() => handleUnban(u)}>Unban</button>
-                        )}
                         {isSuperAdmin && <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u.id)}>Delete</button>}
                       </div>
                     </td>
@@ -207,12 +181,6 @@ export default function AdminUsersPage() {
                       </select>
                     </div>
                   )}
-                  <div className="field">
-                    <label className="field-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-                      <input type="checkbox" name="isLocked" value="true" defaultChecked={!!editing.isLocked} />
-                      Lock account (disable login)
-                    </label>
-                  </div>
                   <div className="form-actions">
                     <button type="button" className="btn btn-outline" onClick={() => setEditing(null)}>Cancel</button>
                     <button type="submit" className="btn btn-primary">Save Profile</button>
@@ -250,34 +218,7 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        {/* Ban Modal */}
-        {banning && (
-          <div className="modal-overlay" onClick={() => setBanning(null)}>
-            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
-              <h3>Ban User</h3>
-              <p className="modal-desc">{banning.email}</p>
-              <div className="field">
-                <div className="field-label">Reason (optional)</div>
-                <input className="input" placeholder="Why is this user being banned?" value={banForm.reason}
-                  onChange={e => setBanForm(p => ({ ...p, reason: e.target.value }))} />
-              </div>
-              <div className="field">
-                <div className="field-label">Ban duration</div>
-                <select className="select" value={banForm.durationDays} onChange={e => setBanForm(p => ({ ...p, durationDays: Number(e.target.value) }))}>
-                  <option value={0}>Permanent</option>
-                  <option value={1}>1 day</option>
-                  <option value={7}>7 days</option>
-                  <option value={30}>30 days</option>
-                  <option value={365}>1 year</option>
-                </select>
-              </div>
-              <div className="form-actions" style={{ marginTop: 20 }}>
-                <button className="btn btn-outline" onClick={() => setBanning(null)}>Cancel</button>
-                <button className="btn btn-danger" onClick={handleBan}>Ban User</button>
-              </div>
-            </div>
-          </div>
-        )}
+        
       </div>
     </div>
   );

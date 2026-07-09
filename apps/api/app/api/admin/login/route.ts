@@ -24,14 +24,6 @@ export async function POST(request: NextRequest) {
       return new NextResponse('Access denied. You do not have admin privileges.', { status: 403 });
     }
 
-    if (user.isLocked) {
-      return new NextResponse('Account is locked. Contact support.', { status: 403 });
-    }
-
-    if (user.bannedAt && (!user.bannedUntil || user.bannedUntil > new Date())) {
-      return new NextResponse('Account is banned. Contact support.', { status: 403 });
-    }
-
     if (user.is2FAEnabled) {
       const { signTemp2faToken } = await import('../../../../lib/auth/jwt');
       const tempToken = await signTemp2faToken(user.id);
