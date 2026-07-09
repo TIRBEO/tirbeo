@@ -29,25 +29,26 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "framer-motion": "^10.12.16",
     "@paper-design/shaders-react": "^0.0.77",
-    "gsap": "^3.12.2",
-    "imagesloaded": "^5.0.0",
-    "react-icons": "^4.10.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^2.6.0",
+    "framer-motion": "^10.12.16",
+    "gsap": "^3.12.2",
+    "imagesloaded": "^5.0.0",
     "lucide-react": "^0.460.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "react-icons": "^4.10.1",
+    "tailwind-merge": "^2.6.0"
   },
   "devDependencies": {
     "@tirbeo/config": "workspace:*",
-    "tsup": "^8.3.0",
-    "typescript": "^5.6.0",
+    "@types/imagesloaded": "^4.1.7",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "tailwindcss": "^4.0.0"
+    "tailwindcss": "^4.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0"
   },
   "peerDependencies": {
     "react": "^19.0.0",

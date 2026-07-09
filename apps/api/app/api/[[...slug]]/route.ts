@@ -24,6 +24,15 @@ import {
 const appUrl = (subdomain: string, path: string) =>
   `https://${subdomain}.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}${path}`;
 
+const INTERNAL_ROUTES = [
+  'auth/login', 'auth/signup', 'auth/logout',
+  'auth/email-otp/request', 'auth/email-otp/verify',
+  'auth/phone-otp/request', 'auth/phone-otp/verify',
+  'auth/google', 'auth/google/callback',
+  'auth/verify-2fa', 'auth/recovery-2fa',
+  'users/me', 'activity', 'workspaces',
+];
+
 async function loadRoutes() {
   return prisma.route.findMany({ where: { enabled: true } });
 }
@@ -34,9 +43,33 @@ async function loadBlocked() {
 
 function matchRoute(slug: string[], method: string, routes: any[]) {
   const pathPart = slug.join('/');
-  return routes.find(
+  const dbRoute = routes.find(
     (r) => r.path === pathPart && r.method.toUpperCase() === method.toUpperCase()
   );
+  if (dbRoute) return dbRoute;
+  if (INTERNAL_ROUTES.includes(pathPart)) {
+    const methodMap: Record<string, string[]> = {
+      'auth/login': ['POST'],
+      'auth/signup': ['POST'],
+      'auth/logout': ['POST'],
+      'auth/email-otp/request': ['POST'],
+      'auth/email-otp/verify': ['POST'],
+      'auth/phone-otp/request': ['POST'],
+      'auth/phone-otp/verify': ['POST'],
+      'auth/google': ['GET'],
+      'auth/google/callback': ['GET'],
+      'auth/verify-2fa': ['POST'],
+      'auth/recovery-2fa': ['POST'],
+      'users/me': ['GET', 'PATCH'],
+      'activity': ['GET'],
+      'workspaces': ['GET', 'POST'],
+    };
+    const allowed = methodMap[pathPart];
+    if (allowed && allowed.includes(method.toUpperCase())) {
+      return { path: pathPart, method, internal: true, allowedRoles: ['guest'] };
+    }
+  }
+  return undefined;
 }
 
 function isBlocked(ip?: string, userId?: string, blocked: any[] = []) {
