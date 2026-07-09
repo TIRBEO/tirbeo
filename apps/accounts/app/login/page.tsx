@@ -287,7 +287,7 @@ function LoginForm() {
             />
             <InputGroup
               label="Password"
-              placeholder="G求G求G求G求G求G求G求G求"
+              placeholder="6+ characters"
               type="password"
               value={password}
               onChange={(v) => { setPassword(v); setFieldErrors((p) => ({ ...p, password: undefined })); }}
