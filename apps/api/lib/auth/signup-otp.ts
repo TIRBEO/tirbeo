@@ -47,7 +47,7 @@ export async function sendSignupOtpEmail(email: string, code: string) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Tirbeo <noreply@tirbeo.app>',
+        from: 'Tirbeo <onboarding@resend.dev>',
         to: [email],
         subject: 'Your verification code',
         html: `<div style="background:#000;color:#fff;font-family:Inter,sans-serif;padding:48px 24px;text-align:center">
@@ -58,7 +58,7 @@ export async function sendSignupOtpEmail(email: string, code: string) {
         </div>`,
       }),
     });
-    if (!res.ok) console.error(`[SIGNUP OTP] Resend error ${res.status}: ${await res.text()}`);
+    if (!res.ok) throw new Error(`Resend error ${res.status}: ${await res.text()}`);
   } catch (err) {
     console.error(`[SIGNUP OTP] Failed to send to ${email}:`, err);
     throw err;

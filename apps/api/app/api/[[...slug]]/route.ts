@@ -14,6 +14,8 @@ import {
   verifyPhoneOtpHandler,
   googleAuthRedirectHandler,
   googleAuthCallbackHandler,
+  githubAuthRedirectHandler,
+  githubAuthCallbackHandler,
   verify2faLoginHandler,
   recovery2faLoginHandler,
   activityHandler,
@@ -33,7 +35,7 @@ const INTERNAL_ROUTES = [
   'auth/phone-otp/request', 'auth/phone-otp/verify',
   'auth/signup-otp/request',
   'auth/login-otp/request', 'auth/login-otp/verify',
-  'auth/google', 'auth/google/callback',
+  'auth/google', 'auth/google/callback', 'auth/github', 'auth/github/callback',
   'auth/verify-2fa', 'auth/recovery-2fa',
   'users/me', 'activity', 'workspaces',
 ];
@@ -66,6 +68,8 @@ function matchRoute(slug: string[], method: string, routes: any[]) {
       'auth/login-otp/verify': ['POST'],
       'auth/google': ['GET'],
       'auth/google/callback': ['GET'],
+      'auth/github': ['GET'],
+      'auth/github/callback': ['GET'],
       'auth/verify-2fa': ['POST'],
       'auth/recovery-2fa': ['POST'],
       'users/me': ['GET', 'PATCH'],
@@ -163,6 +167,12 @@ async function handler(request: NextRequest, slug: string[], method: string) {
         break;
       case 'auth/google/callback':
         resp = await googleAuthCallbackHandler(request);
+        break;
+      case 'auth/github':
+        resp = await githubAuthRedirectHandler(request);
+        break;
+      case 'auth/github/callback':
+        resp = await githubAuthCallbackHandler(request);
         break;
       case 'auth/verify-2fa':
         resp = await verify2faLoginHandler(request);

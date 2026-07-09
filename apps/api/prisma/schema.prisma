@@ -22,6 +22,7 @@ model User {
   phoneNumber      String?
   occupation       String?
   googleId        String?      @unique
+  githubId        String?      @unique
   adminRole        String?     // 'super_admin' | 'admin' | 'manager' | 'editor' | null (legacy)
   totpSecret       String?
   is2FAEnabled     Boolean     @default(false)

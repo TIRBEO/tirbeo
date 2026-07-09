@@ -367,7 +367,90 @@ export async function googleAuthCallbackHandler(request: NextRequest) {
   // Create session
   const ip = request.headers.get('x-forwarded-for') || '';
   const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
-  const res = NextResponse.redirect(new URL('/', request.url));
+  const res = NextResponse.redirect(`https://dashboard.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}`);
+  setSessionCookie(res, token);
+  return res;
+}
+
+// GitHub OAuth - start flow
+export async function githubAuthRedirectHandler(request: NextRequest) {
+  const clientId = process.env.GITHUB_CLIENT_ID;
+  const redirectUri = process.env.GITHUB_REDIRECT_URI;
+  if (!clientId || !redirectUri) {
+    return new NextResponse('GitHub OAuth not configured', { status: 500 });
+  }
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    scope: 'read:user user:email',
+  });
+  const githubAuthUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
+  return NextResponse.redirect(githubAuthUrl);
+}
+
+// GitHub OAuth callback handler
+export async function githubAuthCallbackHandler(request: NextRequest) {
+  const clientId = process.env.GITHUB_CLIENT_ID;
+  const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+  const redirectUri = process.env.GITHUB_REDIRECT_URI;
+  if (!clientId || !clientSecret || !redirectUri) {
+    return new NextResponse('GitHub OAuth not configured', { status: 500 });
+  }
+  const code = request.nextUrl.searchParams.get('code');
+  if (!code) {
+    return new NextResponse('Missing code', { status: 400 });
+  }
+
+  const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ client_id: clientId, client_secret: clientSecret, code, redirect_uri: redirectUri }),
+  });
+  if (!tokenRes.ok) {
+    return new NextResponse('Failed to exchange token', { status: 500 });
+  }
+  const tokenData = await tokenRes.json();
+  const accessToken = tokenData.access_token;
+
+  const userInfoRes = await fetch('https://api.github.com/user', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!userInfoRes.ok) {
+    return new NextResponse('Failed to fetch user info', { status: 500 });
+  }
+  const profile = await userInfoRes.json();
+  const githubId = String(profile.id);
+  let email = profile.email;
+  const name = profile.name || profile.login;
+
+  if (!email) {
+    const emailsRes = await fetch('https://api.github.com/user/emails', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (emailsRes.ok) {
+      const emails = await emailsRes.json();
+      const primary = emails.find((e: any) => e.primary) || emails[0];
+      if (primary) email = primary.email;
+    }
+  }
+
+  let user = await prisma.user.findUnique({ where: { githubId } });
+  if (!user && email) {
+    user = await prisma.user.findUnique({ where: { email } });
+    if (user) {
+      await prisma.user.update({ where: { id: user.id }, data: { githubId } });
+    } else {
+      user = await prisma.user.create({
+        data: { email: email || `${githubId}@github.user`, name, githubId, passwordHash: '' },
+      });
+    }
+  } else if (!user) {
+    return new NextResponse('GitHub email not available', { status: 400 });
+  }
+
+  const ip = request.headers.get('x-forwarded-for') || '';
+  const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
+  const res = NextResponse.redirect(`https://dashboard.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}`);
   setSessionCookie(res, token);
   return res;
 }
