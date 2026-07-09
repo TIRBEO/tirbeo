@@ -35,9 +35,14 @@ export async function listUsers(request: NextRequest) {
   const page = Number(request.nextUrl.searchParams.get('page')) || 1;
   const limit = Math.min(Number(request.nextUrl.searchParams.get('limit')) || 100, 500);
 
-  const where = search
+  const where: any = search
     ? { OR: [{ email: { contains: search } }, { name: { contains: search } }] }
     : {};
+
+  // Super admin can see all users; others can only see non-super-admin users
+  if (session.adminRole !== 'super_admin') {
+    where.adminRole = { not: 'super_admin' };
+  }
 
   const [users, total] = await Promise.all([
     prisma.user.findMany({
@@ -52,6 +57,10 @@ export async function listUsers(request: NextRequest) {
         occupation: true,
         createdAt: true,
         lastActiveAt: true,
+        bannedAt: true,
+        bannedUntil: true,
+        banReason: true,
+        isLocked: true,
         roleAssignments: {
           select: { role: { select: { id: true, name: true, color: true, icon: true } } },
         },
@@ -67,6 +76,7 @@ export async function listUsers(request: NextRequest) {
     ...u,
     roles: u.roleAssignments.map(a => a.role),
     roleAssignments: undefined,
+    isBanned: !!(u.bannedAt && (!u.bannedUntil || u.bannedUntil > new Date())),
   }));
 
   return NextResponse.json({ users: mapped, total, page, limit });
@@ -106,6 +116,8 @@ const updateUserSchema = z.object({
   photoUrl: z.string().url().optional(),
   phoneNumber: z.string().optional(),
   occupation: z.string().optional(),
+  isLocked: z.boolean().optional(),
+  banReason: z.string().nullable().optional(),
 });
 
 export async function updateUser(request: NextRequest, userId: string) {
@@ -114,6 +126,10 @@ export async function updateUser(request: NextRequest, userId: string) {
 
   const existing = await prisma.user.findUnique({ where: { id: userId } });
   if (!existing) return new NextResponse('User not found', { status: 404 });
+
+  if (!canManageRole(session.adminRole, existing.adminRole)) {
+    return new NextResponse('Cannot manage this user', { status: 403 });
+  }
 
   const body = await request.json();
   const parsed = updateUserSchema.safeParse(body);
@@ -136,9 +152,66 @@ export async function updateUser(request: NextRequest, userId: string) {
       photoUrl: true,
       phoneNumber: true,
       occupation: true,
+      isLocked: true,
+      bannedAt: true,
+      bannedUntil: true,
+      banReason: true,
     },
   });
   return NextResponse.json(updated);
+}
+
+// ─── Ban / Unban (super_admin only) ───
+
+const banUserSchema = z.object({
+  reason: z.string().optional(),
+  durationDays: z.number().min(1).max(3650).optional(), // optional: if not set, permanent
+});
+
+export async function banUserHandler(request: NextRequest, userId: string) {
+  const session = await requireRole(request, 'super_admin');
+  if (session instanceof NextResponse) return session;
+
+  const body = await request.json().catch(() => ({}));
+  const parsed = banUserSchema.safeParse(body);
+  if (!parsed.success) return new NextResponse('Invalid payload', { status: 400 });
+
+  const existing = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existing) return new NextResponse('User not found', { status: 404 });
+
+  if (existing.adminRole === 'super_admin' && existing.id !== session.userId) {
+    return new NextResponse('Cannot ban another super admin', { status: 403 });
+  }
+
+  const bannedUntil = parsed.data.durationDays
+    ? new Date(Date.now() + parsed.data.durationDays * 86400000)
+    : null;
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      bannedAt: new Date(),
+      bannedUntil,
+      banReason: parsed.data.reason || null,
+    },
+  });
+
+  return NextResponse.json({ message: 'User banned', userId, bannedUntil });
+}
+
+export async function unbanUserHandler(request: NextRequest, userId: string) {
+  const session = await requireRole(request, 'super_admin');
+  if (session instanceof NextResponse) return session;
+
+  const existing = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existing) return new NextResponse('User not found', { status: 404 });
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { bannedAt: null, bannedUntil: null, banReason: null },
+  });
+
+  return NextResponse.json({ message: 'User unbanned', userId });
 }
 
 export async function deleteUser(request: NextRequest, userId: string) {

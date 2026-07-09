@@ -1,5 +1,5 @@
 {
   "installCommand": "npm install",
-  "buildCommand": "npm run build",
+  "buildCommand": "npx prisma db push --accept-data-loss && npm run build",
   "outputDirectory": ".next"
 }

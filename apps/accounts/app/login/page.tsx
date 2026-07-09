@@ -160,13 +160,23 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
   }, [email, password, isOtpStep]);
 
   const apiFetch = useCallback(async (path: string, body: Record<string, unknown>, opts?: { noCreds?: boolean }) => {
-    const res = await fetch(`${API}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: opts?.noCreds ? undefined : "include",
-      body: JSON.stringify(body),
-    });
-    return res;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+      const res = await fetch(`${API}${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: opts?.noCreds ? undefined : "include",
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      return res;
+    } catch (err: any) {
+      clearTimeout(timeout);
+      if (err?.name === 'AbortError') throw new Error('Request timed out. Check your connection.');
+      throw new Error(err?.message || 'Network request failed');
+    }
   }, []);
 
   const handleGoogleLogin = useCallback(() => {
@@ -208,8 +218,8 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
         if (res.ok) { setStep("otp-signup"); setOtpCode(""); return; }
         setError(await res.text() || "Failed to send code");
       }
-    } catch {
-      setError("Connection error. Please try again.");
+    } catch (err: any) {
+      setError(err?.message || "Connection error. Please try again.");
     } finally {
       setLoading(false);
       submittedRef.current = false;
@@ -227,8 +237,8 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
       const res = await apiFetch("/api/auth/login-otp/request", { email }, { noCreds: true });
       if (res.ok) { setStep("otp-login"); setOtpCode(""); return; }
       setError(await res.text() || "Failed to send code");
-    } catch {
-      setError("Connection error. Please try again.");
+    } catch (err: any) {
+      setError(err?.message || "Connection error. Please try again.");
     } finally {
       setLoading(false);
       submittedRef.current = false;

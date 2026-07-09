@@ -9,7 +9,7 @@ export async function apiFetch(path: string, opts?: RequestInit) {
   if (cached && cached.expiry > Date.now()) return cached.data as Response;
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8000);
+  const timeout = setTimeout(() => controller.abort(), 12000);
   try {
     const headers: Record<string, string> = {};
     if (!(opts?.body instanceof FormData)) {
@@ -22,15 +22,18 @@ export async function apiFetch(path: string, opts?: RequestInit) {
       headers: { ...headers, ...(opts?.headers as Record<string, string> || {}) },
     });
     clearTimeout(timeout);
-    if (res.status === 401 || res.status === 403) {
+    if (res.status === 401) {
       if (typeof window !== 'undefined') window.location.href = '/login';
-      throw new Error('Unauthorized');
+      throw new Error('Session expired. Please log in again.');
     }
     if (!opts?.method) cache.set(cacheKey, { data: res.clone(), expiry: Date.now() + TTL });
     return res;
   } catch (err) {
     clearTimeout(timeout);
     if (err instanceof DOMException && err.name === 'AbortError') throw new Error('Request timed out');
+    if (err instanceof TypeError && err.message === 'Failed to fetch') {
+      throw new Error('Cannot reach API server. Check your connection.');
+    }
     throw err;
   }
 }

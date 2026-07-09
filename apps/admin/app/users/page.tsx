@@ -5,8 +5,13 @@ import { apiFetch, isOnline } from '../lib';
 import { OnlineDot } from '../components';
 
 interface Role { id: string; name: string; color: string; icon: string; isSystem?: boolean; description?: string; }
-interface User { id: string; email: string; name: string | null; adminRole: string | null; photoUrl: string | null; phoneNumber: string | null; occupation: string | null; createdAt: string; lastActiveAt?: string; roles: Role[]; }
-
+interface User {
+  id: string; email: string; name: string | null; adminRole: string | null;
+  photoUrl: string | null; phoneNumber: string | null; occupation: string | null;
+  createdAt: string; lastActiveAt?: string; roles: Role[];
+  isBanned?: boolean; bannedAt?: string; bannedUntil?: string; banReason?: string | null;
+  isLocked?: boolean;
+}
 
 function RoleAvatar({ role }: { role: Role }) {
   return <span style={{
@@ -25,6 +30,8 @@ export default function AdminUsersPage() {
   const [editing, setEditing] = useState<User | null>(null);
   const [myRole, setMyRole] = useState<string>('');
   const [allRoles, setAllRoles] = useState<Role[]>([]);
+  const [banning, setBanning] = useState<User | null>(null);
+  const [banForm, setBanForm] = useState({ reason: '', durationDays: 0 });
   const limit = 100;
 
   const loadUsers = async (p: number, s: string) => {
@@ -52,15 +59,35 @@ export default function AdminUsersPage() {
     if (!editing) return;
     const form = new FormData(e.currentTarget);
     const adminRole = form.get('adminRole') as string;
-    const body: Record<string, unknown> = { name: (form.get('name') as string) || undefined, occupation: (form.get('occupation') as string) || undefined };
+    const body: Record<string, unknown> = {
+      name: (form.get('name') as string) || undefined,
+      occupation: (form.get('occupation') as string) || undefined,
+      isLocked: form.get('isLocked') === 'true',
+    };
     if (adminRole === 'none') body.adminRole = null; else body.adminRole = adminRole;
     const res = await apiFetch(`/api/admin/users/${editing.id}`, { method: 'PATCH', body: JSON.stringify(body) });
     if (res.ok) { setEditing(null); loadUsers(page, search); } else setError('Failed to update user');
   };
   const handleDelete = async (id: string) => {
-    if (!confirm('Delete this user permanently?')) return;
+    if (!confirm('Delete this user permanently? This cannot be undone.')) return;
     const res = await apiFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
     if (res.ok) loadUsers(page, search); else setError('Failed to delete user');
+  };
+
+  const handleBan = async () => {
+    if (!banning) return;
+    const body: Record<string, unknown> = {};
+    if (banForm.reason) body.reason = banForm.reason;
+    if (banForm.durationDays > 0) body.durationDays = banForm.durationDays;
+    const res = await apiFetch(`/api/admin/users/${banning.id}/ban`, { method: 'POST', body: JSON.stringify(body) });
+    if (res.ok) { setBanning(null); setBanForm({ reason: '', durationDays: 0 }); loadUsers(page, search); }
+    else setError('Failed to ban user');
+  };
+
+  const handleUnban = async (user: User) => {
+    if (!confirm(`Unban ${user.email}?`)) return;
+    const res = await apiFetch(`/api/admin/users/${user.id}/unban`, { method: 'POST' });
+    if (res.ok) loadUsers(page, search); else setError('Failed to unban user');
   };
 
   const handleRoleToggle = async (userId: string, roleId: string, hasRole: boolean) => {
@@ -77,6 +104,15 @@ export default function AdminUsersPage() {
   };
 
   const totalPages = Math.ceil(total / limit);
+  const isSuperAdmin = myRole === 'super_admin';
+  const isAdmin = myRole === 'admin' || isSuperAdmin;
+
+  function getStatusLabel(user: User): { label: string; color: string } {
+    if (user.isBanned) return { label: 'Banned', color: '#da3633' };
+    if (user.isLocked) return { label: 'Locked', color: '#d29922' };
+    if (isOnline(user.lastActiveAt)) return { label: 'Online', color: '#238636' };
+    return { label: 'Offline', color: 'rgba(255,255,255,0.2)' };
+  }
 
   return (
     <div className="admin-layout">
@@ -86,37 +122,53 @@ export default function AdminUsersPage() {
         <p className="desc">{total} total users</p>
         {error && <p className="error">{error}</p>}
         <form onSubmit={handleSearch} className="search-form">
-          <input type="text" placeholder="Search by email or nameâ€¦" value={search} onChange={e => setSearch(e.target.value)} />
+          <input type="text" placeholder="Search by email or name..." value={search} onChange={e => setSearch(e.target.value)} />
           <button type="submit" className="btn btn-primary">Search</button>
           {search && <button type="button" className="btn btn-outline" onClick={() => { setSearch(''); setPage(1); loadUsers(1, ''); }}>Clear</button>}
         </form>
         <div className="card" style={{ padding: 0 }}>
           <div className="table-wrapper">
             <table>
-              <thead><tr><th>Status</th><th>Email</th><th>Name</th><th>Role</th><th>Custom Roles</th><th>Phone</th><th>Occupation</th><th>Created</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Status</th><th>Email</th><th>Name</th><th>Role</th><th>Custom Roles</th><th>Phone</th><th>Occupation</th><th>Actions</th></tr></thead>
               <tbody>
                 {users.map(u => {
-                  const online = isOnline(u.lastActiveAt);
+                  const status = getStatusLabel(u);
                   return (
                   <tr key={u.id}>
-                    <td><OnlineDot active={online} /></td>
+                    <td><span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11,
+                      color: status.color, fontWeight: 500,
+                    }}>
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: status.color, display: 'inline-block' }} />
+                      {status.label}
+                    </span></td>
                     <td style={{ fontSize: 12 }}>{u.email}</td>
-                    <td>{u.name || 'â€”'}</td>
+                    <td>{u.name || '—'}</td>
                     <td>{u.adminRole ? <span className={`badge badge-${u.adminRole}`}>{u.adminRole}</span> : <span className="badge badge-member">member</span>}</td>
                     <td>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
                         {u.roles.map(r => <RoleAvatar key={r.id} role={r} />)}
-                        {u.roles.length === 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>â€”</span>}
+                        {u.roles.length === 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>}
                       </div>
                     </td>
-                    <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.phoneNumber || 'â€”'}</td>
-                    <td style={{ fontSize: 12 }}>{u.occupation || 'â€”'}</td>
-                    <td style={{ fontSize: 11, color: 'var(--text-muted)' }}>{new Date(u.createdAt).toLocaleDateString()}</td>
-                    <td><div className="flex gap-2"><button className="btn btn-sm btn-outline" onClick={() => setEditing(u)}>Edit</button>{myRole === 'super_admin' && <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u.id)}>Delete</button>}</div></td>
+                    <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.phoneNumber || '—'}</td>
+                    <td style={{ fontSize: 12 }}>{u.occupation || '—'}</td>
+                    <td>
+                      <div className="flex gap-2" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                        <button className="btn btn-sm btn-outline" onClick={() => setEditing(u)}>Edit</button>
+                        {isAdmin && !u.isBanned && (
+                          <button className="btn btn-sm btn-outline" style={{ borderColor: '#da363366', color: '#da3633' }} onClick={() => { setBanning(u); setBanForm({ reason: '', durationDays: 0 }); }}>Ban</button>
+                        )}
+                        {isAdmin && u.isBanned && (
+                          <button className="btn btn-sm btn-outline" style={{ borderColor: '#23863666', color: '#238636' }} onClick={() => handleUnban(u)}>Unban</button>
+                        )}
+                        {isSuperAdmin && <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u.id)}>Delete</button>}
+                      </div>
+                    </td>
                   </tr>
                   );
                 })}
-                {users.length === 0 && <tr><td colSpan={9}><div className="empty-state">No users found</div></td></tr>}
+                {users.length === 0 && <tr><td colSpan={8}><div className="empty-state">No users found</div></td></tr>}
               </tbody>
             </table>
           </div>
@@ -134,8 +186,6 @@ export default function AdminUsersPage() {
               <div>
                 <h3>Edit User</h3>
                 <p className="modal-desc">{editing.email}</p>
-
-                {/* Profile Fields */}
                 <form onSubmit={handleUpdate}>
                   <div className="field">
                     <div className="field-label">Name</div>
@@ -145,15 +195,23 @@ export default function AdminUsersPage() {
                     <div className="field-label">Occupation</div>
                     <input className="input" name="occupation" defaultValue={editing.occupation || ''} />
                   </div>
+                  {isSuperAdmin && (
+                    <div className="field">
+                      <div className="field-label">Admin Role (legacy)</div>
+                      <select className="select" name="adminRole" defaultValue={editing.adminRole || 'none'}>
+                        <option value="none">None (regular user)</option>
+                        <option value="super_admin">Super Admin</option>
+                        <option value="admin">Admin</option>
+                        <option value="manager">Manager</option>
+                        <option value="editor">Editor</option>
+                      </select>
+                    </div>
+                  )}
                   <div className="field">
-                    <div className="field-label">Admin Role (legacy)</div>
-                    <select className="select" name="adminRole" defaultValue={editing.adminRole || 'none'}>
-                      <option value="none">None (regular user)</option>
-                      {myRole === 'super_admin' && <option value="super_admin">Super Admin</option>}
-                      <option value="admin">Admin</option>
-                      <option value="manager">Manager</option>
-                      <option value="editor">Editor</option>
-                    </select>
+                    <label className="field-label" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                      <input type="checkbox" name="isLocked" value="true" defaultChecked={!!editing.isLocked} />
+                      Lock account (disable login)
+                    </label>
                   </div>
                   <div className="form-actions">
                     <button type="button" className="btn btn-outline" onClick={() => setEditing(null)}>Cancel</button>
@@ -163,7 +221,7 @@ export default function AdminUsersPage() {
 
                 {/* Custom Role Assignment */}
                 {myRole === 'super_admin' && allRoles.length > 0 && (
-                  <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border-subtle)' }}>
+                  <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>Custom Roles</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       {allRoles.map(role => {
@@ -172,17 +230,13 @@ export default function AdminUsersPage() {
                           <label key={role.id} style={{
                             display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
                             background: hasRole ? role.color + '10' : 'transparent',
-                            border: `1px solid ${hasRole ? role.color + '44' : 'var(--border-subtle)'}`,
+                            border: `1px solid ${hasRole ? role.color + '44' : 'rgba(255,255,255,0.06)'}`,
                             borderRadius: 8, cursor: 'pointer',
-                            transition: 'all 0.12s',
                           }}>
                             <input type="checkbox" checked={hasRole}
                               onChange={() => handleRoleToggle(editing.id, role.id, hasRole)}
                               style={{ accentColor: role.color }} />
-                            <div style={{
-                              width: 8, height: 8, borderRadius: '50%',
-                              background: role.color, flexShrink: 0,
-                            }} />
+                            <div style={{ width: 8, height: 8, borderRadius: '50%', background: role.color, flexShrink: 0 }} />
                             <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>{role.name}</span>
                             <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>{role.description || ''}</span>
                           </label>
@@ -195,8 +249,36 @@ export default function AdminUsersPage() {
             </div>
           </div>
         )}
+
+        {/* Ban Modal */}
+        {banning && (
+          <div className="modal-overlay" onClick={() => setBanning(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 400 }}>
+              <h3>Ban User</h3>
+              <p className="modal-desc">{banning.email}</p>
+              <div className="field">
+                <div className="field-label">Reason (optional)</div>
+                <input className="input" placeholder="Why is this user being banned?" value={banForm.reason}
+                  onChange={e => setBanForm(p => ({ ...p, reason: e.target.value }))} />
+              </div>
+              <div className="field">
+                <div className="field-label">Ban duration</div>
+                <select className="select" value={banForm.durationDays} onChange={e => setBanForm(p => ({ ...p, durationDays: Number(e.target.value) }))}>
+                  <option value={0}>Permanent</option>
+                  <option value={1}>1 day</option>
+                  <option value={7}>7 days</option>
+                  <option value={30}>30 days</option>
+                  <option value={365}>1 year</option>
+                </select>
+              </div>
+              <div className="form-actions" style={{ marginTop: 20 }}>
+                <button className="btn btn-outline" onClick={() => setBanning(null)}>Cancel</button>
+                <button className="btn btn-danger" onClick={handleBan}>Ban User</button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
