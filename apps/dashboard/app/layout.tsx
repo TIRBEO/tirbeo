@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { ThemeInit } from "./components";
 
 export const metadata: Metadata = {
   title: "Dashboard — Tirbeo",
@@ -9,7 +10,10 @@ export const metadata: Metadata = {
 export default function DashboardRootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ThemeInit />
+        {children}
+      </body>
     </html>
   );
 }

@@ -92,6 +92,7 @@ interface NotifItem { id: string; title: string; body: string | null; type: stri
 export default function AdminSidebar() {
   const [perms, setPerms] = useState<Perms>({});
   const [myRole, setMyRole] = useState<string>('');
+  const [me, setMe] = useState<{ name: string | null; email: string; photoUrl: string | null } | null>(null);
   const [notifCount, setNotifCount] = useState(0);
   const [notifs, setNotifs] = useState<NotifItem[]>([]);
   const [showNotifs, setShowNotifs] = useState(false);
@@ -111,7 +112,7 @@ export default function AdminSidebar() {
         apiFetch('/api/admin/me'),
         apiFetch('/api/admin/notifications?count=true'),
       ]);
-      if (meRes.ok) { const d = await meRes.json(); setPerms(d.permissions || {}); setMyRole(d.adminRole || ''); }
+      if (meRes.ok) { const d = await meRes.json(); setPerms(d.permissions || {}); setMyRole(d.adminRole || ''); setMe(d); }
       if (countRes.ok) { const d = await countRes.json(); setNotifCount(d.count); }
     };
     load();
@@ -250,10 +251,27 @@ export default function AdminSidebar() {
       )}
 
       <div className="footer">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 4px 10px', fontSize: 11, color: 'var(--text-muted)' }}>
+        {me && (
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border-default)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="avatar" style={{ width: 32, height: 32, fontSize: 12, flexShrink: 0 }}>
+              {me.photoUrl ? <img src={me.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} /> : (me.name || me.email)[0]?.toUpperCase() || 'U'}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{me.name || 'Admin'}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{me.email}</div>
+            </div>
+          </div>
+        )}
+        <div style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 6 }}>
           <ThemeToggle />
           <span className={`badge badge-${myRole}`} style={{ fontSize: 10 }}>{myRole || '—'}</span>
-          <button onClick={handleLogout} className="signout-btn" style={{ padding: '5px 10px', fontSize: 11, width: 'auto', marginLeft: 'auto' }}>
+        </div>
+        <div style={{ padding: '4px 12px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <a href="https://dashboard.tirbeo.app" target="_blank" rel="noopener noreferrer" className="signout-btn" style={{ textDecoration: 'none', color: 'var(--accent)', borderColor: 'var(--accent-border)' }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+            Dashboard
+          </a>
+          <button onClick={handleLogout} className="signout-btn">
             <LogoutIcon /> Sign Out
           </button>
         </div>

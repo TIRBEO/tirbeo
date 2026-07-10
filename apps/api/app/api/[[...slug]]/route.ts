@@ -24,6 +24,9 @@ import {
   requestSignupOtpHandler,
   requestLoginOtpHandler,
   verifyLoginOtpHandler,
+  requestPasswordResetHandler,
+  verifyPasswordResetHandler,
+  confirmPasswordResetHandler,
 } from '../../../lib/authHandlers';
 
 import {
@@ -58,6 +61,7 @@ const INTERNAL_ROUTES = [
   'auth/login-otp/request', 'auth/login-otp/verify',
   'auth/google', 'auth/google/callback', 'auth/github', 'auth/github/callback',
   'auth/verify-2fa', 'auth/recovery-2fa',
+  'auth/password-reset/request', 'auth/password-reset/verify', 'auth/password-reset/confirm',
   'users/me', 'activity', 'workspaces',
   'profile', 'security/password', 'security/sessions', 'security/set-password',
   'profile/request-edit-otp', 'profile/verify-edit-otp', 'profile/avatar',
@@ -107,6 +111,9 @@ function matchRoute(slug: string[], method: string, routes: any[]) {
       'auth/github/callback': ['GET'],
       'auth/verify-2fa': ['POST'],
       'auth/recovery-2fa': ['POST'],
+      'auth/password-reset/request': ['POST'],
+      'auth/password-reset/verify': ['POST'],
+      'auth/password-reset/confirm': ['POST'],
       'users/me': ['GET', 'PATCH'],
       'activity': ['GET'],
       'workspaces': ['GET', 'POST'],
@@ -241,6 +248,15 @@ async function handler(request: NextRequest, slug: string[], method: string) {
         break;
       case 'auth/recovery-2fa':
         resp = await recovery2faLoginHandler(request);
+        break;
+      case 'auth/password-reset/request':
+        resp = await requestPasswordResetHandler(request);
+        break;
+      case 'auth/password-reset/verify':
+        resp = await verifyPasswordResetHandler(request);
+        break;
+      case 'auth/password-reset/confirm':
+        resp = await confirmPasswordResetHandler(request);
         break;
       case 'activity':
         resp = await activityHandler(request);

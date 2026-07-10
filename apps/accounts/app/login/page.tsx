@@ -507,6 +507,14 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
             Send one-time code
           </button>
         )}
+
+        {!isOtpStep && signupPhase < 2 && !isSignUp && (
+          <div className="text-center">
+            <a href="/reset-password" className="text-sm text-accent-green/60 hover:text-accent-green transition-colors">
+              Forgot your password?
+            </a>
+          </div>
+        )}
       </form>
 
       {!isOtpStep && signupPhase < 2 && (
@@ -534,8 +542,9 @@ export default function LoginPage() {
     <main className="flex min-h-screen w-full selection:bg-accent-green/30 transition-all duration-500 lg:h-screen lg:overflow-hidden" style={{ background: "#08150F" }}>
       {/* Left: Brand / Video Column */}
       <div className="hidden lg:flex relative flex-col items-center justify-end pb-32 px-12 rounded-3xl overflow-hidden shadow-2xl h-full w-[52%]">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-dark/90 via-surface-dark/80 to-rich-black/90" />
-        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay">
+        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://ipdwpivjwwaawelmczas.supabase.co/storage/v1/object/sign/TIRBEO/loginbg.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80OGIyNGYwYS0yZWM2LTQ1NjUtODZhNi00YzE5YWQ4YmM5ZWYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJUSVJCRU8vbG9naW5iZy5wbmciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzgzNzE3OTk4LCJleHAiOjMxNTUzNTIxODE5OTh9.QRl5llUqZA7pdo8h361LUlVaSBg8ucJvz28Fc8TS4yY')" }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-dark/70 via-surface-dark/60 to-rich-black/80" />
+        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay">
           <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260506_081238_406ed0e3-5d83-436e-a512-0bbff7ec5b95.mp4" type="video/mp4" />
         </video>
 

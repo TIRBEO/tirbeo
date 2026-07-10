@@ -20,7 +20,7 @@ const securityHeaders = {
   'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'no-referrer',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  'Content-Security-Policy': "default-src 'none'; base-uri 'none'; form-action 'self';",
+  'Content-Security-Policy': "default-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' https: data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; form-action 'self';",
 };
 
 function addCorsHeaders(response: NextResponse, origin: string) {
@@ -51,13 +51,13 @@ export async function middleware(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || '' || 'unknown';
   const pathname = request.nextUrl.pathname;
 
-  const isAuth = pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/signup') || pathname.startsWith('/api/auth/verify-2fa') || pathname.startsWith('/api/auth/recovery-2fa') || pathname.startsWith('/api/auth/login-otp');
+  const isAuth = pathname.startsWith('/api/auth/login') || pathname.startsWith('/api/auth/signup') || pathname.startsWith('/api/auth/verify-2fa') || pathname.startsWith('/api/auth/recovery-2fa') || pathname.startsWith('/api/auth/login-otp') || pathname.startsWith('/api/auth/password-reset');
   const rateOk = await checkRateLimit(`${ip}:${pathname}`, isAuth);
   if (!rateOk) {
     return new NextResponse('Too many requests', { status: 429 });
   }
 
-  const publicPaths = ['/api/auth/login', '/api/auth/signup', '/api/auth/signup-otp/request', '/api/auth/login-otp/request', '/api/auth/login-otp/verify', '/api/auth/verify-2fa', '/api/auth/recovery-2fa', '/api/auth/google', '/api/auth/google/callback', '/api/auth/github', '/api/auth/github/callback', '/api/admin/login', '/api/admin/seed', '/api/profile'];
+  const publicPaths = ['/api/auth/login', '/api/auth/signup', '/api/auth/signup-otp/request', '/api/auth/login-otp/request', '/api/auth/login-otp/verify', '/api/auth/verify-2fa', '/api/auth/recovery-2fa', '/api/auth/google', '/api/auth/google/callback', '/api/auth/github', '/api/auth/github/callback', '/api/auth/password-reset/request', '/api/auth/password-reset/verify', '/api/auth/password-reset/confirm', '/api/admin/login', '/api/admin/seed', '/api/profile'];
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method) && !publicPaths.some(p => pathname.startsWith(p))) {
     const cookie = request.cookies.get('__session')?.value;
     if (!cookie) {

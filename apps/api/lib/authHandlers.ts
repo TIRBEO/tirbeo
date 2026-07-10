@@ -8,6 +8,7 @@ import { createSession, setSessionCookie, clearSessionCookie, revokeSession, get
 import { signTemp2faToken, verifyTemp2faToken } from './auth/jwt';
 import { verifyTotp } from './auth/totp';
 import { sendTemplateEmail } from './email';
+import { requestPasswordReset, verifyPasswordReset, confirmPasswordReset } from './auth/password-reset';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -333,6 +334,8 @@ export async function googleAuthRedirectHandler(request: NextRequest) {
   if (!clientId || !redirectUri) {
     return new NextResponse('Google OAuth not configured', { status: 500 });
   }
+  const sp = request.nextUrl.searchParams;
+  const redirectTo = sp.get('redirect');
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -341,6 +344,7 @@ export async function googleAuthRedirectHandler(request: NextRequest) {
     access_type: 'offline',
     prompt: 'consent',
   });
+  if (redirectTo) params.set('state', redirectTo);
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   return NextResponse.redirect(googleAuthUrl);
 }
@@ -354,6 +358,7 @@ export async function googleAuthCallbackHandler(request: NextRequest) {
     return new NextResponse('Google OAuth not configured', { status: 500 });
   }
   const code = request.nextUrl.searchParams.get('code');
+  const redirectTo = request.nextUrl.searchParams.get('state');
   if (!code) {
     return new NextResponse('Missing code', { status: 400 });
   }
@@ -428,7 +433,7 @@ export async function googleAuthCallbackHandler(request: NextRequest) {
   // Create session
   const ip = request.headers.get('x-forwarded-for') || '';
   const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
-  const res = NextResponse.redirect(`https://dashboard.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}`);
+  const res = NextResponse.redirect(redirectTo || `https://dashboard.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}`);
   setSessionCookie(res, token);
   return res;
 }
@@ -440,11 +445,14 @@ export async function githubAuthRedirectHandler(request: NextRequest) {
   if (!clientId || !redirectUri) {
     return new NextResponse('GitHub OAuth not configured', { status: 500 });
   }
+  const sp = request.nextUrl.searchParams;
+  const redirectTo = sp.get('redirect');
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
     scope: 'read:user user:email',
   });
+  if (redirectTo) params.set('state', redirectTo);
   const githubAuthUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
   return NextResponse.redirect(githubAuthUrl);
 }
@@ -533,9 +541,10 @@ export async function githubAuthCallbackHandler(request: NextRequest) {
     create: { userId: user.id, provider: 'github', connected: true, metadata: { githubId, email } },
   });
 
+  const redirectTo = request.nextUrl.searchParams.get('state') || request.nextUrl.searchParams.get('redirect');
   const ip = request.headers.get('x-forwarded-for') || '';
   const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
-  const res = NextResponse.redirect(`https://dashboard.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}`);
+  const res = NextResponse.redirect(redirectTo || `https://dashboard.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}`);
   setSessionCookie(res, token);
   return res;
 }
@@ -649,4 +658,62 @@ export async function profileHandler(request: NextRequest) {
   }
 
   return new NextResponse('Method not allowed', { status: 405 });
+}
+
+// Password reset — request (send email with code + link)
+export async function requestPasswordResetHandler(request: NextRequest) {
+  try {
+    const { email } = await request.json();
+    if (!email || typeof email !== 'string') {
+      return new NextResponse('Email is required', { status: 400 });
+    }
+    const result = await requestPasswordReset(email);
+    // Always return success to prevent email enumeration
+    return NextResponse.json({ message: 'If an account exists, a reset link has been sent.' });
+  } catch (err: any) {
+    console.error('[PASSWORD RESET REQUEST]', err?.message || err);
+    return new NextResponse('Failed to process request', { status: 500 });
+  }
+}
+
+// Password reset — verify (code or token)
+export async function verifyPasswordResetHandler(request: NextRequest) {
+  try {
+    const { email, code, token } = await request.json();
+    if (!email || typeof email !== 'string') {
+      return new NextResponse('Email is required', { status: 400 });
+    }
+    if (!code && !token) {
+      return new NextResponse('Code or token required', { status: 400 });
+    }
+    const result = await verifyPasswordReset(email, { code, token });
+    if (!result.success) {
+      return new NextResponse(result.error || 'Verification failed', { status: 400 });
+    }
+    return NextResponse.json({ resetToken: result.resetToken });
+  } catch (err: any) {
+    console.error('[PASSWORD RESET VERIFY]', err?.message || err);
+    return new NextResponse('Failed to verify', { status: 500 });
+  }
+}
+
+// Password reset — confirm (set new password)
+export async function confirmPasswordResetHandler(request: NextRequest) {
+  try {
+    const { email, resetToken, newPassword } = await request.json();
+    if (!email || !resetToken || !newPassword) {
+      return new NextResponse('Email, reset token, and new password required', { status: 400 });
+    }
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      return new NextResponse('Password must be at least 8 characters', { status: 400 });
+    }
+    const result = await confirmPasswordReset(email, resetToken, newPassword);
+    if (!result.success) {
+      return new NextResponse(result.error || 'Failed to reset password', { status: 400 });
+    }
+    return NextResponse.json({ message: 'Password updated successfully' });
+  } catch (err: any) {
+    console.error('[PASSWORD RESET CONFIRM]', err?.message || err);
+    return new NextResponse('Failed to reset password', { status: 500 });
+  }
 }

@@ -38,6 +38,88 @@
   --sidebar-w: 260px;
 }
 
+[data-theme="dark"] {
+  --bg: #08150F;
+  --bg-surface: #101c13;
+  --bg-card: #12271D;
+  --bg-elevated: #1a3326;
+  --border: rgba(255,255,255,0.08);
+  --border-hover: rgba(255,255,255,0.14);
+  --text: #F2EEE8;
+  --text-secondary: #B7C6BE;
+  --text-muted: #6b8a7a;
+  --accent: #569578;
+  --accent-hover: #6aab8d;
+  --accent-muted: rgba(86,149,120,0.15);
+  --accent-glow: rgba(86,149,120,0.25);
+  --success: #59C173;
+  --danger: #E45D5D;
+  --sidebar-w: 260px;
+}
+
+[data-theme="light"] {
+  --bg: #f0f5f2;
+  --bg-surface: #ffffff;
+  --bg-card: #f8faf9;
+  --bg-elevated: #ffffff;
+  --border: rgba(0,0,0,0.08);
+  --border-hover: rgba(0,0,0,0.14);
+  --text: #1a2e23;
+  --text-secondary: #4a6b5c;
+  --text-muted: #7d9a8c;
+  --accent: #275d46;
+  --accent-hover: #1e4a37;
+  --accent-muted: rgba(39,93,70,0.1);
+  --accent-glow: rgba(39,93,70,0.15);
+  --success: #1a7a3e;
+  --danger: #c53030;
+  --sidebar-w: 260px;
+}
+
+[data-theme="light"] body {
+  background-color: #f0f5f2;
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(240,245,242,0.8) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 50%, rgba(232,240,235,0.5) 0%, transparent 50%);
+  color: #1a2e23;
+}
+
+[data-theme="light"] .glass {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+[data-theme="light"] .glass::before {
+  background: linear-gradient(180deg,
+    rgba(39,93,70,0.1) 0%,
+    rgba(0,0,0,0.03) 20%,
+    rgba(0,0,0,0) 40%,
+    rgba(0,0,0,0) 60%,
+    rgba(0,0,0,0.03) 80%,
+    rgba(39,93,70,0.1) 100%);
+}
+[data-theme="light"] .glass-subtle {
+  background: rgba(0,0,0,0.02);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+[data-theme="light"] .input-field {
+  background: rgba(0,0,0,0.03);
+  border: 1px solid rgba(0,0,0,0.08);
+  color: #1a2e23;
+}
+[data-theme="light"] .input-field::placeholder { color: rgba(0,0,0,0.25); }
+[data-theme="light"] .btn-ghost {
+  color: #4a6b5c;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+[data-theme="light"] .btn-ghost:hover {
+  color: #1a2e23;
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.14);
+}
+[data-theme="light"] .toast { position: fixed; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
+[data-theme="light"] ::selection { background: rgba(39,93,70,0.2); }
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {

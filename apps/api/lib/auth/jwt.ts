@@ -44,4 +44,22 @@ export async function verifyTemp2faToken(token: string): Promise<string | null> 
   }
 }
 
+export async function signPasswordResetToken(userId: string): Promise<string> {
+  return new SignJWT({ sub: userId, purpose: 'password-reset' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .sign(SECRET);
+}
+
+export async function verifyPasswordResetToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, SECRET, { algorithms: ['HS256'] });
+    if (payload.sub && payload.purpose === 'password-reset') return payload.sub as string;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export { COOKIE_NAME };

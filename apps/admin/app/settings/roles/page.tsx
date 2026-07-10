@@ -324,23 +324,25 @@ export default function RolesPage() {
                       <span style={{ fontSize: 12, color: "#7d8590" }}>{enabled}/{groupKeys.length}</span>
                     </div>
                     {expanded && (
-                      <div style={{ padding: "4px 0", background: "#0d1117" }}>
+                      <div style={{ padding: "4px 0", background: "var(--bg-inset)" }}>
                         {group.modules.map(m => (
                           <div key={m.key} style={{
-                            display: "flex", alignItems: "center", gap: 10, padding: "8px 14px 8px 42px",
-                            borderBottom: "1px solid #21262d",
+                            display: "flex", alignItems: "center", gap: 10, padding: "10px 16px 10px 42px",
+                            borderBottom: "1px solid var(--border-muted)",
                           }} title={m.desc}>
-                            <button onClick={() => togglePerm(m.key)} style={{
-                              width: 16, height: 16, borderRadius: 3, border: `1.5px solid ${formPerms[m.key] ? "#3fb950" : "#30363d"}`,
-                              background: formPerms[m.key] ? "#3fb950" : "transparent",
-                              display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0,
-                            }}>
-                              {formPerms[m.key] && <Check size={10} color="#fff" strokeWidth={3} />}
-                            </button>
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <span style={{ fontSize: 13, color: "#c9d1d9" }}>{m.label}</span>
-                              <span style={{ fontSize: 12, color: "#484f58", marginLeft: 8 }}>{m.desc}</span>
+                              <div style={{ fontSize: 13, color: "var(--text-primary)", fontWeight: 500 }}>{m.label}</div>
+                              <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 1 }}>{m.desc}</div>
                             </div>
+                            <button onClick={() => togglePerm(m.key)} style={{
+                              width: 36, height: 20, borderRadius: 10, border: `1.5px solid ${formPerms[m.key] ? "#3fb950" : "var(--border-elevated)"}`,
+                              background: formPerms[m.key] ? "#3fb950" : "var(--bg-hover)",
+                              display: "flex", alignItems: formPerms[m.key] ? "center" : "center", justifyContent: formPerms[m.key] ? "flex-end" : "flex-start",
+                              cursor: "pointer", flexShrink: 0, padding: formPerms[m.key] ? "0 2px 0 0" : "0 0 0 2px",
+                              transition: "all 0.15s",
+                            }}>
+                              <div style={{ width: 14, height: 14, borderRadius: "50%", background: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
+                            </button>
                           </div>
                         ))}
                       </div>
@@ -402,6 +404,9 @@ export default function RolesPage() {
                   </td>
                   <td style={{ textAlign: "right" }}>
                     <div style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
+                      <button onClick={() => openEdit(role)} className="btn btn-sm btn-outline" title="View & Edit">
+                        <Eye size={14} />
+                      </button>
                       <button onClick={() => openEdit(role)} className="btn btn-sm btn-outline" disabled={role.isSystem} title={role.isSystem ? "System roles cannot be edited" : "Edit"}>
                         <Edit2 size={14} />
                       </button>
