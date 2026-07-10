@@ -1,56 +1,22 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --color-tirbeo-crimson-50: #fef2f4;
-  --color-tirbeo-crimson-100: #fde6e9;
-  --color-tirbeo-crimson-200: #fbd0d9;
-  --color-tirbeo-crimson-300: #f7a9b9;
-  --color-tirbeo-crimson-400: #f17894;
-  --color-tirbeo-crimson-500: #e84a6f;
-  --color-tirbeo-crimson-600: #d42a5a;
-  --color-tirbeo-crimson-700: #b31e4a;
-  --color-tirbeo-crimson-800: #961c42;
-  --color-tirbeo-crimson-900: #801b3c;
-  --color-tirbeo-crimson-950: #470a1e;
+  --color-rich-black: #0B0B0D;
+  --color-dark-surface: #121417;
+  --color-surface: #16181C;
+  --color-elevated: #252B31;
+  --color-off-white: #F2EEE8;
+  --color-text-secondary: #A6A6A6;
+  --color-text-muted: #7B7E84;
 
-  --color-tirbeo-blue-50: #e8eaf5;
-  --color-tirbeo-blue-100: #c2c8e8;
-  --color-tirbeo-blue-200: #99a3d9;
-  --color-tirbeo-blue-300: #6f7ecb;
-  --color-tirbeo-blue-400: #4f62c0;
-  --color-tirbeo-blue-500: #2f4fc4;
-  --color-tirbeo-blue-600: #243de6;
-  --color-tirbeo-blue-700: #2218b8;
-  --color-tirbeo-blue-800: #0a2472;
-  --color-tirbeo-blue-900: #051650;
-  --color-tirbeo-blue-950: #00072d;
+  --color-gold: #D8B36A;
+  --color-moss: #5F7352;
+  --color-olive: #7D8461;
+  --color-cream: #F5EFE7;
+  --color-dusty-rose: #D98A9D;
 
-  --color-tirbeo-dark-50: #f6f6f6;
-  --color-tirbeo-dark-100: #e7e7e7;
-  --color-tirbeo-dark-200: #d1d1d1;
-  --color-tirbeo-dark-300: #b0b0b0;
-  --color-tirbeo-dark-400: #888888;
-  --color-tirbeo-dark-500: #6d6d6d;
-  --color-tirbeo-dark-600: #5d5d5d;
-  --color-tirbeo-dark-700: #4f4f4f;
-  --color-tirbeo-dark-800: #454545;
-  --color-tirbeo-dark-900: #3d3d3d;
-  --color-tirbeo-dark-950: #0f0f0f;
-
-  --color-tirbeo-gold-50: #fef9ee;
-  --color-tirbeo-gold-100: #fdf0d0;
-  --color-tirbeo-gold-200: #f9de9e;
-  --color-tirbeo-gold-300: #f5c663;
-  --color-tirbeo-gold-400: #f0ad35;
-  --color-tirbeo-gold-500: #ee9b1d;
-  --color-tirbeo-gold-600: #c77510;
-  --color-tirbeo-gold-700: #a65312;
-  --color-tirbeo-gold-800: #874116;
-  --color-tirbeo-gold-900: #6e3618;
-  --color-tirbeo-gold-950: #401b09;
-
-  --font-sans: "Inter", "SF Pro", system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-heading: "Inter", "SF Pro Display", system-ui, sans-serif;
 
   --radius-sm: 0.5rem;
@@ -71,24 +37,23 @@ html::-webkit-scrollbar {
   display: none;
 }
 
-@media (hover: hover) and (pointer: fine) {
-  html, html * {
-    cursor: none !important;
-  }
-}
-
 body {
-  background-color: #010006;
-  color: var(--color-tirbeo-dark-50);
+  background-color: var(--color-rich-black);
+  background-image:
+    radial-gradient(ellipse at 50% 0%, rgba(18,20,23,1) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 50%, rgba(22,24,28,1) 0%, transparent 50%);
+  color: var(--color-off-white);
+  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: #F25604;
-  color: #fff;
+  background: var(--color-gold);
+  color: var(--color-rich-black);
 }
 
 * {
-  border-color: var(--color-tirbeo-dark-700);
+  border-color: var(--color-elevated);
 }
 
 @keyframes card-float {
@@ -118,7 +83,6 @@ body {
   50% { transform: translateY(6px); opacity: 0.3; }
 }
 
-
 @keyframes lastGreeting {
   0% { opacity: 0; transform: scale(0.8); }
   40% { opacity: 1; transform: scale(1.05); }
@@ -133,13 +97,16 @@ body {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-12px); }
 }
+
 .animate-lastGreeting {
   animation: lastGreeting 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
 .animate-card-float { animation: card-float 4s ease-in-out infinite; }
 .animate-card-float-delayed { animation: card-float 4s ease-in-out 1s infinite; }
 .animate-fade-up { animation: fade-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 .animate-drift { animation: drift 12s ease-in-out infinite; }
 .animate-drift-slow { animation: drift-slow 16s ease-in-out infinite; }
 .animate-scroll-dot { animation: scroll-dot 2s ease-in-out infinite; }
+
 html { overscroll-behavior: none; }
