@@ -135,9 +135,10 @@ const FALLBACK_TEMPLATES: Record<string, { subject: string; html: string }> = {
     subject: 'Welcome to Tirbeo',
     html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
       <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
-      <h1 style="font-size:24px;font-weight:700;margin:0 0 16px;color:#F2EEE8">Welcome aboard!</h1>
-      <p style="color:#A6A6A6;font-size:14px;margin:0 0 24px">Your account has been created. Start exploring Tirbeo today.</p>
-      <a href="https://dashboard.tirbeo.app" style="display:inline-block;background:#D8B36A;color:#0B0B0D;font-weight:600;font-size:14px;padding:12px 32px;border-radius:8px;text-decoration:none">Go to Dashboard</a>
+      <h1 style="font-size:24px;font-weight:700;margin:0 0 16px;color:#F2EEE8">Welcome aboard{{#if name}}, {{name}}{{/if}}!</h1>
+      <p style="color:#A6A6A6;font-size:14px;margin:0 0 24px">Your account is ready. Start exploring Tirbeo today.</p>
+      <a href="https://dashboard.tirbeo.app" style="display:inline-block;background:#fff;color:#0B0B0D;font-weight:600;font-size:14px;padding:14px 36px;border-radius:12px;text-decoration:none;transition:all 0.2s">Go to Dashboard</a>
+      <p style="color:#7B7E84;font-size:12px;margin:32px 0 0">If you have any questions, reply to this email — we're here to help.</p>
     </div>`,
   },
   password_reset: {

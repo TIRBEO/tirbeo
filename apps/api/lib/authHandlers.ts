@@ -7,6 +7,7 @@ import { hashPassword, verifyPassword } from './auth/password';
 import { createSession, setSessionCookie, clearSessionCookie, revokeSession, getSession } from './session';
 import { signTemp2faToken, verifyTemp2faToken } from './auth/jwt';
 import { verifyTotp } from './auth/totp';
+import { sendTemplateEmail } from './email';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -151,6 +152,11 @@ export async function signupHandler(request: NextRequest) {
     const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
     const res = NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
     setSessionCookie(res, token);
+
+    // Send welcome email (non-blocking)
+    sendTemplateEmail(email, 'welcome', { name: name || email.split('@')[0] })
+      .catch(err => console.error('[SIGNUP] Welcome email failed:', err?.message));
+
     return res;
   } catch (err: any) {
     console.error('[LOGIN]', err?.message || err, err?.stack);
