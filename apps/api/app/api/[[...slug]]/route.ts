@@ -36,6 +36,13 @@ import {
   preferencesHandler,
 } from '../../../lib/userHandlers';
 
+import {
+  emailConfigHandler,
+  emailTemplatesHandler,
+  emailTemplateDetailHandler,
+  emailTestHandler,
+} from '../../../lib/emailAdminHandlers';
+
 const appUrl = (subdomain: string, path: string) =>
   `https://${subdomain}.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}${path}`;
 
@@ -50,6 +57,7 @@ const INTERNAL_ROUTES = [
   'users/me', 'activity', 'workspaces',
   'profile', 'security/password', 'security/sessions',
   'notifications', 'integrations', 'user/activity', 'preferences',
+  'email/config', 'email/templates', 'email/test',
 ];
 
 async function loadRoutes() {
@@ -66,6 +74,16 @@ function matchRoute(slug: string[], method: string, routes: any[]) {
     (r) => r.path === pathPart && r.method.toUpperCase() === method.toUpperCase()
   );
   if (dbRoute) return dbRoute;
+
+  // Handle email/templates/{name} dynamic route
+  if (slug.length === 3 && slug[0] === 'email' && slug[1] === 'templates') {
+    const templateName = slug[2];
+    const allowed = ['GET', 'PATCH', 'DELETE'];
+    if (allowed.includes(method.toUpperCase())) {
+      return { path: 'email/templates/[name]', method, internal: true, allowedRoles: ['guest'], meta: { templateName } };
+    }
+  }
+
   if (INTERNAL_ROUTES.includes(pathPart)) {
     const methodMap: Record<string, string[]> = {
       'auth/login': ['POST'],
@@ -94,6 +112,9 @@ function matchRoute(slug: string[], method: string, routes: any[]) {
       'integrations': ['GET', 'POST', 'DELETE'],
       'user/activity': ['GET'],
       'preferences': ['GET', 'PATCH'],
+      'email/config': ['GET', 'PATCH'],
+      'email/templates': ['GET', 'POST'],
+      'email/test': ['POST'],
     };
     const allowed = methodMap[pathPart];
     if (allowed && allowed.includes(method.toUpperCase())) {
@@ -227,6 +248,18 @@ async function handler(request: NextRequest, slug: string[], method: string) {
         break;
       case 'preferences':
         resp = await preferencesHandler(request);
+        break;
+      case 'email/config':
+        resp = await emailConfigHandler(request);
+        break;
+      case 'email/templates':
+        resp = await emailTemplatesHandler(request);
+        break;
+      case 'email/test':
+        resp = await emailTestHandler(request);
+        break;
+      case 'email/templates/[name]':
+        resp = await emailTemplateDetailHandler(request, (route as any).meta.templateName);
         break;
       default:
         resp = new NextResponse('Internal route not implemented', { status: 501 });

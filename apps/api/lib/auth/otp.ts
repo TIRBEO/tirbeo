@@ -44,7 +44,7 @@ export async function verifyOtpCode(userId: string, type: 'email' | 'phone', cod
 /** Send OTP via configured email provider (Resend or SMTP) */
 export async function sendEmailOtp(email: string, code: string) {
   const { sendTemplateEmail } = await import('../email');
-  const result = await sendTemplateEmail(email, 'signup_otp', { otp: code });
+  const result = await sendTemplateEmail(email, 'email_verify', { otp: code });
   if (!result.success) {
     console.error(`[EMAIL OTP] Failed to send to ${email}: ${result.error}`);
   }

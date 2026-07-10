@@ -4,13 +4,11 @@ import { prisma } from './db/prisma';
 interface EmailResult { success: boolean; error?: string; messageId?: string; }
 
 export async function getEmailConfig() {
-  const cfg = await prisma.emailConfig.findFirst({ orderBy: { updatedAt: 'desc' } });
-  return cfg;
+  return prisma.emailConfig.findFirst({ orderBy: { updatedAt: 'desc' } });
 }
 
 export async function getEmailTemplate(name: string) {
-  const tpl = await prisma.emailTemplate.findUnique({ where: { name } });
-  return tpl;
+  return prisma.emailTemplate.findUnique({ where: { name } });
 }
 
 export function renderTemplate(html: string, vars: Record<string, string>): string {
@@ -28,7 +26,8 @@ export async function sendEmail(
   options?: { fromEmail?: string; fromName?: string }
 ): Promise<EmailResult> {
   const config = await getEmailConfig();
-  if (!config?.enabled) {
+
+  if (!config || !config.enabled) {
     console.log(`[EMAIL] Config disabled or missing. Would send to ${to}: ${subject}`);
     return { success: true, messageId: 'noop' };
   }
@@ -94,6 +93,61 @@ async function sendViaSmtp(
   }
 }
 
+// ─── Built-in fallback templates (used when DB templates aren't seeded yet) ───
+
+const FALLBACK_TEMPLATES: Record<string, { subject: string; html: string }> = {
+  signup_otp: {
+    subject: 'Your Tirbeo verification code',
+    html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
+      <p style="color:#A6A6A6;font-size:14px;margin:0 0 8px">Your verification code</p>
+      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(255,255,255,0.06);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(255,255,255,0.08)">{{otp}}</div>
+      <p style="color:#7B7E84;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
+      <p style="color:#7B7E84;font-size:12px;margin:16px 0 0">If you didn't request this, you can safely ignore this email.</p>
+    </div>`,
+  },
+  login_otp: {
+    subject: 'Your Tirbeo login code',
+    html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
+      <p style="color:#A6A6A6;font-size:14px;margin:0 0 8px">Your login code</p>
+      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(255,255,255,0.06);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(255,255,255,0.08)">{{otp}}</div>
+      <p style="color:#7B7E84;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
+      <p style="color:#7B7E84;font-size:12px;margin:16px 0 0">If you didn't request this, you can safely ignore this email.</p>
+    </div>`,
+  },
+  welcome: {
+    subject: 'Welcome to Tirbeo',
+    html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
+      <h1 style="font-size:24px;font-weight:700;margin:0 0 16px;color:#F2EEE8">Welcome aboard!</h1>
+      <p style="color:#A6A6A6;font-size:14px;margin:0 0 24px">Your account has been created. Start exploring Tirbeo today.</p>
+      <a href="https://dashboard.tirbeo.app" style="display:inline-block;background:#D8B36A;color:#0B0B0D;font-weight:600;font-size:14px;padding:12px 32px;border-radius:8px;text-decoration:none">Go to Dashboard</a>
+    </div>`,
+  },
+  password_reset: {
+    subject: 'Reset your Tirbeo password',
+    html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
+      <h1 style="font-size:24px;font-weight:700;margin:0 0 16px;color:#F2EEE8">Password Reset</h1>
+      <p style="color:#A6A6A6;font-size:14px;margin:0 0 8px">Use the code below to reset your password:</p>
+      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(255,255,255,0.06);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(255,255,255,0.08)">{{otp}}</div>
+      <p style="color:#7B7E84;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
+      <p style="color:#7B7E84;font-size:12px;margin:16px 0 0">If you didn't request this, you can safely ignore this email.</p>
+    </div>`,
+  },
+  email_verify: {
+    subject: 'Verify your Tirbeo email',
+    html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
+      <h1 style="font-size:24px;font-weight:700;margin:0 0 16px;color:#F2EEE8">Verify your email</h1>
+      <p style="color:#A6A6A6;font-size:14px;margin:0 0 8px">Your verification code:</p>
+      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(255,255,255,0.06);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(255,255,255,0.08)">{{otp}}</div>
+      <p style="color:#7B7E84;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
+    </div>`,
+  },
+};
+
 export async function sendTemplateEmail(
   to: string,
   templateName: string,
@@ -101,13 +155,24 @@ export async function sendTemplateEmail(
   options?: { fromEmail?: string; fromName?: string }
 ): Promise<EmailResult> {
   const template = await getEmailTemplate(templateName);
-  if (!template) {
-    return { success: false, error: `Template '${templateName}' not found` };
+  if (template) {
+    const subject = renderTemplate(template.subject, variables);
+    const htmlBody = renderTemplate(template.htmlBody, variables);
+    return sendEmail(to, subject, htmlBody, {
+      fromEmail: options?.fromEmail || template.fromEmail || undefined,
+      fromName: options?.fromName || template.fromName || undefined,
+    });
   }
-  const subject = renderTemplate(template.subject, variables);
-  const htmlBody = renderTemplate(template.htmlBody, variables);
-  return sendEmail(to, subject, htmlBody, {
-    fromEmail: options?.fromEmail || template.fromEmail || undefined,
-    fromName: options?.fromName || template.fromName || undefined,
-  });
+
+  const fallback = FALLBACK_TEMPLATES[templateName];
+  if (fallback) {
+    console.log(`[EMAIL] Template '${templateName}' not in DB, using built-in fallback`);
+    const subject = renderTemplate(fallback.subject, variables);
+    const htmlBody = renderTemplate(fallback.html, variables);
+    return sendEmail(to, subject, htmlBody, options);
+  }
+
+  return { success: false, error: `Template '${templateName}' not found` };
 }
+
+export { FALLBACK_TEMPLATES };
