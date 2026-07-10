@@ -263,7 +263,11 @@ export async function requestProfileEditOtpHandler(request: NextRequest) {
 
   const code = generateOtpCode();
   await storeOtp(session.userId, 'email', code);
-  await sendEmailOtp(user.email, code);
+  try {
+    await sendEmailOtp(user.email, code);
+  } catch (err) {
+    console.error('[PROFILE EDIT OTP] Email send failed, but OTP stored:', err);
+  }
   return new NextResponse('Verification code sent', { status: 200 });
 }
 

@@ -32,11 +32,17 @@ export async function sendEmail(
     return { success: true, messageId: 'noop' };
   }
 
+  const apiKey = config.apiKey || process.env.RESEND_API_KEY || '';
+  if (!apiKey) {
+    console.log(`[EMAIL] No API key configured. Would send to ${to}: ${subject}`);
+    return { success: true, messageId: 'noop' };
+  }
+
   const fromEmail = options?.fromEmail || config.fromEmail;
   const fromName = options?.fromName || config.fromName;
 
   if (config.provider === 'resend') {
-    return sendViaResend(config.apiKey!, to, fromEmail, fromName, subject, htmlBody);
+    return sendViaResend(apiKey, to, fromEmail, fromName, subject, htmlBody);
   } else if (config.provider === 'smtp') {
     return sendViaSmtp(config, to, fromEmail, fromName, subject, htmlBody);
   }

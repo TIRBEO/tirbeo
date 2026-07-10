@@ -610,7 +610,7 @@ export async function profileHandler(request: NextRequest) {
     const body = await request.json();
     const schema = z.object({
       name: z.string().min(1).optional(),
-      photoUrl: z.string().url().optional(),
+      photoUrl: z.string().optional().nullable(),
       secondaryEmail: z.string().email().optional(),
       phoneNumber: z.string().optional(),
       occupation: z.string().optional(),

@@ -9,6 +9,9 @@ import { Chrome, Github, Eye, EyeOff, ArrowLeft } from "lucide-react";
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const AVATAR_SEEDS = ["Felix", "Luna", "Milo", "Nala", "Oscar", "Pixel", "Ruby", "Sage", "Tango", "Ursa", "Vex", "Willow", "Xena", "Yuki", "Zara", "Aria", "Blaze", "Cleo", "Dexter", "Ember"];
+const AVATAR_URLS = AVATAR_SEEDS.map(s => `https://api.dicebear.com/7.x/adventurer/svg?seed=${s}&backgroundColor=1a1a2e,16213e,0f3460,533483,2b2d42`);
+
 function StepItem({ number, text, active, done }: { number: number; text: string; active?: boolean; done?: boolean }) {
   return (
     <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
@@ -136,6 +139,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
   const [phone, setPhone] = useState("");
   const [whoYouAre, setWhoYouAre] = useState("");
   const [findUs, setFindUs] = useState("");
+  const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_URLS[0]);
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
@@ -256,6 +260,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
           name: [firstName, lastName].filter(Boolean).join(" ").trim() || undefined,
           phoneNumber: phone || undefined,
           occupation: occupation || whoYouAre || undefined,
+          photoUrl: selectedAvatar,
         }),
       });
       if (res.ok) {
@@ -268,7 +273,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
     } finally {
       setLoading(false);
     }
-  }, [firstName, lastName, phone, occupation, whoYouAre, API]);
+  }, [firstName, lastName, phone, occupation, whoYouAre, selectedAvatar, API]);
 
   const handleCompleteSetup = useCallback(() => {
     window.location.href = redirectTo;
@@ -356,6 +361,19 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
           </div>
         ) : signupPhase === 2 ? (
           <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-white mb-2 block">Choose Your Avatar</label>
+              <div className="grid grid-cols-5 gap-2">
+                {AVATAR_URLS.map((url, i) => (
+                  <button key={i} type="button" onClick={() => setSelectedAvatar(url)}
+                    className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-110 ${
+                      selectedAvatar === url ? "border-white ring-2 ring-white/30 scale-110" : "border-white/10 hover:border-white/30"
+                    }`}>
+                    <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full" />
+                  </button>
+                ))}
+              </div>
+            </div>
             <InputGroup label="Occupation" placeholder="e.g. Designer, Developer" type="text" value={occupation} onChange={setOccupation} />
             <InputGroup label="Phone Number" placeholder="+977 98XXXXXXXX" type="tel" value={phone} onChange={setPhone} />
             <InputGroup label="Who you are" placeholder="A short bio about yourself" type="text" value={whoYouAre} onChange={setWhoYouAre} />
@@ -363,10 +381,8 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
           </div>
         ) : signupPhase === 3 ? (
           <div className="space-y-6 pt-4 text-center">
-            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto">
-              <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-              </svg>
+            <div className="w-20 h-20 rounded-full overflow-hidden mx-auto border-2 border-white/20">
+              <img src={selectedAvatar} alt="Your avatar" className="w-full h-full" />
             </div>
             <div>
               <p className="text-white/80 text-lg font-medium">Profile Complete</p>
