@@ -70,8 +70,25 @@ const DEFAULTS: LandingConfig = {
     ctaText: 'Get Started',
     ctaUrl: '/login',
     dropdowns: [
-      { label: 'Products', items: [{ label: 'Tirbeo Chat', description: 'Real-time messaging', link: '/chat' }] },
-      { label: 'Solutions', items: [{ label: 'For Developers', description: 'Open source collaboration', link: '/solutions' }] },
+      { label: 'Products', items: [{ label: 'Tirbeo Chat', description: 'Real-time messaging', link: '/login' }] },
+      { label: 'Solutions', items: [
+        { label: 'For Developers', description: 'Open source collaboration', link: '/login' },
+        { label: 'For Designers', description: 'Feedback rounds', link: '/login' },
+        { label: 'For Educators', description: 'Student communities', link: '/login' },
+        { label: 'For Startups', description: 'Async updates', link: '/login' },
+      ]},
+      { label: 'Resources', items: [
+        { label: 'Documentation', description: 'Complete guides', link: '/login' },
+        { label: 'Help Center', description: 'FAQs', link: '/login' },
+        { label: 'Blog', description: 'Updates', link: '/login' },
+        { label: 'Changelog', description: "What's new", link: '/login' },
+      ]},
+      { label: 'About', items: [
+        { label: 'Our Story', description: 'The journey', link: '/login' },
+        { label: 'Team', description: 'Meet the people', link: '/login' },
+        { label: 'Careers', description: 'Join us', link: '/login' },
+        { label: 'Contact', description: 'Get in touch', link: '/login' },
+      ]},
     ],
   },
   hero: {
@@ -83,7 +100,7 @@ const DEFAULTS: LandingConfig = {
     cta1Url: '/login',
     cta2Text: 'Explore the platform',
     cta2Url: '#about',
-    bgImage: '/bgpc.png',
+    bgImage: '',
     scrollText: 'Scroll to explore',
   },
   about: {
@@ -113,13 +130,21 @@ const DEFAULTS: LandingConfig = {
   },
 };
 
+const SECTIONS: (keyof LandingConfig)[] = ['navbar', 'hero', 'about', 'features', 'newsletter', 'footer'];
+
 export async function fetchLandingConfig(): Promise<LandingConfig> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-tirbeo.vercel.app';
     const res = await fetch(`${apiUrl}/api/public/landing`, { next: { revalidate: 30 } });
     if (res.ok) {
       const raw = await res.json();
-      return { ...DEFAULTS, ...raw };
+      const merged = { ...DEFAULTS };
+      for (const key of SECTIONS) {
+        if (raw[key] && typeof raw[key] === 'object') {
+          (merged as any)[key] = { ...merged[key], ...raw[key] };
+        }
+      }
+      return merged;
     }
   } catch {}
   return DEFAULTS;

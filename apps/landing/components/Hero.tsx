@@ -3,8 +3,8 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { appUrl } from "@/lib/domains";
-import { HeroScene } from "./HeroScene";
 import { useLandingConfig } from "./LandingContentProvider";
+import { CityScene } from "./CityScene";
 
 export function Hero() {
   const cfg = useLandingConfig().hero;
@@ -19,56 +19,41 @@ export function Hero() {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
       tl.fromTo(titleRef.current,
-        { opacity: 0, y: 120, scale: 0.92, filter: "blur(12px)" },
-        { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", duration: 1.4 },
+        { opacity: 0, y: 80, filter: "blur(10px)" },
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.2 },
       )
       .fromTo(subtitleRef.current,
-        { opacity: 0, y: 60 },
-        { opacity: 1, y: 0, duration: 1 },
-        "-=0.6",
-      )
-      .fromTo(buttonsRef.current?.children || [],
-        { opacity: 0, y: 40, scale: 0.95 },
-        { opacity: 1, y: 0, scale: 1, stagger: 0.2, duration: 0.8 },
+        { opacity: 0, y: 40 },
+        { opacity: 1, y: 0, duration: 0.8 },
         "-=0.4",
       )
+      .fromTo(buttonsRef.current?.children || [],
+        { opacity: 0, y: 30, scale: 0.95 },
+        { opacity: 1, y: 0, scale: 1, stagger: 0.15, duration: 0.6 },
+        "-=0.3",
+      )
       .fromTo(scrollRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.6 },
+        { opacity: 0, y: 15 },
+        { opacity: 1, y: 0, duration: 0.5 },
         "-=0.2",
       );
-
-      gsap.to(".hero-orb", {
-        x: "random(-40, 40)",
-        y: "random(-30, 30)",
-        scale: "random(0.8, 1.2)",
-        duration: "random(8, 14)",
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-        stagger: { each: 0.3, from: "random" },
-      });
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <section ref={sectionRef} className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-6">
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat scale-110 gsap-parallax"
-        style={{ backgroundImage: `url(${cfg.bgImage})` }}
-        data-speed="0.08"
-      />
+    <section ref={sectionRef} className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
+      {/* 3D City backdrop */}
+      <CityScene />
 
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="hero-orb absolute left-[10%] top-[20%] h-72 w-72 rounded-full bg-gradient-to-br from-[#F25604]/10 to-transparent blur-3xl" />
-        <div className="hero-orb absolute right-[15%] top-[15%] h-96 w-96 rounded-full bg-gradient-to-br from-[#7A3EF2]/8 to-transparent blur-3xl" />
-        <div className="hero-orb absolute bottom-[25%] left-[40%] h-80 w-80 rounded-full bg-gradient-to-br from-[#2F4FC4]/8 to-transparent blur-3xl" />
-      </div>
-      <HeroScene />
+      {/* Dark gradient overlay for readability */}
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/60 via-[#0a0a0f]/30 to-[#0a0a0f]/80" style={{ zIndex: 1 }} />
 
-      <div className="relative z-10 my-60 max-w-3xl text-center">
+      {/* Vignette */}
+      <div className="pointer-events-none absolute inset-0" style={{ zIndex: 1, background: 'radial-gradient(ellipse at center, transparent 40%, #0a0a0f 100%)' }} />
+
+      <div className="relative z-10 my-40 max-w-3xl text-center px-6">
         <h1
           ref={titleRef}
           className="font-heading text-4xl font-semibold leading-[1.05] tracking-[-0.03em] text-[#F8FAFC] md:text-6xl lg:text-7xl"
