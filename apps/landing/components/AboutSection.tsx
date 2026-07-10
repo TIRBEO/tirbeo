@@ -23,11 +23,14 @@ const stages = [
 ];
 
 export function AboutSection() {
-	const cfg = useLandingConfig().about;
-	const sectionRef = useRef<HTMLDivElement>(null);
+  const cfg = useLandingConfig().about;
+  const sectionRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const panelsRef = useRef<(HTMLDivElement | null)[]>([]);
   const titleRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const counterRef = useRef<HTMLDivElement>(null);
+  const stepsRef = useRef<(HTMLDivElement | null)[]>([]);
   const blobARef = useRef<HTMLDivElement>(null);
   const blobBRef = useRef<HTMLDivElement>(null);
 
@@ -35,111 +38,84 @@ export function AboutSection() {
     const section = sectionRef.current;
     const pin = pinRef.current;
     const panels = panelsRef.current.filter(Boolean) as HTMLDivElement[];
+    const steps = stepsRef.current.filter(Boolean) as HTMLDivElement[];
     if (!section || !pin || !panels.length) return;
 
     const ctx = gsap.context(() => {
       gsap.to(blobARef.current, {
-        x: 60,
-        y: -40,
-        duration: 14,
-        ease: "sine.inOut",
-        repeat: -1,
-        yoyo: true,
+        x: 80, y: -60, duration: 16, ease: "sine.inOut", repeat: -1, yoyo: true,
       });
       gsap.to(blobBRef.current, {
-        x: -50,
-        y: 50,
-        duration: 18,
-        ease: "sine.inOut",
-        repeat: -1,
-        yoyo: true,
+        x: -60, y: 70, duration: 20, ease: "sine.inOut", repeat: -1, yoyo: true,
       });
 
-      gsap.fromTo(
-        titleRef.current,
+      gsap.fromTo(titleRef.current,
         { opacity: 1, y: 0, scale: 1, filter: "blur(0px)" },
-        {
-          opacity: 0,
-          y: -60,
-          scale: 0.88,
-          filter: "blur(8px)",
-          scrollTrigger: {
-            trigger: section,
-            start: "top top",
-            end: "+=50%",
-            scrub: 0.6,
-          },
-        },
+        { opacity: 0, y: -80, scale: 0.85, filter: "blur(10px)", scrollTrigger: { trigger: section, start: "top top", end: "+=40%", scrub: 0.8 } },
       );
 
-      gsap.set(panels, { opacity: 0, y: 80, scale: 0.85, rotationY: -45, rotationX: 12, z: -100, filter: "blur(6px)", force3D: true });
+      gsap.set(panels, { opacity: 0, y: 100, scale: 0.9, filter: "blur(8px)", force3D: true });
 
-      const pinSt = ScrollTrigger.create({
+      const total = panels.length;
+
+      ScrollTrigger.create({
         trigger: pin,
         start: "top top",
-        end: `+=${panels.length * 120}%`,
+        end: `+=${total * 110}%`,
         pin: true,
         anticipatePin: 1,
         invalidateOnRefresh: true,
       });
 
-      const total = panels.length;
       const tl = gsap.timeline({ paused: true });
 
       panels.forEach((panel, i) => {
-        const dir = i % 2 === 0 ? 1 : -1;
         const start = i / total;
         const mid = (i + 0.5) / total;
         const end = (i + 1) / total;
 
         tl.to(panel, {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          rotationY: 0,
-          rotationX: 0,
-          z: 0,
-          filter: "blur(0px)",
-          duration: mid - start,
-          ease: "power2.out",
-          force3D: true,
+          opacity: 1, y: 0, scale: 1, filter: "blur(0px)",
+          duration: mid - start, ease: "power3.out", force3D: true,
         }, start);
 
         tl.to(panel, {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          rotationY: 0,
-          rotationX: 0,
-          z: 0,
-          filter: "blur(0px)",
-          duration: end - mid - 0.05,
-          ease: "none",
-          force3D: true,
+          opacity: 1, y: 0, scale: 1, filter: "blur(0px)",
+          duration: end - mid - 0.05, ease: "none", force3D: true,
         }, mid);
 
         tl.to(panel, {
-          opacity: 0,
-          y: -60,
-          scale: 0.88,
-          rotationY: 45 * dir,
-          rotationX: -8,
-          z: -80,
-          filter: "blur(4px)",
-          duration: 0.05,
-          ease: "power2.in",
-          force3D: true,
-        }, end - 0.05);
+          opacity: 0, y: -80, scale: 0.88, filter: "blur(6px)",
+          duration: 0.06, ease: "power2.in", force3D: true,
+        }, end - 0.03);
       });
 
       ScrollTrigger.create({
         trigger: pin,
         start: "top top",
-        end: `+=${total * 120}%`,
+        end: `+=${total * 110}%`,
         scrub: 0.8,
         invalidateOnRefresh: true,
-        onUpdate: (stSelf) => {
-          tl.progress(stSelf.progress);
+        onUpdate: (st) => {
+          const p = st.progress;
+          tl.progress(p);
+
+          if (progressRef.current) {
+            gsap.set(progressRef.current, { scaleY: p });
+          }
+
+          if (counterRef.current) {
+            const idx = Math.min(Math.floor(p * total), total - 1);
+            counterRef.current.textContent = `${String(idx + 1).padStart(2, '0')}  /  ${String(total).padStart(2, '0')}`;
+          }
+
+          steps.forEach((step, i) => {
+            const active = i <= Math.floor(p * total);
+            gsap.set(step, {
+              backgroundColor: active ? cfg.textColor : 'rgba(255,255,255,0.15)',
+              scale: active ? 1.3 : 1,
+            });
+          });
         },
       });
 
@@ -147,87 +123,88 @@ export function AboutSection() {
     });
 
     return () => ctx.revert();
-  }, []);
+  }, [cfg.textColor]);
 
   return (
-    <section ref={sectionRef} id="about" className="relative overflow-hidden bg-[#010006]">
-      <div
-        ref={blobARef}
-        className="pointer-events-none absolute left-[8%] top-[10%] h-[38rem] w-[38rem] rounded-full opacity-[0.10] blur-[120px]"
-        style={{ background: "#F25604" }}
-      />
-      <div
-        ref={blobBRef}
-        className="pointer-events-none absolute bottom-[5%] right-[10%] h-[32rem] w-[32rem] rounded-full opacity-[0.08] blur-[120px]"
-        style={{ background: "#7A3EF2" }}
-      />
+    <section ref={sectionRef} id="about" className="relative overflow-hidden">
+      {/* Background blobs */}
+      <div ref={blobARef} className="pointer-events-none absolute left-[5%] top-[5%] h-[40rem] w-[40rem] rounded-full opacity-[0.07] blur-[150px]" style={{ background: "#F25604" }} />
+      <div ref={blobBRef} className="pointer-events-none absolute bottom-[5%] right-[5%] h-[35rem] w-[35rem] rounded-full opacity-[0.05] blur-[150px]" style={{ background: "#7A3EF2" }} />
 
-      <div className="relative h-screen flex items-center justify-center px-6">
-        <div ref={titleRef} className="text-center">
-          <span className="inline-block text-[10px] font-semibold uppercase tracking-[0.3em] text-white/20">
+      {/* Grid overlay */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.02]" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
+
+      {/* Title screen */}
+      <div className="relative min-h-screen flex items-center justify-center px-6" style={{ background: 'rgba(10,10,15,0.5)', backdropFilter: 'blur(4px)' }}>
+        <div ref={titleRef} className="text-center max-w-4xl mx-auto">
+          <span className="inline-block text-[11px] font-semibold uppercase tracking-[0.35em] text-white/25 mb-6">
             About
           </span>
-          <h2
-            className="mt-3 text-6xl font-bold tracking-tight md:text-8xl lg:text-9xl"
-            style={{ color: cfg.textColor, textShadow: `0 0 120px ${cfg.textColor}4D` }}
+          <h2 className="text-5xl font-bold leading-[1.05] tracking-tight md:text-7xl lg:text-8xl"
+            style={{ color: cfg.textColor, textShadow: `0 0 80px ${cfg.textColor}33` }}
           >
             {cfg.headline}
           </h2>
           {cfg.paragraphs[0] && (
-            <p className="mt-3 text-xs uppercase tracking-[0.35em] text-white/15">
+            <p className="mt-5 text-sm leading-relaxed text-white/25 max-w-xl mx-auto md:text-base">
               {cfg.paragraphs[0]}
             </p>
           )}
+          {/* Scroll cue */}
+          <div className="mt-16 flex flex-col items-center gap-2 animate-pulse">
+            <span className="block h-10 w-[1px] bg-gradient-to-b from-transparent via-white/20 to-transparent" />
+            <span className="text-[10px] uppercase tracking-[0.3em] text-white/15">Scroll</span>
+          </div>
         </div>
       </div>
 
-      <div ref={pinRef} className="relative h-screen overflow-hidden">
-        <div className="absolute inset-0" style={{ perspective: 1200 }}>
-          <div
-            className="pointer-events-none absolute left-1/2 top-0 h-full w-px -translate-x-1/2"
-            style={{
-              background:
-                "linear-gradient(to bottom, transparent, rgba(242,86,4,0.16) 15%, rgba(242,86,4,0.16) 85%, transparent)",
-            }}
-          />
-
-          {stages.map((stage, i) => (
-            <div
-              key={`panel-${i}`}
-              className="absolute inset-0 flex items-center justify-center px-6"
-            >
-              <div
-                ref={(el) => {
-                  panelsRef.current[i] = el;
-                }}
-                className="relative w-full max-w-4xl text-center"
-                style={{
-                  willChange: "transform, opacity, filter",
-                  backfaceVisibility: "hidden",
-                  transformStyle: "preserve-3d",
-                }}
-              >
-                <div className="mb-6 flex items-center justify-center">
-                  <span
-                    className="block h-2 w-2 rounded-full"
-                    style={{ background: cfg.textColor, boxShadow: `0 0 20px ${cfg.textColor}99` }}
-                  />
-                </div>
-
-                <span
-                  className="mx-auto mb-8 block h-px w-[120px]"
-                  style={{ background: `linear-gradient(90deg, transparent, ${cfg.textColor}, transparent)` }}
-                />
-
-                <p
-                  style={{ color: cfg.textColor, textShadow: "0 0 60px rgba(0,0,0,0.4)" }}
-                  className="text-2xl leading-relaxed md:text-3xl md:leading-relaxed lg:text-4xl lg:leading-relaxed"
-                >
-                  {stage.body}
-                </p>
-              </div>
+      {/* Pinned paragraph scroll */}
+      <div ref={pinRef} className="relative min-h-screen" style={{ background: 'rgba(10,10,15,0.4)', backdropFilter: 'blur(4px)' }}>
+        <div className="mx-auto flex max-w-6xl items-center justify-center px-6 min-h-screen">
+          {/* Left progress column */}
+          <div className="hidden md:flex flex-col items-center gap-5 mr-16">
+            <div className="relative h-48 w-[1px] bg-white/[0.08] overflow-hidden rounded-full">
+              <div ref={progressRef} className="absolute bottom-0 left-0 w-full origin-bottom rounded-full transition-transform" style={{ backgroundColor: cfg.textColor, transform: 'scaleY(0)' }} />
             </div>
-          ))}
+            <div className="flex flex-col gap-4">
+              {stages.map((_, i) => (
+                <div key={i} ref={(el) => { stepsRef.current[i] = el; }}
+                  className="h-2 w-2 rounded-full transition-all duration-500" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
+              ))}
+            </div>
+          </div>
+
+          {/* Paragraph panels */}
+          <div className="relative flex-1" style={{ perspective: 1200 }}>
+            {stages.map((stage, i) => (
+              <div key={`panel-${i}`} className="absolute inset-0 flex items-center justify-center">
+                <div ref={(el) => { panelsRef.current[i] = el; }}
+                  className="w-full max-w-3xl rounded-3xl border border-white/[0.06] p-8 md:p-12 lg:p-16"
+                  style={{
+                    background: 'rgba(18,20,23,0.6)',
+                    backdropFilter: 'blur(24px)',
+                    WebkitBackdropFilter: 'blur(24px)',
+                    willChange: 'transform, opacity, filter',
+                    backfaceVisibility: 'hidden',
+                    transformStyle: 'preserve-3d',
+                  }}
+                >
+                  <div className="flex items-center gap-3 mb-8">
+                    <span className="block h-2 w-2 rounded-full" style={{ background: cfg.textColor, boxShadow: `0 0 16px ${cfg.textColor}66` }} />
+                    <span className="block h-px flex-1" style={{ background: `linear-gradient(90deg, ${cfg.textColor}44, transparent)` }} />
+                  </div>
+                  <p className="text-xl leading-relaxed text-white/80 md:text-2xl md:leading-relaxed lg:text-3xl lg:leading-relaxed font-light">
+                    {stage.body}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom counter */}
+        <div ref={counterRef} className="absolute bottom-12 left-1/2 -translate-x-1/2 text-xs font-mono tracking-[0.2em] text-white/20">
+          01  /  04
         </div>
       </div>
     </section>

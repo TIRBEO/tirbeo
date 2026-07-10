@@ -46,7 +46,8 @@ export function Preloader() {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] bg-white flex items-center justify-center"
+      className="fixed inset-0 z-[9999] flex items-center justify-center"
+      style={{ background: "#0B0B0D" }}
       onClick={handleSkip}
       onKeyDown={(e) => e.key === "Escape" && handleSkip()}
       tabIndex={0}

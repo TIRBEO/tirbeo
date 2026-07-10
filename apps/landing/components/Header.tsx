@@ -6,43 +6,6 @@ import { useLandingConfig } from "./LandingContentProvider";
 
 type DropdownItem = { label: string; description: string; link: string };
 
-const dropdowns: { label: string; items: DropdownItem[] }[] = [
-  {
-    label: "Products",
-    items: [
-      { label: "Tirbeo Chat", description: "Real-time messaging with channels, threads, voice/video calls", link: appUrl("docs", "/products/chat") },
-    ],
-  },
-  {
-    label: "Solutions",
-    items: [
-      { label: "For Developers", description: "Open source collaboration, code reviews, hackathons", link: appUrl("docs", "/solutions/developers") },
-      { label: "For Designers", description: "Feedback rounds, resource sharing, critiques", link: appUrl("docs", "/solutions/designers") },
-      { label: "For Educators", description: "Student communities, cohort management", link: appUrl("docs", "/solutions/educators") },
-      { label: "For Startups", description: "Async updates, investor relations, hiring", link: appUrl("docs", "/solutions/startups") },
-    ],
-  },
-  {
-    label: "Resources",
-    items: [
-      { label: "Documentation", description: "Complete guides and references", link: appUrl("docs", "/docs") },
-      { label: "Help Center", description: "FAQs and support articles", link: appUrl("help") },
-      { label: "Blog", description: "Product updates and community stories", link: appUrl("docs", "/blog") },
-      { label: "Community", description: "Join our community", link: appUrl("chats") },
-      { label: "Changelog", description: "What's new at Tirbeo", link: appUrl("docs", "/changelog") },
-    ],
-  },
-  {
-    label: "About",
-    items: [
-      { label: "Our Story", description: "The Tirbeo journey", link: appUrl("docs", "/about") },
-      { label: "Team", description: "Meet the people behind Tirbeo", link: appUrl("docs", "/team") },
-      { label: "Careers", description: "Join us and build the future", link: appUrl("docs", "/careers") },
-      { label: "Contact", description: "Get in touch with us", link: appUrl("help", "/contact") },
-    ],
-  },
-];
-
 function MegaDropdown({ label, items }: { label: string; items: DropdownItem[] }) {
   const [open, setOpen] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -96,11 +59,11 @@ function MegaDropdown({ label, items }: { label: string; items: DropdownItem[] }
                 <a
                   key={item.label}
                   href={item.link}
-                  className="group relative rounded-xl px-4 py-3.5 transition-all hover:bg-gradient-to-r hover:from-white/[0.04] hover:to-transparent hover:scale-[1.01]"
+                  className="group relative rounded-xl px-4 py-3.5 transition-all duration-200 hover:bg-gradient-to-r hover:from-white/[0.07] hover:to-white/[0.02] hover:scale-[1.02] hover:shadow-lg hover:shadow-black/20"
                 >
                   <span className="relative z-10 text-sm font-semibold tracking-tight text-white/85 transition-colors group-hover:text-white">{item.label}</span>
-                  <span className="relative z-10 mt-1 block text-xs leading-relaxed text-white/35 transition-colors group-hover:text-white/55">{item.description}</span>
-                  <div className="absolute inset-y-2 right-2 w-px bg-gradient-to-b from-transparent via-white/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                  <span className="relative z-10 mt-1 block text-xs leading-relaxed text-white/35 transition-colors group-hover:text-white/60">{item.description}</span>
+                  <div className="absolute inset-y-2 right-2 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
                 </a>
               ))}
             </div>
@@ -135,10 +98,10 @@ export function Header() {
 
     return (
       <div className="border-b border-white/[0.04] last:border-0">
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex w-full items-center justify-between px-3 py-2.5 text-xs font-medium text-white/70 transition-colors hover:text-white md:px-6 md:py-4 md:text-sm"
-        >
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex w-full items-center justify-between px-3 py-2.5 text-xs font-medium text-white/70 transition-all duration-200 hover:text-white hover:bg-white/[0.04] rounded-lg md:px-6 md:py-4 md:text-sm"
+            >
           {label}
           <svg
             className={`h-3 w-3 text-white/40 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
@@ -203,7 +166,7 @@ export function Header() {
           </button>
           <a
             href={appUrl("accounts", cfg.ctaUrl)}
-            className="hidden md:inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:underline hover:decoration-dashed hover:decoration-2 hover:decoration-[#F25604] hover:underline-offset-4"
+            className="hidden md:inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 bg-gradient-to-r from-[#F25604] to-[#F97316] rounded-xl hover:from-[#F97316] hover:to-[#F25604] hover:shadow-lg hover:shadow-[#F25604]/30 hover:scale-105 active:scale-[0.98]"
           >
                  <span>{cfg.ctaText}</span>
             <svg className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">

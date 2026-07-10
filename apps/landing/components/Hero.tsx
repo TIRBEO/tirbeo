@@ -4,7 +4,6 @@ import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { appUrl } from "@/lib/domains";
 import { useLandingConfig } from "./LandingContentProvider";
-import { CityScene } from "./CityScene";
 
 export function Hero() {
   const cfg = useLandingConfig().hero;
@@ -44,11 +43,8 @@ export function Hero() {
 
   return (
     <section ref={sectionRef} className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden">
-      {/* 3D City backdrop */}
-      <CityScene />
-
       {/* Dark gradient overlay for readability */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/60 via-[#0a0a0f]/30 to-[#0a0a0f]/80" style={{ zIndex: 1 }} />
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#0a0a0f]/80 via-[#0a0a0f]/40 to-[#0a0a0f]/80" />
 
       {/* Vignette */}
       <div className="pointer-events-none absolute inset-0" style={{ zIndex: 1, background: 'radial-gradient(ellipse at center, transparent 40%, #0a0a0f 100%)' }} />

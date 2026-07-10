@@ -26,7 +26,7 @@ export function Pricing() {
   const cfg = useLandingConfig().newsletter;
 
   return (
-    <section id="pricing" className="relative overflow-hidden px-6 py-28 bg-black">
+    <section id="pricing" className="relative overflow-hidden px-6 py-28" style={{ background: 'rgba(10,10,15,0.5)', backdropFilter: 'blur(4px)' }}>
       <div className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none" style={{ backgroundImage: "url(/footer.png)" }} />
 
       <div className="relative mx-auto max-w-3xl text-center">
@@ -43,7 +43,7 @@ export function Pricing() {
             return (
               <div
                 key={item.question}
-                className="gsap-stagger-card overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg backdrop-blur-xl transition-transform duration-300 hover:scale-[1.01]"
+                className="gsap-stagger-card overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg backdrop-blur-xl transition-all duration-300 hover:scale-[1.02] hover:bg-white/[0.08] hover:shadow-xl"
               >
                 <button
                   type="button"
@@ -84,7 +84,7 @@ export function Pricing() {
               />
               <button
                 type="submit"
-                className="rounded-2xl bg-gradient-to-r from-[#FE8624] to-[#FE8624] px-7 py-4 text-sm font-semibold text-white transition duration-300 hover:shadow-[0_24px_60px_rgba(36,61,230,0.28)]"
+                className="rounded-2xl bg-gradient-to-r from-[#FE8624] to-[#F97316] px-7 py-4 text-sm font-semibold text-white transition-all duration-300 hover:shadow-[0_24px_60px_rgba(254,134,36,0.3)] hover:scale-105 active:scale-[0.98]"
               >
                 {cfg.buttonLabel}
               </button>
