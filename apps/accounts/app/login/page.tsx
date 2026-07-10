@@ -161,6 +161,15 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
 
   const redirectTo = searchParams.get("redirect") || appUrl("dashboard");
 
+  // Validate redirect URL
+  const validatedRedirect = (() => {
+    try {
+      const url = new URL(redirectTo);
+      if (url.hostname.endsWith('tirbeo.app') || url.hostname === 'localhost') return redirectTo;
+    } catch {}
+    return appUrl('dashboard');
+  })();
+
   useEffect(() => {
     onPhaseChange?.(signupPhase, isSignUp);
   }, [signupPhase, isSignUp, onPhaseChange]);
@@ -211,7 +220,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
     try {
       if (step === "otp-login") {
         const res = await apiFetch("/api/auth/login-otp/verify", { email, otpCode });
-        if (res.ok) { window.location.href = redirectTo; return; }
+        if (res.ok) { window.location.href = validatedRedirect; return; }
         setError(await res.text() || "Invalid code");
       } else if (step === "otp-signup") {
         const name = [firstName, lastName].filter(Boolean).join(" ").trim() || email.split("@")[0];
@@ -225,7 +234,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
         setError(await res.text() || "Signup failed");
       } else if (step === "login") {
         const res = await apiFetch("/api/auth/login", { email, password });
-        if (res.ok) { window.location.href = redirectTo; return; }
+        if (res.ok) { window.location.href = validatedRedirect; return; }
         setError(await res.text() || "Invalid credentials");
       } else {
         const res = await apiFetch("/api/auth/signup-otp/request", { email }, { noCreds: true });
@@ -241,7 +250,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
       setLoading(false);
       submittedRef.current = false;
     }
-  }, [email, password, firstName, lastName, otpCode, step, signupPhase, redirectTo, validate, apiFetch]);
+  }, [email, password, firstName, lastName, otpCode, step, signupPhase, validatedRedirect, validate, apiFetch]);
 
   const handleOtpLogin = useCallback(async () => {
     if (submittedRef.current) return;
@@ -292,8 +301,8 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
   }, [firstName, lastName, phone, occupation, whoYouAre, selectedAvatar, API]);
 
   const handleCompleteSetup = useCallback(() => {
-    window.location.href = redirectTo;
-  }, [redirectTo]);
+    window.location.href = validatedRedirect;
+  }, [validatedRedirect]);
 
   const switchMode = () => {
     const newStep = isSignUp ? "login" : "signup";
@@ -368,7 +377,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
         {isOtpStep ? (
           <div className="space-y-6 pt-4">
             <OtpInput length={6} value={otpCode} onChange={setOtpCode} />
-            {devCode && (
+            {devCode && process.env.NODE_ENV === 'development' && (
               <div className="text-center p-4 rounded-2xl bg-accent-green/10 border border-accent-green/20">
                 <p className="text-xs font-medium text-accent-green">Dev Mode — Your code: <span className="font-bold text-sm">{devCode}</span></p>
               </div>

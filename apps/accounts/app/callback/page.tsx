@@ -12,11 +12,20 @@ function CallbackHandler() {
     const code = searchParams.get("code");
     const redirectTo = searchParams.get("redirect") || appUrl("dashboard");
 
+    // Validate redirect URL
+    const validatedRedirect = (() => {
+      try {
+        const url = new URL(redirectTo);
+        if (url.hostname.endsWith('tirbeo.app') || url.hostname === 'localhost') return redirectTo;
+      } catch {}
+      return appUrl('dashboard');
+    })();
+
     if (code) {
       // API handles the OAuth exchange and sets the session cookie
       // This page is only reached if the API callback redirects here
       // In normal flow, API redirects directly to dashboard with cookie set
-      window.location.href = redirectTo;
+      window.location.href = validatedRedirect;
     } else {
       // No code - might be direct access or error
       setError("No authorization code provided");

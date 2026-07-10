@@ -401,4 +401,63 @@ model Integration {
   @@index([userId])
 }
 
+// ─── Theme Configuration ───────────────────────────────
+
+model ThemeConfig {
+  id        String   @id @default(uuid())
+  name      String   @unique // e.g., "default", "brand-2026"
+  isActive  Boolean  @default(false)
+
+  // Core Colors
+  bgPrimary     String @default("#08150F")
+  bgSecondary   String @default("#101c13")
+  bgCard        String @default("#12271D")
+  bgElevated    String @default("#1a3326")
+
+  // Text Colors
+  textPrimary   String @default("#F2EEE8")
+  textSecondary String @default("#B7C6BE")
+  textMuted     String @default("#6b8a7a")
+
+  // Accent Colors
+  accentPrimary   String @default("#569578")
+  accentSecondary String @default("#275d46")
+  accentHover     String @default("#6aab8d")
+
+  // Semantic Colors
+  success   String @default("#59C173")
+  warning   String @default("#F4B942")
+  error     String @default("#E45D5D")
+
+  // Border & Shadow
+  borderColor     String @default("rgba(255,255,255,0.08)")
+  borderHover     String @default("rgba(255,255,255,0.14)")
+
+  // Typography
+  fontPrimary  String @default("Inter")
+  fontHeading  String @default("Plus Jakarta Sans")
+  borderRadius String @default("16px")
+
+  // Branding
+  logoUrl      String?
+  brandName    String @default("Tirbeo")
+  brandTagline String @default("Premium Social Platform")
+
+  // Light Theme (optional override)
+  lightBgPrimary     String?
+  lightBgSecondary   String?
+  lightTextPrimary   String?
+  lightAccentPrimary String?
+
+  // Email-specific colors (used in email templates)
+  emailHeaderBg      String @default("linear-gradient(135deg,#022B22,#275D46,#569578)")
+  emailButtonColor   String @default("#569578")
+  emailTextColor     String @default("#B7C6BE")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
 

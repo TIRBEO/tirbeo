@@ -1,12 +1,13 @@
 import { prisma } from '../db/prisma';
 import { hashPassword as hashOtp, verifyPassword as verifyOtp } from './password'; // reuse argon2 helpers
 import { addMinutes } from 'date-fns';
+import { randomInt } from 'crypto';
 
 const OTP_TTL_MINUTES = 10;
 
 /** Generate a 6‑digit numeric OTP */
 export function generateOtpCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return randomInt(100000, 1000000).toString();
 }
 
 /** Store OTP hash for a user */

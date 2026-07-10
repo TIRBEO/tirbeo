@@ -1,6 +1,8 @@
 import { SignJWT, jwtVerify, type JWTPayload } from 'jose';
 
-const SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret-change-me');
+const rawSecret = process.env.JWT_SECRET;
+if (!rawSecret) throw new Error('FATAL: JWT_SECRET environment variable is not set');
+const SECRET = new TextEncoder().encode(rawSecret);
 const COOKIE_NAME = '__session';
 
 interface SessionPayload extends JWTPayload {

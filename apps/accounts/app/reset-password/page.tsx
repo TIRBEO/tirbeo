@@ -241,7 +241,7 @@ function ResetPasswordForm() {
             </div>
           </div>
 
-          {devCode && (
+          {devCode && process.env.NODE_ENV === 'development' && (
             <div className="p-4 rounded-2xl bg-accent-green/10 border border-accent-green/20">
               <p className="text-xs font-medium text-accent-green">Dev Mode &mdash; Your code: <span className="font-bold text-sm">{devCode}</span></p>
             </div>

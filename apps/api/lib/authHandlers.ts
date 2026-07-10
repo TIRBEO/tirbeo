@@ -10,6 +10,17 @@ import { verifyTotp } from './auth/totp';
 import { sendTemplateEmail } from './email';
 import { requestPasswordReset, verifyPasswordReset, confirmPasswordReset } from './auth/password-reset';
 
+function isAllowedRedirect(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const host = u.hostname;
+    if (host.endsWith('.tirbeo.app')) return true;
+    if (host === 'localhost' || host === '127.0.0.1') return true;
+    if (host.endsWith('.vercel.app') && host.startsWith('tirbeo')) return true;
+    return false;
+  } catch { return false; }
+}
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
@@ -160,8 +171,8 @@ export async function signupHandler(request: NextRequest) {
 
     return res;
   } catch (err: any) {
-    console.error('[LOGIN]', err?.message || err, err?.stack);
-    return new NextResponse(`Login failed: ${err?.message || 'unknown'}`, { status: 400 });
+    console.error('[SIGNUP]', err?.message || err, err?.stack);
+    return new NextResponse('Signup failed', { status: 400 });
   }
 }
 
@@ -187,9 +198,9 @@ export async function requestSignupOtpHandler(request: NextRequest) {
       console.error('[SIGNUP OTP] Email send error:', emailErr);
     }
     const resp: any = { message: 'Verification code sent to email' };
-    if (!emailSent) {
+    if (!emailSent && process.env.NODE_ENV === 'development') {
       resp.devCode = code;
-      resp.devMessage = 'Email delivery failed — use this code for testing';
+      resp.devMessage = 'Dev mode: use this code for testing';
       console.log(`[SIGNUP OTP] Dev mode: code for ${email} is ${code}`);
     }
     return NextResponse.json(resp, { status: 200 });
@@ -221,9 +232,9 @@ export async function requestLoginOtpHandler(request: NextRequest) {
       console.error('[LOGIN OTP] Email send error:', emailErr);
     }
     const resp: any = { message: 'Verification code sent to your email' };
-    if (!emailSent) {
+    if (!emailSent && process.env.NODE_ENV === 'development') {
       resp.devCode = code;
-      resp.devMessage = 'Email delivery failed — use this code for testing';
+      resp.devMessage = 'Dev mode: use this code for testing';
       console.log(`[LOGIN OTP] Dev mode: code for ${email} is ${code}`);
     }
     return NextResponse.json(resp, { status: 200 });
@@ -336,6 +347,7 @@ export async function googleAuthRedirectHandler(request: NextRequest) {
   }
   const sp = request.nextUrl.searchParams;
   const redirectTo = sp.get('redirect');
+  const safeRedirect = redirectTo && isAllowedRedirect(redirectTo) ? redirectTo : undefined;
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -344,7 +356,7 @@ export async function googleAuthRedirectHandler(request: NextRequest) {
     access_type: 'offline',
     prompt: 'consent',
   });
-  if (redirectTo) params.set('state', redirectTo);
+  if (safeRedirect) params.set('state', safeRedirect);
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
   return NextResponse.redirect(googleAuthUrl);
 }
@@ -358,7 +370,8 @@ export async function googleAuthCallbackHandler(request: NextRequest) {
     return new NextResponse('Google OAuth not configured', { status: 500 });
   }
   const code = request.nextUrl.searchParams.get('code');
-  const redirectTo = request.nextUrl.searchParams.get('state');
+  const rawRedirect = request.nextUrl.searchParams.get('state');
+  const redirectTo = rawRedirect && isAllowedRedirect(rawRedirect) ? rawRedirect : undefined;
   if (!code) {
     return new NextResponse('Missing code', { status: 400 });
   }
@@ -447,12 +460,13 @@ export async function githubAuthRedirectHandler(request: NextRequest) {
   }
   const sp = request.nextUrl.searchParams;
   const redirectTo = sp.get('redirect');
+  const safeRedirect = redirectTo && isAllowedRedirect(redirectTo) ? redirectTo : undefined;
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
     scope: 'read:user user:email',
   });
-  if (redirectTo) params.set('state', redirectTo);
+  if (safeRedirect) params.set('state', safeRedirect);
   const githubAuthUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
   return NextResponse.redirect(githubAuthUrl);
 }
@@ -541,7 +555,8 @@ export async function githubAuthCallbackHandler(request: NextRequest) {
     create: { userId: user.id, provider: 'github', connected: true, metadata: { githubId, email } },
   });
 
-  const redirectTo = request.nextUrl.searchParams.get('state') || request.nextUrl.searchParams.get('redirect');
+  const rawRedirect = request.nextUrl.searchParams.get('state') || request.nextUrl.searchParams.get('redirect');
+  const redirectTo = rawRedirect && isAllowedRedirect(rawRedirect) ? rawRedirect : undefined;
   const ip = request.headers.get('x-forwarded-for') || '';
   const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
   const res = NextResponse.redirect(redirectTo || `https://dashboard.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}`);
@@ -554,7 +569,7 @@ export async function activityHandler(request: NextRequest) {
   const session = await getSession(request);
   if (!session) return new NextResponse('Unauthenticated', { status: 401 });
 
-  const limit = Number(request.nextUrl.searchParams.get('limit')) || 20;
+  const limit = Math.min(Number(request.nextUrl.searchParams.get('limit')) || 20, 100);
   const logs = await prisma.log.findMany({
     where: { userId: session.userId },
     orderBy: { createdAt: 'desc' },

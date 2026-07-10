@@ -8,7 +8,8 @@ function isAllowedOrigin(origin: string): boolean {
     if (['localhost', '127.0.0.1'].includes(u.hostname)) return true;
     if (u.hostname === 'api.tirbeo.app') return true;
     if (u.hostname.endsWith('.tirbeo.app')) return true;
-    if (u.hostname.endsWith('.vercel.app')) return true;
+    // Only allow specific Vercel deployments
+    if (u.hostname === 'api-tirbeo.vercel.app') return true;
     return false;
   } catch {
     return false;

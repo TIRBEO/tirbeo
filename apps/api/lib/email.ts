@@ -11,12 +11,38 @@ export async function getEmailTemplate(name: string) {
   return prisma.emailTemplate.findUnique({ where: { name } });
 }
 
+export function escapeHtml(str: string): string {
+  return str.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' } as Record<string, string>)[c]);
+}
+
 export function renderTemplate(html: string, vars: Record<string, string>): string {
   let result = html;
   for (const [key, val] of Object.entries(vars)) {
-    result = result.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi'), val);
+    result = result.replace(new RegExp(`\\{\\{\\s*${key}\\s*\\}\\}`, 'gi'), escapeHtml(val));
   }
   return result;
+}
+
+async function getThemeColors(): Promise<Record<string, string>> {
+  try {
+    const theme = await prisma.themeConfig.findFirst({ where: { isActive: true } });
+    if (!theme) return {};
+    return {
+      ACCENT_PRIMARY: theme.accentPrimary,
+      ACCENT_SECONDARY: theme.accentSecondary,
+      BG_PRIMARY: theme.bgPrimary,
+      BG_CARD: theme.bgCard,
+      TEXT_PRIMARY: theme.textPrimary,
+      TEXT_SECONDARY: theme.textSecondary,
+      EMAIL_HEADER_BG: theme.emailHeaderBg,
+      EMAIL_BUTTON_COLOR: theme.emailButtonColor,
+      EMAIL_TEXT_COLOR: theme.emailTextColor,
+      SUCCESS: theme.success,
+      BORDER_COLOR: theme.borderColor,
+    };
+  } catch {
+    return {};
+  }
 }
 
 export async function sendEmail(
@@ -146,10 +172,13 @@ export async function sendTemplateEmail(
   variables: Record<string, string>,
   options?: { fromEmail?: string; fromName?: string }
 ): Promise<EmailResult> {
+  const themeColors = await getThemeColors();
+  const mergedVars = { ...themeColors, ...variables };
+
   const template = await getEmailTemplate(templateName);
   if (template) {
-    const subject = renderTemplate(template.subject, variables);
-    const htmlBody = renderTemplate(template.htmlBody, variables);
+    const subject = renderTemplate(template.subject, mergedVars);
+    const htmlBody = renderTemplate(template.htmlBody, mergedVars);
     return sendEmail(to, subject, htmlBody, {
       fromEmail: options?.fromEmail || template.fromEmail || undefined,
       fromName: options?.fromName || template.fromName || undefined,
@@ -160,8 +189,8 @@ export async function sendTemplateEmail(
   const fallback = fallbacks[templateName];
   if (fallback) {
     console.log(`[EMAIL] Template '${templateName}' not in DB, using built-in fallback`);
-    const subject = renderTemplate(fallback.subject, variables);
-    const htmlBody = renderTemplate(fallback.html, variables);
+    const subject = renderTemplate(fallback.subject, mergedVars);
+    const htmlBody = renderTemplate(fallback.html, mergedVars);
     return sendEmail(to, subject, htmlBody, options);
   }
 

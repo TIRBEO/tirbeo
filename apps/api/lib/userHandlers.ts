@@ -63,7 +63,21 @@ export async function extendedProfileHandler(request: NextRequest) {
     });
     const parsed = schema.safeParse(body);
     if (!parsed.success) return new NextResponse('Invalid payload', { status: 400 });
-    const updated = await prisma.user.update({ where: { id: session.userId }, data: parsed.data });
+    const updated = await prisma.user.update({
+      where: { id: session.userId },
+      data: parsed.data,
+      select: {
+        id: true, email: true, name: true, photoUrl: true,
+        phoneNumber: true, occupation: true, bio: true,
+        website: true, linkedin: true, github: true, twitter: true,
+        country: true, timezone: true, language: true, theme: true,
+        dateFormat: true, timeFormat: true, fontSize: true,
+        reduceMotion: true, highContrast: true,
+        companyName: true, companyRole: true, industry: true, companySize: true,
+        emailVerified: true, phoneVerified: true, is2FAEnabled: true,
+        createdAt: true, updatedAt: true,
+      },
+    });
     return NextResponse.json(updated);
   }
 
@@ -89,6 +103,9 @@ export async function changePasswordHandler(request: NextRequest) {
 
   const newHash = await hashPassword(newPassword);
   await prisma.user.update({ where: { id: session.userId }, data: { passwordHash: newHash } });
+  await prisma.session.deleteMany({
+    where: { userId: session.userId, NOT: { id: session.sessionId } },
+  });
   return new NextResponse('Password changed', { status: 200 });
 }
 
@@ -110,6 +127,10 @@ export async function sessionsHandler(request: NextRequest) {
     const { sessionId } = body;
     if (!sessionId) return new NextResponse('sessionId required', { status: 400 });
     if (sessionId === session.sessionId) return new NextResponse('Cannot terminate current session', { status: 400 });
+    const targetSession = await prisma.session.findUnique({ where: { id: sessionId } });
+    if (!targetSession || targetSession.userId !== session.userId) {
+      return new NextResponse('Session not found', { status: 404 });
+    }
     await prisma.session.delete({ where: { id: sessionId } });
     return new NextResponse('Session terminated', { status: 200 });
   }

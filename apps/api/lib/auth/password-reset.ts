@@ -3,6 +3,7 @@ import { hashPassword as hashOtp, verifyPassword as verifyOtp } from './password
 import { signPasswordResetToken, verifyPasswordResetToken } from './jwt';
 import { addMinutes } from 'date-fns';
 import { sendTemplateEmail } from '../email';
+import { randomInt } from 'crypto';
 
 const RESET_TTL_MINUTES = 15;
 
@@ -15,7 +16,7 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
   }
 
   // Generate OTP code
-  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const code = randomInt(100000, 1000000).toString();
   const otpHash = await hashOtp(code);
   const expiresAt = addMinutes(new Date(), RESET_TTL_MINUTES);
 
@@ -108,6 +109,9 @@ export async function confirmPasswordReset(
 
   // Clean up any remaining OTPs
   await prisma.otp.deleteMany({ where: { userId: user.id, type: 'email' } });
+
+  // Invalidate all sessions for this user (they need to re-authenticate with new password)
+  await prisma.session.deleteMany({ where: { userId: user.id } });
 
   return { success: true };
 }

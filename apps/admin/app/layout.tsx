@@ -1,6 +1,7 @@
 import React from 'react';
 import './globals.css';
 import QuickSearch from './quick-search';
+import { AdminThemeProvider } from './admin-theme-provider';
 
 export const metadata = { title: 'Tirbeo Admin', description: 'Manage the Tirbeo platform' };
 
@@ -17,8 +18,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }} />
       </head>
       <body>
-        {children}
-        <QuickSearch />
+        <AdminThemeProvider>
+          {children}
+          <QuickSearch />
+        </AdminThemeProvider>
       </body>
     </html>
   );

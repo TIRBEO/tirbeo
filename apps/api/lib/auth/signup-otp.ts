@@ -2,11 +2,12 @@ import { prisma } from '../db/prisma';
 import { hashPassword as hashOtp, verifyPassword as verifyOtp } from './password';
 import { addMinutes } from 'date-fns';
 import { sendTemplateEmail } from '../email';
+import { randomInt } from 'crypto';
 
 const OTP_TTL_MINUTES = 10;
 
 export function generateOtpCode(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return randomInt(100000, 1000000).toString();
 }
 
 export async function storeSignupOtp(email: string, code: string) {
