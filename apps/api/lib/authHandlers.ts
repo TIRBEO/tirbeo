@@ -152,9 +152,9 @@ export async function signupHandler(request: NextRequest) {
     const res = NextResponse.json({ id: user.id, email: user.email }, { status: 201 });
     setSessionCookie(res, token);
     return res;
-  } catch (err) {
-    console.error('[SIGNUP]', err);
-    return new NextResponse('Signup failed', { status: 400 });
+  } catch (err: any) {
+    console.error('[LOGIN]', err?.message || err, err?.stack);
+    return new NextResponse(`Login failed: ${err?.message || 'unknown'}`, { status: 400 });
   }
 }
 
@@ -178,9 +178,9 @@ export async function requestSignupOtpHandler(request: NextRequest) {
       console.error('[SIGNUP OTP] Email send failed, but OTP stored:', emailErr);
     }
     return new NextResponse('Verification code sent to email', { status: 200 });
-  } catch (err) {
-    console.error('[SIGNUP OTP REQUEST]', err);
-    return new NextResponse('Failed to process request', { status: 500 });
+  } catch (err: any) {
+    console.error('[SIGNUP OTP REQUEST]', err?.message || err, err?.stack);
+    return new NextResponse(`Failed to process request: ${err?.message || 'unknown'}`, { status: 500 });
   }
 }
 
@@ -204,9 +204,9 @@ export async function requestLoginOtpHandler(request: NextRequest) {
       console.error('[LOGIN OTP] Email send failed, but OTP stored:', emailErr);
     }
     return new NextResponse('Verification code sent to your email', { status: 200 });
-  } catch (err) {
-    console.error('[LOGIN OTP REQUEST]', err);
-    return new NextResponse('Failed to process request', { status: 500 });
+  } catch (err: any) {
+    console.error('[LOGIN OTP REQUEST]', err?.message || err, err?.stack);
+    return new NextResponse(`Failed to process request: ${err?.message || 'unknown'}`, { status: 500 });
   }
 }
 

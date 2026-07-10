@@ -52,32 +52,67 @@ const PERM_GROUPS = [
   ]},
 ];
 
+const SVG_PATHS: Record<string, React.ReactNode> = {
+  shield: <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l7 4v5c0 5.25-3.5 9.74-7 11-3.5-1.26-7-5.75-7-11V6l7-4z" />,
+  star: <path strokeLinecap="round" strokeLinejoin="round" d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l7.1-1.01L12 2z" />,
+  crown: <><path strokeLinecap="round" strokeLinejoin="round" d="M2 20h20M4 17l2-12 6 4 6-4 2 12H4z" /><circle cx="12" cy="5" r="1.5" fill="currentColor" /></>,
+  bolt: <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />,
+  heart: <path strokeLinecap="round" strokeLinejoin="round" d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />,
+  eye: <><path strokeLinecap="round" strokeLinejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></>,
+  gear: <><circle cx="12" cy="12" r="3" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" /></>,
+  key: <path strokeLinecap="round" strokeLinejoin="round" d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />,
+  lock: <rect x="3" y="11" width="18" height="11" rx="2" ry="2" /><path strokeLinecap="round" strokeLinejoin="round" d="M7 11V7a5 5 0 0110 0v4" />,
+  pencil: <path strokeLinecap="round" strokeLinejoin="round" d="M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />,
+  wrench: <path strokeLinecap="round" strokeLinejoin="round" d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z" />,
+  flag: <path strokeLinecap="round" strokeLinejoin="round" d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" />,
+  book: <path strokeLinecap="round" strokeLinejoin="round" d="M4 19.5A2.5 2.5 0 016.5 17H20" /><path strokeLinecap="round" strokeLinejoin="round" d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />,
+  bell: <path strokeLinecap="round" strokeLinejoin="round" d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path strokeLinecap="round" strokeLinejoin="round" d="M13.73 21a2 2 0 01-3.46 0" />,
+  tag: <path strokeLinecap="round" strokeLinejoin="round" d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" />,
+  'user-cog': <><circle cx="12" cy="7" r="4" /><path strokeLinecap="round" strokeLinejoin="round" d="M5.5 21a6.5 6.5 0 0113 0" /><circle cx="19" cy="17" r="2" /><path strokeLinecap="round" strokeLinejoin="round" d="M19 13v-1m0 6v1m-3-3h1m-4 0h1" /></>,
+  users: <><path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 00-3-3.87" /><path strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 010 7.75" /></>,
+  globe: <><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" /></>,
+  chat: <path strokeLinecap="round" strokeLinejoin="round" d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />,
+  code: <><polyline points="16 18 22 12 16 6" /><polyline points="8 6 2 12 8 18" /></>,
+  alert: <><path strokeLinecap="round" strokeLinejoin="round" d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></>,
+  file: <><path strokeLinecap="round" strokeLinejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /></>,
+  paperclip: <path strokeLinecap="round" strokeLinejoin="round" d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" />,
+};
+
 const ICON_OPTIONS = [
-  { value: 'shield', label: '🛡️ Shield' },
-  { value: 'star', label: '⭐ Star' },
-  { value: 'crown', label: '👑 Crown' },
-  { value: 'bolt', label: '⚡ Bolt' },
-  { value: 'heart', label: '❤️ Heart' },
-  { value: 'eye', label: '👁️ Eye' },
-  { value: 'gear', label: '⚙️ Gear' },
-  { value: 'key', label: '🔑 Key' },
-  { value: 'lock', label: '🔒 Lock' },
-  { value: 'pencil', label: '✏️ Pencil' },
-  { value: 'wrench', label: '🔧 Wrench' },
-  { value: 'flag', label: '🚩 Flag' },
-  { value: 'book', label: '📖 Book' },
-  { value: 'bell', label: '🔔 Bell' },
-  { value: 'tag', label: '🏷️ Tag' },
-  { value: 'user-cog', label: '👤 Cog' },
-  { value: 'users', label: '👥 Users' },
-  { value: 'globe', label: '🌐 Globe' },
-  { value: 'chat', label: '💬 Chat' },
-  { value: 'code', label: '💻 Code' },
+  { value: 'shield', label: 'Shield' },
+  { value: 'star', label: 'Star' },
+  { value: 'crown', label: 'Crown' },
+  { value: 'bolt', label: 'Bolt' },
+  { value: 'heart', label: 'Heart' },
+  { value: 'eye', label: 'Eye' },
+  { value: 'gear', label: 'Gear' },
+  { value: 'key', label: 'Key' },
+  { value: 'lock', label: 'Lock' },
+  { value: 'pencil', label: 'Pencil' },
+  { value: 'wrench', label: 'Wrench' },
+  { value: 'flag', label: 'Flag' },
+  { value: 'book', label: 'Book' },
+  { value: 'bell', label: 'Bell' },
+  { value: 'tag', label: 'Tag' },
+  { value: 'user-cog', label: 'User Cog' },
+  { value: 'users', label: 'Users' },
+  { value: 'globe', label: 'Globe' },
+  { value: 'chat', label: 'Chat' },
+  { value: 'code', label: 'Code' },
 ];
 
-function RoleIcon({ icon }: { icon: string }) {
-  const emoji = ICON_OPTIONS.find(o => o.value === icon)?.label.split(' ')[0] || '🛡️';
-  return <span style={{ fontSize: 18 }}>{emoji}</span>;
+function RoleIcon({ icon, size = 18 }: { icon: string; size?: number }) {
+  const paths = SVG_PATHS[icon];
+  if (!paths) return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      {SVG_PATHS.shield}
+    </svg>
+  );
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+      {paths}
+    </svg>
+  );
 }
 
 export default function RolesSettingsPage() {
@@ -212,8 +247,8 @@ export default function RolesSettingsPage() {
       {/* Create Modal */}
       {(showCreate || editing) && (
         <div className="modal-overlay" onClick={() => { setShowCreate(false); setEditing(null); }}>
-          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 600 }}>
-            <div>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 600, maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ overflowY: 'auto', flex: 1, paddingRight: 4 }}>
               <h3>{editing ? 'Edit Role' : 'Create Role'}</h3>
               <p className="modal-desc">{editing ? 'Update role name, color, icon, and permissions' : 'Create a new role with custom permissions'}</p>
 

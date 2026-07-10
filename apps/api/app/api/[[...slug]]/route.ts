@@ -158,9 +158,21 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
 async function handler(request: NextRequest, slug: string[], method: string) {
   const ip = request.headers.get('x-forwarded-for') || '';
-  const session = await getSession(request);
+  let session: any = null;
+  try {
+    session = await getSession(request);
+  } catch (e: any) {
+    console.error('[HANDLER] getSession failed:', e?.message);
+  }
 
-  const [routes, blocked] = await Promise.all([loadRoutes(), loadBlocked()]);
+  let routes: any[] = [];
+  let blocked: any[] = [];
+  try {
+    [routes, blocked] = await Promise.all([loadRoutes(), loadBlocked()]);
+  } catch (e: any) {
+    console.error('[HANDLER] loadRoutes/loadBlocked failed:', e?.message);
+    return new NextResponse('Database connection error', { status: 500 });
+  }
 
   if (isBlocked(ip, session?.userId, blocked)) {
     await logRequest({ ip, method, path: slug.join('/'), userId: session?.userId, status: 403 });
@@ -175,7 +187,8 @@ async function handler(request: NextRequest, slug: string[], method: string) {
 
   if (route.internal) {
     let resp: NextResponse;
-    switch (route.path) {
+    try {
+      switch (route.path) {
       case 'auth/login':
         resp = await loginHandler(request);
         break;
@@ -279,6 +292,10 @@ async function handler(request: NextRequest, slug: string[], method: string) {
         break;
       default:
         resp = new NextResponse('Internal route not implemented', { status: 501 });
+    }
+    } catch (err: any) {
+      console.error(`[HANDLER] Internal route ${route.path} error:`, err?.message || err, err?.stack);
+      resp = new NextResponse('Internal server error', { status: 500 });
     }
     await logRequest({ ip, method, path: slug.join('/'), userId: session?.userId, status: resp.status });
     return resp;

@@ -16,8 +16,13 @@ export default function UnauthorizedPage() {
         <div style={{
           width: 56, height: 56, borderRadius: '50%', margin: '0 auto 20px',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(248,81,73,0.1)', fontSize: 28,
-        }}>⚠</div>
+          background: 'rgba(248,81,73,0.1)',
+        }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#f85149" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </div>
         <h1 style={{ fontSize: 22, fontWeight: 600, margin: '0 0 8px' }}>Access Denied</h1>
         <p style={{ fontSize: 14, color: 'rgba(230,237,243,0.5)', margin: '0 0 28px', lineHeight: 1.5 }}>
           You do not have permission to access this panel.

@@ -32,8 +32,8 @@ function isPdf(mime: string) { return mime === 'application/pdf'; }
 function FileIcon({ mime, url, alt }: { mime: string; url: string; alt: string }) {
   if (isImage(mime)) return <img src={url} alt={alt} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
   if (isVideo(mime)) return <video src={url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
-  if (isPdf(mime)) return <div style={{ fontSize: 28 }}>📄</div>;
-  return <div style={{ fontSize: 28 }}>📎</div>;
+  if (isPdf(mime)) return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg></div>;
+  return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" /></svg></div>;
 }
 
 export default function MediaLibraryPage() {
