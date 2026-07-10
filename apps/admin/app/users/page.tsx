@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import AdminSidebar from '../sidebar';
 import { apiFetch, isOnline } from '../lib';
-import { OnlineDot } from '../components';
 
 interface Role { id: string; name: string; color: string; icon: string; isSystem?: boolean; description?: string; }
 interface User {
@@ -10,14 +9,6 @@ interface User {
   photoUrl: string | null; phoneNumber: string | null; occupation: string | null;
   createdAt: string; lastActiveAt?: string; roles: Role[];
   isBanned?: boolean;
-}
-
-function RoleAvatar({ role }: { role: Role }) {
-  return <span style={{
-    display: 'inline-flex', alignItems: 'center', gap: 3,
-    padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 600,
-    background: role.color + '18', color: role.color, border: `1px solid ${role.color}33`,
-  }}>{role.name}</span>;
 }
 
 export default function AdminUsersPage() {
@@ -29,6 +20,10 @@ export default function AdminUsersPage() {
   const [editing, setEditing] = useState<User | null>(null);
   const [myRole, setMyRole] = useState<string>('');
   const [allRoles, setAllRoles] = useState<Role[]>([]);
+  const [resetPwUser, setResetPwUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMsg, setResetMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const limit = 100;
 
   const loadUsers = async (p: number, s: string) => {
@@ -51,6 +46,7 @@ export default function AdminUsersPage() {
   }, []);
 
   const handleSearch = (e: React.FormEvent) => { e.preventDefault(); setPage(1); loadUsers(1, search); };
+
   const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editing) return;
@@ -59,12 +55,14 @@ export default function AdminUsersPage() {
     const body: Record<string, unknown> = {
       name: (form.get('name') as string) || undefined,
       occupation: (form.get('occupation') as string) || undefined,
-      isLocked: form.get('isLocked') === 'true',
     };
-    if (adminRole === 'none') body.adminRole = null; else body.adminRole = adminRole;
+    if (isSuperAdmin) {
+      if (adminRole === 'none') body.adminRole = null; else body.adminRole = adminRole;
+    }
     const res = await apiFetch(`/api/admin/users/${editing.id}`, { method: 'PATCH', body: JSON.stringify(body) });
     if (res.ok) { setEditing(null); loadUsers(page, search); } else setError('Failed to update user');
   };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this user permanently? This cannot be undone.')) return;
     const res = await apiFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
@@ -84,6 +82,28 @@ export default function AdminUsersPage() {
     if (res.ok) loadUsers(page, search); else setError('Failed to update roles');
   };
 
+  const handleResetPassword = async () => {
+    if (!resetPwUser || !newPassword || newPassword.length < 8) return;
+    setResetLoading(true); setResetMsg(null);
+    try {
+      const res = await apiFetch(`/api/admin/users/${resetPwUser.id}/password`, {
+        method: 'POST',
+        body: JSON.stringify({ password: newPassword }),
+      });
+      if (res.ok) {
+        setResetMsg({ type: 'success', text: `Password reset for ${resetPwUser.email}` });
+        setResetPwUser(null); setNewPassword('');
+      } else {
+        const text = await res.text();
+        setResetMsg({ type: 'error', text: text || 'Failed to reset password' });
+      }
+    } catch {
+      setResetMsg({ type: 'error', text: 'Connection error' });
+    }
+    setResetLoading(false);
+    setTimeout(() => setResetMsg(null), 4000);
+  };
+
   const totalPages = Math.ceil(total / limit);
   const isSuperAdmin = myRole === 'super_admin';
   const isAdmin = myRole === 'admin' || isSuperAdmin;
@@ -101,6 +121,11 @@ export default function AdminUsersPage() {
         <h2>Users</h2>
         <p className="desc">{total} total users</p>
         {error && <p className="error">{error}</p>}
+        {resetMsg && (
+          <div className={`toast toast-${resetMsg.type}`} style={{ position: 'relative', bottom: 'auto', right: 'auto', marginBottom: 12 }}>
+            {resetMsg.text}
+          </div>
+        )}
         <form onSubmit={handleSearch} className="search-form">
           <input type="text" placeholder="Search by email or name..." value={search} onChange={e => setSearch(e.target.value)} />
           <button type="submit" className="btn btn-primary">Search</button>
@@ -109,16 +134,13 @@ export default function AdminUsersPage() {
         <div className="card" style={{ padding: 0 }}>
           <div className="table-wrapper">
             <table>
-              <thead><tr><th>Status</th><th>Email</th><th>Name</th><th>Role</th><th>Custom Roles</th><th>Phone</th><th>Occupation</th><th>Actions</th></tr></thead>
+              <thead><tr><th>Status</th><th>Email</th><th>Name</th><th>Role</th><th>Custom Roles</th><th>Actions</th></tr></thead>
               <tbody>
                 {users.map(u => {
                   const status = getStatusLabel(u);
                   return (
                   <tr key={u.id}>
-                    <td><span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11,
-                      color: status.color, fontWeight: 500,
-                    }}>
+                    <td><span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: status.color, fontWeight: 500 }}>
                       <span style={{ width: 7, height: 7, borderRadius: '50%', background: status.color, display: 'inline-block' }} />
                       {status.label}
                     </span></td>
@@ -127,22 +149,31 @@ export default function AdminUsersPage() {
                     <td>{u.adminRole ? <span className={`badge badge-${u.adminRole}`}>{u.adminRole}</span> : <span className="badge badge-member">member</span>}</td>
                     <td>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                        {u.roles.map(r => <RoleAvatar key={r.id} role={r} />)}
+                        {u.roles.map(r => (
+                          <span key={r.id} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: 3,
+                            padding: '2px 7px', borderRadius: 4, fontSize: 10, fontWeight: 600,
+                            background: r.color + '18', color: r.color, border: `1px solid ${r.color}33`,
+                          }}>{r.name}</span>
+                        ))}
                         {u.roles.length === 0 && <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>—</span>}
                       </div>
                     </td>
-                    <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>{u.phoneNumber || '—'}</td>
-                    <td style={{ fontSize: 12 }}>{u.occupation || '—'}</td>
                     <td>
-                      <div className="flex gap-2" style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                         <button className="btn btn-sm btn-outline" onClick={() => setEditing(u)}>Edit</button>
+                        {isSuperAdmin && (
+                          <button className="btn btn-sm btn-outline" onClick={() => { setResetPwUser(u); setNewPassword(''); setResetMsg(null); }} style={{ borderColor: 'var(--warning-subtle, rgba(244,185,66,0.3))', color: '#F4B942' }}>
+                            Reset Password
+                          </button>
+                        )}
                         {isSuperAdmin && <button className="btn btn-sm btn-danger" onClick={() => handleDelete(u.id)}>Delete</button>}
                       </div>
                     </td>
                   </tr>
                   );
                 })}
-                {users.length === 0 && <tr><td colSpan={8}><div className="empty-state">No users found</div></td></tr>}
+                {users.length === 0 && <tr><td colSpan={6}><div className="empty-state">No users found</div></td></tr>}
               </tbody>
             </table>
           </div>
@@ -171,7 +202,7 @@ export default function AdminUsersPage() {
                   </div>
                   {isSuperAdmin && (
                     <div className="field">
-                      <div className="field-label">Admin Role (legacy)</div>
+                      <div className="field-label">Admin Role</div>
                       <select className="select" name="adminRole" defaultValue={editing.adminRole || 'none'}>
                         <option value="none">None (regular user)</option>
                         <option value="super_admin">Super Admin</option>
@@ -188,7 +219,7 @@ export default function AdminUsersPage() {
                 </form>
 
                 {/* Custom Role Assignment */}
-                {myRole === 'super_admin' && allRoles.length > 0 && (
+                {isSuperAdmin && allRoles.length > 0 && (
                   <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 10 }}>Custom Roles</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -218,7 +249,42 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        
+        {/* Reset Password Modal */}
+        {resetPwUser && (
+          <div className="modal-overlay" onClick={() => setResetPwUser(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 440 }}>
+              <h3 style={{ marginBottom: 4 }}>Reset Password</h3>
+              <p className="modal-desc" style={{ marginBottom: 20 }}>
+                Set a new password for <strong>{resetPwUser.email}</strong>
+              </p>
+              <div className="field">
+                <div className="field-label">New Password</div>
+                <input
+                  className="input"
+                  type="password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Minimum 8 characters"
+                  autoFocus
+                />
+                {newPassword.length > 0 && newPassword.length < 8 && (
+                  <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>Password must be at least 8 characters</p>
+                )}
+              </div>
+              <div className="form-actions">
+                <button className="btn btn-outline" onClick={() => setResetPwUser(null)}>Cancel</button>
+                <button
+                  className="btn btn-primary"
+                  disabled={resetLoading || newPassword.length < 8}
+                  onClick={handleResetPassword}
+                  style={{ background: 'linear-gradient(135deg, #F4B942, #d4a030)' }}
+                >
+                  {resetLoading ? 'Resetting...' : 'Reset Password'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
