@@ -34,6 +34,9 @@ import {
   integrationsHandler,
   userActivityHandler,
   preferencesHandler,
+  setPasswordHandler,
+  requestProfileEditOtpHandler,
+  verifyProfileEditOtpHandler,
 } from '../../../lib/userHandlers';
 
 import {
@@ -55,7 +58,8 @@ const INTERNAL_ROUTES = [
   'auth/google', 'auth/google/callback', 'auth/github', 'auth/github/callback',
   'auth/verify-2fa', 'auth/recovery-2fa',
   'users/me', 'activity', 'workspaces',
-  'profile', 'security/password', 'security/sessions',
+  'profile', 'security/password', 'security/sessions', 'security/set-password',
+  'profile/request-edit-otp', 'profile/verify-edit-otp',
   'notifications', 'integrations', 'user/activity', 'preferences',
   'email/config', 'email/templates', 'email/test',
 ];
@@ -108,6 +112,9 @@ function matchRoute(slug: string[], method: string, routes: any[]) {
       'profile': ['GET', 'PATCH'],
       'security/password': ['POST'],
       'security/sessions': ['GET', 'DELETE'],
+      'security/set-password': ['POST'],
+      'profile/request-edit-otp': ['POST'],
+      'profile/verify-edit-otp': ['POST'],
       'notifications': ['GET', 'PATCH'],
       'integrations': ['GET', 'POST', 'DELETE'],
       'user/activity': ['GET'],
@@ -236,6 +243,15 @@ async function handler(request: NextRequest, slug: string[], method: string) {
         break;
       case 'security/sessions':
         resp = await sessionsHandler(request);
+        break;
+      case 'security/set-password':
+        resp = await setPasswordHandler(request);
+        break;
+      case 'profile/request-edit-otp':
+        resp = await requestProfileEditOtpHandler(request);
+        break;
+      case 'profile/verify-edit-otp':
+        resp = await verifyProfileEditOtpHandler(request);
         break;
       case 'notifications':
         resp = await notificationsHandler(request);

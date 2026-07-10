@@ -22,7 +22,13 @@ export async function loginHandler(request: NextRequest) {
     const { email, password } = parsed.data;
 
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !(await verifyPassword(user.passwordHash, password))) {
+    if (!user) {
+      return new NextResponse('Invalid email or password', { status: 401 });
+    }
+    if (!user.passwordHash) {
+      return new NextResponse('This account uses social login. Please sign in with Google or GitHub.', { status: 401 });
+    }
+    if (!(await verifyPassword(user.passwordHash, password))) {
       return new NextResponse('Invalid email or password', { status: 401 });
     }
 
@@ -357,21 +363,45 @@ export async function googleAuthCallbackHandler(request: NextRequest) {
   const googleId = profile.id as string;
   const email = profile.email as string;
   const name = profile.name as string;
+  const photoUrl = profile.picture as string | undefined;
 
   // Find or create user
   let user = await prisma.user.findUnique({ where: { googleId } });
   if (!user) {
     user = await prisma.user.findUnique({ where: { email } });
     if (user) {
-      // link googleId
-      await prisma.user.update({ where: { id: user.id }, data: { googleId } });
+      // link googleId + update profile from OAuth
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { googleId, photoUrl: user.photoUrl || photoUrl || undefined },
+      });
     } else {
-      // create new user (no password)
+      // create new user (no password needed for OAuth)
+      const adminCount = await prisma.user.count({ where: { adminRole: { not: null } } });
       user = await prisma.user.create({
-        data: { email, name, googleId, passwordHash: '' },
+        data: {
+          email, name, googleId, photoUrl: photoUrl || undefined,
+          adminRole: adminCount === 0 ? 'super_admin' : undefined,
+        },
+      });
+      // Log the new OAuth user creation
+      await prisma.auditEvent.create({
+        data: { actorId: user.id, action: 'user.created', targetType: 'user', targetId: user.id, metadata: { provider: 'google', email } },
       });
     }
+  } else {
+    // Existing OAuth user — refresh photo if not set
+    if (!user.photoUrl && photoUrl) {
+      await prisma.user.update({ where: { id: user.id }, data: { photoUrl } });
+    }
   }
+
+  // Create Integration record
+  await prisma.integration.upsert({
+    where: { userId_provider: { userId: user.id, provider: 'google' } },
+    update: { connected: true, metadata: { googleId, email } },
+    create: { userId: user.id, provider: 'google', connected: true, metadata: { googleId, email } },
+  });
 
   // Create session
   const ip = request.headers.get('x-forwarded-for') || '';
@@ -431,6 +461,7 @@ export async function githubAuthCallbackHandler(request: NextRequest) {
   const githubId = String(profile.id);
   let email = profile.email;
   const name = profile.name || profile.login;
+  const photoUrl = profile.avatar_url as string | undefined;
 
   if (!email) {
     const emailsRes = await fetch('https://api.github.com/user/emails', {
@@ -447,15 +478,38 @@ export async function githubAuthCallbackHandler(request: NextRequest) {
   if (!user && email) {
     user = await prisma.user.findUnique({ where: { email } });
     if (user) {
-      await prisma.user.update({ where: { id: user.id }, data: { githubId } });
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { githubId, photoUrl: user.photoUrl || photoUrl || undefined },
+      });
     } else {
+      const adminCount = await prisma.user.count({ where: { adminRole: { not: null } } });
       user = await prisma.user.create({
-        data: { email: email || `${githubId}@github.user`, name, githubId, passwordHash: '' },
+        data: {
+          email: email || `${githubId}@github.user`, name, githubId,
+          photoUrl: photoUrl || undefined,
+          adminRole: adminCount === 0 ? 'super_admin' : undefined,
+        },
+      });
+      await prisma.auditEvent.create({
+        data: { actorId: user.id, action: 'user.created', targetType: 'user', targetId: user.id, metadata: { provider: 'github', email } },
       });
     }
-  } else if (!user) {
+  } else if (user) {
+    // Existing OAuth user — refresh photo if not set
+    if (!user.photoUrl && photoUrl) {
+      await prisma.user.update({ where: { id: user.id }, data: { photoUrl } });
+    }
+  } else {
     return new NextResponse('GitHub email not available', { status: 400 });
   }
+
+  // Create Integration record
+  await prisma.integration.upsert({
+    where: { userId_provider: { userId: user.id, provider: 'github' } },
+    update: { connected: true, metadata: { githubId, email } },
+    create: { userId: user.id, provider: 'github', connected: true, metadata: { githubId, email } },
+  });
 
   const ip = request.headers.get('x-forwarded-for') || '';
   const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);

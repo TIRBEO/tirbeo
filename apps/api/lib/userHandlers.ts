@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from './db/prisma';
 import { getSession } from './session';
 import { hashPassword, verifyPassword } from './auth/password';
+import { generateOtpCode, storeOtp, verifyOtpCode, sendEmailOtp } from './auth/otp';
 
 export async function extendedProfileHandler(request: NextRequest) {
   const session = await getSession(request);
@@ -21,10 +22,17 @@ export async function extendedProfileHandler(request: NextRequest) {
         emailVerified: true, phoneVerified: true, is2FAEnabled: true,
         companyName: true, companyRole: true, industry: true, companySize: true,
         createdAt: true, updatedAt: true,
+        passwordHash: true, googleId: true, githubId: true,
       },
     });
     if (!user) return new NextResponse('User not found', { status: 404 });
-    return NextResponse.json(user);
+    const { passwordHash, googleId, githubId, ...safe } = user;
+    return NextResponse.json({
+      ...safe,
+      hasPassword: !!passwordHash,
+      hasGoogle: !!googleId,
+      hasGithub: !!githubId,
+    });
   }
 
   if (request.method === 'PATCH') {
@@ -218,4 +226,57 @@ export async function preferencesHandler(request: NextRequest) {
   }
 
   return new NextResponse('Method not allowed', { status: 405 });
+}
+
+// POST /api/security/set-password — OAuth users can set a password after verifying via OTP
+export async function setPasswordHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+  const body = await request.json();
+  const { password, otpCode } = body;
+  if (!password || typeof password !== 'string' || password.length < 8) {
+    return new NextResponse('Password must be at least 8 characters', { status: 400 });
+  }
+  if (!otpCode || typeof otpCode !== 'string') {
+    return new NextResponse('OTP code required', { status: 400 });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  if (!user) return new NextResponse('User not found', { status: 404 });
+
+  const ok = await verifyOtpCode(session.userId, 'email', otpCode);
+  if (!ok) return new NextResponse('Invalid or expired verification code', { status: 400 });
+
+  const hash = await hashPassword(password);
+  await prisma.user.update({ where: { id: session.userId }, data: { passwordHash: hash } });
+  return new NextResponse('Password set successfully', { status: 200 });
+}
+
+// POST /api/profile/request-edit-otp — send OTP before sensitive profile edits
+export async function requestProfileEditOtpHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  if (!user?.email) return new NextResponse('No email on file', { status: 400 });
+
+  const code = generateOtpCode();
+  await storeOtp(session.userId, 'email', code);
+  await sendEmailOtp(user.email, code);
+  return new NextResponse('Verification code sent', { status: 200 });
+}
+
+// POST /api/profile/verify-edit-otp — verify OTP for sensitive profile edit
+export async function verifyProfileEditOtpHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+  const { code } = await request.json();
+  if (typeof code !== 'string') return new NextResponse('Invalid payload', { status: 400 });
+
+  const ok = await verifyOtpCode(session.userId, 'email', code);
+  if (!ok) return new NextResponse('Invalid or expired verification code', { status: 400 });
+
+  return NextResponse.json({ verified: true, message: 'Profile edit authorized' });
 }

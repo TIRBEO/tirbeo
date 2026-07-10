@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Save, Camera } from "lucide-react";
+import { Save, Shield, KeyRound } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 
@@ -12,6 +12,7 @@ type Profile = {
   twitter: string | null; country: string | null; timezone: string | null;
   language: string | null; companyName: string | null; companyRole: string | null;
   industry: string | null; companySize: string | null;
+  hasPassword: boolean; hasGoogle: boolean; hasGithub: boolean;
   createdAt: string; updatedAt: string;
 };
 
@@ -21,13 +22,25 @@ export default function ProfilePage() {
   const [toast, setToast] = useState<string | null>(null);
   const fetched = useRef(false);
 
+  const [showSetPassword, setShowSetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [settingPassword, setSettingPassword] = useState(false);
+
   useEffect(() => {
     if (fetched.current) return;
     fetched.current = true;
-    fetch(`${API}/api/profile`, { credentials: "include" }).then(r => r.ok ? r.json() : null).then(setP).catch(() => {});
+    fetch(`${API}/api/profile`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(setP)
+      .catch(() => {});
   }, []);
 
-  const update = (key: keyof Profile, val: string | null) => { if (p) setP({ ...p, [key]: val }); };
+  const update = (key: keyof Profile, val: string | null) => {
+    if (p) setP({ ...p, [key]: val });
+  };
 
   const save = async () => {
     if (!p) return;
@@ -50,6 +63,50 @@ export default function ProfilePage() {
     setSaving(false);
   };
 
+  const requestOtp = async () => {
+    try {
+      const res = await fetch(`${API}/api/profile/request-edit-otp`, {
+        method: "POST", credentials: "include",
+      });
+      if (res.ok) { setOtpSent(true); setToast("Code sent to your email"); }
+      else setToast("Failed to send code");
+    } catch { setToast("Connection error"); }
+  };
+
+  const verifyOtp = async () => {
+    try {
+      const res = await fetch(`${API}/api/profile/verify-edit-otp`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: otpCode }),
+      });
+      if (res.ok) { setOtpVerified(true); setToast("Verified!"); }
+      else setToast("Invalid code");
+    } catch { setToast("Connection error"); }
+  };
+
+  const setPassword = async () => {
+    if (!newPassword || newPassword.length < 8) { setToast("Password must be 8+ chars"); return; }
+    setSettingPassword(true);
+    try {
+      const res = await fetch(`${API}/api/security/set-password`, {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword, otpCode }),
+      });
+      if (res.ok) {
+        setToast("Password set! You can now login with email + password");
+        setP(p ? { ...p, hasPassword: true } : p);
+        setShowSetPassword(false);
+        setNewPassword(""); setOtpCode(""); setOtpSent(false); setOtpVerified(false);
+      } else {
+        const msg = await res.text();
+        setToast(msg || "Failed to set password");
+      }
+    } catch { setToast("Connection error"); }
+    setSettingPassword(false);
+  };
+
   if (!p) return null;
 
   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
@@ -70,6 +127,8 @@ export default function ProfilePage() {
     </div>
   );
 
+  const isOAuth = !p.hasPassword && (p.hasGoogle || p.hasGithub);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -82,6 +141,52 @@ export default function ProfilePage() {
         </button>
       </div>
 
+      {isOAuth && !p.hasPassword && (
+        <div className="glass card-section" style={{ borderLeft: "3px solid var(--accent, #D8B36A)" }}>
+          <div className="flex items-start gap-3">
+            <Shield size={20} style={{ color: "var(--accent, #D8B36A)", marginTop: 2, flexShrink: 0 }} />
+            <div className="flex-1">
+              <p className="text-sm font-medium" style={{ color: "var(--text)" }}>
+                Signed in with {p.hasGoogle ? "Google" : "GitHub"}
+              </p>
+              <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+                You don&apos;t have a password yet. Set one to enable email + password login as a backup.
+              </p>
+              {!showSetPassword ? (
+                <button onClick={() => setShowSetPassword(true)} className="btn btn-outline mt-3" style={{ fontSize: 12, padding: "6px 14px" }}>
+                  <KeyRound size={13} /> Set Password
+                </button>
+              ) : (
+                <div className="mt-3 space-y-3" style={{ maxWidth: 360 }}>
+                  {!otpSent ? (
+                    <button onClick={requestOtp} className="btn btn-outline" style={{ fontSize: 12, padding: "6px 14px" }}>
+                      Send verification code
+                    </button>
+                  ) : !otpVerified ? (
+                    <div className="flex gap-2">
+                      <input value={otpCode} onChange={e => setOtpCode(e.target.value)}
+                        placeholder="Enter 6-digit code" maxLength={6}
+                        className="input-field" style={{ flex: 1, fontSize: 13 }} />
+                      <button onClick={verifyOtp} className="btn btn-primary" style={{ fontSize: 12, padding: "6px 14px" }}>
+                        Verify
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                        placeholder="New password (8+ characters)" className="input-field" style={{ fontSize: 13 }} />
+                      <button onClick={setPassword} disabled={settingPassword} className="btn btn-primary" style={{ fontSize: 12, padding: "6px 14px" }}>
+                        {settingPassword ? "Setting..." : "Set Password"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <Section title="Personal Information">
         <div className="flex items-center gap-4">
           <div className="avatar" style={{ width: 64, height: 64, fontSize: 22 }}>
@@ -90,6 +195,9 @@ export default function ProfilePage() {
           <div>
             <p className="text-sm font-medium" style={{ color: "var(--text)" }}>{p.name || "No name set"}</p>
             <p className="text-xs" style={{ color: "var(--text-muted)" }}>{p.email}</p>
+            <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
+              {isOAuth ? `Connected via ${p.hasGoogle ? "Google" : "GitHub"}` : "Email + Password account"}
+            </p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -126,7 +234,7 @@ export default function ProfilePage() {
         </div>
       </Section>
 
-      {toast && <div className={`toast ${toast.includes("saved") ? "toast-success" : "toast-error"}`}>{toast}</div>}
+      {toast && <div className={`toast ${toast.includes("saved") || toast.includes("Verified") || toast.includes("set") || toast.includes("Password") ? "toast-success" : "toast-error"}`}>{toast}</div>}
     </div>
   );
 }
