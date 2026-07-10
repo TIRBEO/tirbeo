@@ -113,53 +113,53 @@ async function sendViaSmtp(
 const FALLBACK_TEMPLATES: Record<string, { subject: string; html: string }> = {
   signup_otp: {
     subject: 'Your Tirbeo verification code',
-    html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
-      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
-      <p style="color:#A6A6A6;font-size:14px;margin:0 0 8px">Your verification code</p>
-      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(255,255,255,0.06);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(255,255,255,0.08)">{{otp}}</div>
-      <p style="color:#7B7E84;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
-      <p style="color:#7B7E84;font-size:12px;margin:16px 0 0">If you didn't request this, you can safely ignore this email.</p>
+    html: `<div style="background:#08150F;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#6b8a7a;margin-bottom:32px">Tirbeo</div>
+      <p style="color:#B7C6BE;font-size:14px;margin:0 0 8px">Your verification code</p>
+      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(86,149,120,0.08);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(86,149,120,0.15)">{{otp}}</div>
+      <p style="color:#6b8a7a;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
+      <p style="color:#6b8a7a;font-size:12px;margin:16px 0 0">If you didn't request this, you can safely ignore this email.</p>
     </div>`,
   },
   login_otp: {
     subject: 'Your Tirbeo login code',
-    html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
-      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
-      <p style="color:#A6A6A6;font-size:14px;margin:0 0 8px">Your login code</p>
-      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(255,255,255,0.06);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(255,255,255,0.08)">{{otp}}</div>
-      <p style="color:#7B7E84;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
-      <p style="color:#7B7E84;font-size:12px;margin:16px 0 0">If you didn't request this, you can safely ignore this email.</p>
+    html: `<div style="background:#08150F;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#6b8a7a;margin-bottom:32px">Tirbeo</div>
+      <p style="color:#B7C6BE;font-size:14px;margin:0 0 8px">Your login code</p>
+      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(86,149,120,0.08);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(86,149,120,0.15)">{{otp}}</div>
+      <p style="color:#6b8a7a;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
+      <p style="color:#6b8a7a;font-size:12px;margin:16px 0 0">If you didn't request this, you can safely ignore this email.</p>
     </div>`,
   },
   welcome: {
     subject: 'Welcome to Tirbeo',
-    html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
-      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
+    html: `<div style="background:#08150F;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#6b8a7a;margin-bottom:32px">Tirbeo</div>
       <h1 style="font-size:24px;font-weight:700;margin:0 0 16px;color:#F2EEE8">Welcome aboard{{#if name}}, {{name}}{{/if}}!</h1>
-      <p style="color:#A6A6A6;font-size:14px;margin:0 0 24px">Your account is ready. Start exploring Tirbeo today.</p>
-      <a href="https://dashboard.tirbeo.app" style="display:inline-block;background:#fff;color:#0B0B0D;font-weight:600;font-size:14px;padding:14px 36px;border-radius:12px;text-decoration:none;transition:all 0.2s">Go to Dashboard</a>
-      <p style="color:#7B7E84;font-size:12px;margin:32px 0 0">If you have any questions, reply to this email — we're here to help.</p>
+      <p style="color:#B7C6BE;font-size:14px;margin:0 0 24px">Your account is ready. Start exploring Tirbeo today.</p>
+      <a href="https://dashboard.tirbeo.app" style="display:inline-block;background:linear-gradient(135deg,#569578,#275d46);color:#fff;font-weight:600;font-size:14px;padding:14px 36px;border-radius:12px;text-decoration:none;box-shadow:0 4px 16px rgba(86,149,120,0.3)">Go to Dashboard</a>
+      <p style="color:#6b8a7a;font-size:12px;margin:32px 0 0">If you have any questions, reply to this email — we're here to help.</p>
     </div>`,
   },
   password_reset: {
     subject: 'Reset your Tirbeo password',
-    html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
-      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
+    html: `<div style="background:#08150F;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#6b8a7a;margin-bottom:32px">Tirbeo</div>
       <h1 style="font-size:24px;font-weight:700;margin:0 0 16px;color:#F2EEE8">Password Reset</h1>
-      <p style="color:#A6A6A6;font-size:14px;margin:0 0 8px">Use the code below to reset your password:</p>
-      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(255,255,255,0.06);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(255,255,255,0.08)">{{otp}}</div>
-      <p style="color:#7B7E84;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
-      <p style="color:#7B7E84;font-size:12px;margin:16px 0 0">If you didn't request this, you can safely ignore this email.</p>
+      <p style="color:#B7C6BE;font-size:14px;margin:0 0 8px">Use the code below to reset your password:</p>
+      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(86,149,120,0.08);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(86,149,120,0.15)">{{otp}}</div>
+      <p style="color:#6b8a7a;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
+      <p style="color:#6b8a7a;font-size:12px;margin:16px 0 0">If you didn't request this, you can safely ignore this email.</p>
     </div>`,
   },
   email_verify: {
     subject: 'Verify your Tirbeo email',
-    html: `<div style="background:#0B0B0D;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
-      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#7B7E84;margin-bottom:32px">Tirbeo</div>
+    html: `<div style="background:#08150F;color:#F2EEE8;font-family:Inter,system-ui,sans-serif;padding:48px 24px;text-align:center;max-width:480px;margin:0 auto;border-radius:16px">
+      <div style="font-size:13px;font-weight:600;letter-spacing:0.2em;text-transform:uppercase;color:#6b8a7a;margin-bottom:32px">Tirbeo</div>
       <h1 style="font-size:24px;font-weight:700;margin:0 0 16px;color:#F2EEE8">Verify your email</h1>
-      <p style="color:#A6A6A6;font-size:14px;margin:0 0 8px">Your verification code:</p>
-      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(255,255,255,0.06);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(255,255,255,0.08)">{{otp}}</div>
-      <p style="color:#7B7E84;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
+      <p style="color:#B7C6BE;font-size:14px;margin:0 0 8px">Your verification code:</p>
+      <div style="font-size:48px;font-weight:700;letter-spacing:8px;margin:20px 0;color:#F2EEE8;background:rgba(86,149,120,0.08);padding:16px 24px;border-radius:12px;display:inline-block;border:1px solid rgba(86,149,120,0.15)">{{otp}}</div>
+      <p style="color:#6b8a7a;font-size:13px;margin:28px 0 0">This code expires in 10 minutes.</p>
     </div>`,
   },
 };

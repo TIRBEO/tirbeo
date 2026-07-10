@@ -51,7 +51,7 @@ export default function DashboardHome() {
         </div>
         <div className="flex-1">
           <h1 className="text-xl font-bold" style={{ color: "#F2EEE8" }}>{user.name || "Welcome"}</h1>
-          <p className="text-sm mt-0.5" style={{ color: "#A6A6A6" }}>
+          <p className="text-sm mt-0.5" style={{ color: "#B7C6BE" }}>
             {user.occupation || "Member"}{user.adminRole ? ` · ${user.adminRole.replace("_", " ")}` : ""}
           </p>
         </div>
@@ -63,14 +63,14 @@ export default function DashboardHome() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           { label: "Completion", value: `${pct}%`, icon: Zap, color: "#F2EEE8" },
-          { label: "Role", value: user.adminRole?.replace("_", " ") || "Member", icon: User, color: "#A6A6A6" },
-          { label: "2FA", value: user.is2FAEnabled ? "Active" : "Off", icon: Shield, color: user.is2FAEnabled ? "#22c55e" : "#ef4444" },
-          { label: "Verified", value: user.emailVerified ? "Yes" : "No", icon: Key, color: user.emailVerified ? "#22c55e" : "#ef4444" },
+          { label: "Role", value: user.adminRole?.replace("_", " ") || "Member", icon: User, color: "#B7C6BE" },
+          { label: "2FA", value: user.is2FAEnabled ? "Active" : "Off", icon: Shield, color: user.is2FAEnabled ? "#59C173" : "#E45D5D" },
+          { label: "Verified", value: user.emailVerified ? "Yes" : "No", icon: Key, color: user.emailVerified ? "#59C173" : "#E45D5D" },
         ].map((s) => (
           <div key={s.label} className="glass" style={{ padding: "16px 18px" }}>
             <div className="flex items-center gap-2 mb-2">
-              <s.icon size={14} style={{ color: "#7B7E84" }} />
-              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "#7B7E84" }}>{s.label}</span>
+              <s.icon size={14} style={{ color: "#6b8a7a" }} />
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "#6b8a7a" }}>{s.label}</span>
             </div>
             <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
           </div>
@@ -80,7 +80,7 @@ export default function DashboardHome() {
       <div className="glass" style={{ padding: "20px 24px" }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <Activity size={16} style={{ color: "#7B7E84" }} />
+            <Activity size={16} style={{ color: "#6b8a7a" }} />
             <h3 className="text-sm font-semibold" style={{ color: "#F2EEE8" }}>Quick Actions</h3>
           </div>
         </div>
@@ -93,11 +93,11 @@ export default function DashboardHome() {
           ].map(q => (
             <Link key={q.href} href={q.href} className="glass-subtle group" style={{ padding: "14px 16px", display: "block", textDecoration: "none", transition: "all 0.2s" }}>
               <div className="flex items-center justify-between mb-2">
-                <q.icon size={18} style={{ color: "#A6A6A6" }} />
-                <ArrowUpRight size={12} style={{ color: "#7B7E84" }} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                <q.icon size={18} style={{ color: "#B7C6BE" }} />
+                <ArrowUpRight size={12} style={{ color: "#6b8a7a" }} className="opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               <p className="text-sm font-medium" style={{ color: "#F2EEE8" }}>{q.label}</p>
-              <p className="text-xs mt-0.5" style={{ color: "#7B7E84" }}>{q.desc}</p>
+              <p className="text-xs mt-0.5" style={{ color: "#6b8a7a" }}>{q.desc}</p>
             </Link>
           ))}
         </div>
@@ -106,23 +106,23 @@ export default function DashboardHome() {
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="glass" style={{ padding: "20px 24px" }}>
           <div className="flex items-center gap-2 mb-4">
-            <CheckCircle2 size={16} style={{ color: "#7B7E84" }} />
+            <CheckCircle2 size={16} style={{ color: "#6b8a7a" }} />
             <h3 className="text-sm font-semibold" style={{ color: "#F2EEE8" }}>Account Status</h3>
           </div>
           <div className="space-y-2">
             {checks.map(c => (
               <div key={c.label} className="flex items-center justify-between py-1.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                <span className="text-sm" style={{ color: "#A6A6A6" }}>{c.label}</span>
+                <span className="text-sm" style={{ color: "#B7C6BE" }}>{c.label}</span>
                 {c.ok ? (
-                  <CheckCircle2 size={14} style={{ color: "#22c55e" }} />
+                  <CheckCircle2 size={14} style={{ color: "#59C173" }} />
                 ) : (
-                  <XCircle size={14} style={{ color: "#7B7E84" }} />
+                  <XCircle size={14} style={{ color: "#6b8a7a" }} />
                 )}
               </div>
             ))}
           </div>
           {pct < 100 && (
-            <Link href="/dashboard/profile" className="text-xs mt-3 inline-block" style={{ color: "#D8B36A", textDecoration: "none" }}>
+            <Link href="/dashboard/profile" className="text-xs mt-3 inline-block" style={{ color: "#569578", textDecoration: "none" }}>
               Complete your profile →
             </Link>
           )}
@@ -130,17 +130,17 @@ export default function DashboardHome() {
 
         <div className="glass" style={{ padding: "20px 24px" }}>
           <div className="flex items-center gap-2 mb-4">
-            <Clock size={16} style={{ color: "#7B7E84" }} />
+            <Clock size={16} style={{ color: "#6b8a7a" }} />
             <h3 className="text-sm font-semibold" style={{ color: "#F2EEE8" }}>Recent Activity</h3>
           </div>
           {activity.length === 0 ? (
-            <p className="text-sm" style={{ color: "#7B7E84" }}>No recent activity</p>
+            <p className="text-sm" style={{ color: "#6b8a7a" }}>No recent activity</p>
           ) : (
             <div className="space-y-0">
               {activity.map((a) => (
                 <div key={a.id} className="table-row">
-                  <span className="text-sm" style={{ color: "#A6A6A6" }}>{a.action}</span>
-                  <span className="text-xs" style={{ color: "#7B7E84" }}>{new Date(a.createdAt).toLocaleDateString()}</span>
+                  <span className="text-sm" style={{ color: "#B7C6BE" }}>{a.action}</span>
+                  <span className="text-xs" style={{ color: "#6b8a7a" }}>{new Date(a.createdAt).toLocaleDateString()}</span>
                 </div>
               ))}
             </div>
@@ -149,8 +149,8 @@ export default function DashboardHome() {
       </div>
 
       <div className="glass-subtle" style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
-        <p className="text-xs" style={{ color: "#7B7E84" }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#59C173", flexShrink: 0 }} />
+        <p className="text-xs" style={{ color: "#6b8a7a" }}>
           Member since {new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
           {user.country ? ` · ${user.country}` : ""}
           {user.language ? ` · ${user.language.toUpperCase()}` : ""}

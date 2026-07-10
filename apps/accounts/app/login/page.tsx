@@ -4,71 +4,80 @@ import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { appUrl } from "@tirbeo/utils";
 import { motion } from "motion/react";
-import { Chrome, Github, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Chrome, Github, Eye, EyeOff, ArrowLeft, Check, Loader2, Shield, Mail, User, Briefcase, Phone, Globe, MessageSquare } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const AVATAR_SEEDS = ["Felix", "Luna", "Milo", "Nala", "Oscar", "Pixel", "Ruby", "Sage", "Tango", "Ursa", "Vex", "Willow", "Xena", "Yuki", "Zara", "Aria", "Blaze", "Cleo", "Dexter", "Ember"];
-const AVATAR_URLS = AVATAR_SEEDS.map(s => `https://api.dicebear.com/7.x/adventurer/svg?seed=${s}&backgroundColor=1a1a2e,16213e,0f3460,533483,2b2d42`);
+const AVATAR_URLS = AVATAR_SEEDS.map(s => `https://api.dicebear.com/7.x/adventurer/svg?seed=${s}&backgroundColor=08150F,101c13,12271D,1a3326,275d46`);
 
 function StepItem({ number, text, active, done }: { number: number; text: string; active?: boolean; done?: boolean }) {
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-      active ? "bg-white text-black border border-white" :
-      done ? "bg-white/10 text-white/80" :
-      "bg-brand-gray text-white/40 border-none"
+    <div className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${
+      active ? "bg-accent-green/20 border border-accent-green/30" :
+      done ? "bg-white/5 border border-white/5" :
+      "bg-white/[0.02] border border-transparent"
     }`}>
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium ${
-        active ? "bg-black text-white" :
-        done ? "bg-white/20 text-white" :
-        "bg-white/10 text-white/40"
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
+        active ? "bg-gradient-to-br from-accent-green to-primary-green text-white shadow-lg shadow-accent-green/20" :
+        done ? "bg-success/20 text-success" :
+        "bg-white/5 text-white/30"
       }`}>
-        {done ? "✓" : String(number).padStart(2, "0")}
+        {done ? <Check size={16} /> : number}
       </div>
-      <span className={`text-sm font-medium ${active ? "" : done ? "text-white/70" : "text-white/40"}`}>{text}</span>
+      <div>
+        <span className={`text-sm font-semibold block ${active ? "text-white" : done ? "text-white/60" : "text-white/30"}`}>{text}</span>
+        <span className="text-xs text-white/20">{active ? "In progress" : done ? "Completed" : "Upcoming"}</span>
+      </div>
     </div>
   );
 }
 
 function SocialButton({ icon: Icon, label, onClick, disabled }: { icon: React.ElementType; label: string; onClick?: () => void; disabled?: boolean }) {
   return (
-    <button type="button" onClick={onClick} disabled={disabled} className="flex items-center justify-center gap-2 bg-black border border-white/10 rounded-xl px-4 py-3 text-sm font-medium text-white hover:bg-white/5 transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed">
-      <Icon className="w-5 h-5" />
+    <button type="button" onClick={onClick} disabled={disabled} className="flex items-center justify-center gap-3 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 text-sm font-medium text-white hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed group">
+      <Icon className="w-5 h-5 text-white/60 group-hover:text-white/80 transition-colors" />
       <span>{label}</span>
     </button>
   );
 }
 
-function InputGroup({ label, placeholder, type, value, onChange, error }: {
+function InputGroup({ label, placeholder, type, value, onChange, error, icon: Icon }: {
   label: string;
   placeholder: string;
   type: string;
   value: string;
   onChange: (v: string) => void;
   error?: string;
+  icon?: React.ElementType;
 }) {
   const [show, setShow] = useState(false);
   const isPwd = type === "password";
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium text-white">{label}</label>
-      <div className="relative">
+      <label className="text-sm font-medium text-white/80">{label}</label>
+      <div className="relative group">
+        {Icon && (
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent-green transition-colors z-10">
+            <Icon size={16} />
+          </div>
+        )}
         <input
           type={isPwd ? (show ? "text" : "password") : type}
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-brand-gray border-none rounded-xl h-11 px-4 text-white placeholder:text-white/20 focus:ring-2 focus:ring-white/20 outline-none text-sm"
+          className={`w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl h-12 px-4 ${Icon ? 'pl-11' : ''} text-white placeholder:text-white/20 focus:border-accent-green/40 focus:ring-2 focus:ring-accent-green/10 outline-none text-sm transition-all duration-200`}
         />
         {isPwd && (
-          <button type="button" onClick={() => setShow(!show)} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/60">
-            {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          <button type="button" onClick={() => setShow(!show)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors">
+            {show ? <EyeOff size={16} /> : <Eye size={16} />}
           </button>
         )}
       </div>
-      {isPwd && <p className="text-xs text-white/30">Requires at least 8 symbols.</p>}
-      {error && <p className="text-xs text-red-400/80">{error}</p>}
+      {isPwd && <p className="text-xs text-white/20">Requires at least 8 characters.</p>}
+      {error && <p className="text-xs text-error/80">{error}</p>}
     </div>
   );
 }
@@ -115,7 +124,7 @@ function OtpInput({ length = 6, value, onChange }: { length?: number; value: str
           value={value[i] || ""}
           onChange={(e) => handleChange(i, e.target.value)}
           onKeyDown={(e) => handleKey(i, e)}
-          className="w-12 h-14 rounded-xl border border-white/10 bg-white/5 text-white text-xl font-medium text-center outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10 transition-all"
+          className="w-12 h-14 rounded-2xl border border-white/[0.08] bg-white/[0.03] text-white text-xl font-semibold text-center outline-none focus:border-accent-green/40 focus:ring-2 focus:ring-accent-green/10 transition-all duration-200"
           autoComplete="one-time-code"
         />
       ))}
@@ -299,9 +308,9 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
   return (
     <motion.div
       key={isOtpStep ? "otp" : isSignUp ? `signup-phase-${signupPhase}` : "login"}
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-xl mx-auto space-y-8 lg:space-y-6 sm:space-y-10"
     >
       <div className="flex items-center gap-4">
@@ -309,31 +318,31 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
           <button
             type="button"
             onClick={() => { setStep(isSignUp ? "signup" : "login"); setOtpCode(""); setError(null); }}
-            className="text-white/40 hover:text-white/80 transition-colors"
+            className="text-white/30 hover:text-white/80 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft size={20} />
           </button>
         )}
         {signupPhase === 2 && (
           <button
             type="button"
             onClick={() => { setStep("otp-signup"); setSignupPhase(1); }}
-            className="text-white/40 hover:text-white/80 transition-colors"
+            className="text-white/30 hover:text-white/80 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft size={20} />
           </button>
         )}
         <div>
-          <h1 className="text-3xl font-medium tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight text-white">
             {isOtpStep ? "Check Your Email" :
              signupPhase === 2 ? "Configure Your Studio" :
              signupPhase === 3 ? "Finalize Your Profile" :
              isSignUp ? "Create New Profile" : "Welcome Back"}
           </h1>
-          <p className="text-white/40 text-sm mt-1">
-            {isOtpStep ? `We sent a code to ${email}` :
+          <p className="text-white/40 text-sm mt-2">
+            {isOtpStep ? `We sent a verification code to ${email}` :
              signupPhase === 2 ? "Tell us a bit about yourself." :
-             signupPhase === 3 ? "You're all set. Ready to explore." :
+             signupPhase === 3 ? "You're all set. Ready to explore Tirbeo." :
              isSignUp ? "Input your basic details to begin the journey." :
              "Sign in to your account to continue."}
           </p>
@@ -344,13 +353,13 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
         <>
           <div className="grid grid-cols-2 gap-4">
             <SocialButton icon={Chrome} label="Google" onClick={handleGoogleLogin} disabled={loading} />
-            <SocialButton icon={Github} label="Github" onClick={handleGithubLogin} disabled={loading} />
+            <SocialButton icon={Github} label="GitHub" onClick={handleGithubLogin} disabled={loading} />
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="flex-1 h-px bg-white/10" />
-            <span className="text-xs font-medium text-white/40 uppercase tracking-widest">Or</span>
-            <div className="flex-1 h-px bg-white/10" />
+            <div className="flex-1 h-px bg-white/[0.06]" />
+            <span className="text-xs font-medium text-white/20 uppercase tracking-widest">Or</span>
+            <div className="flex-1 h-px bg-white/[0.06]" />
           </div>
         </>
       )}
@@ -360,59 +369,59 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
           <div className="space-y-6 pt-4">
             <OtpInput length={6} value={otpCode} onChange={setOtpCode} />
             {devCode && (
-              <div className="text-center p-3 rounded-lg" style={{ background: 'rgba(255,200,50,0.1)', border: '1px solid rgba(255,200,50,0.3)' }}>
-                <p className="text-xs font-medium" style={{ color: '#D8B36A' }}>Dev Mode — Your code: <span className="font-bold text-sm">{devCode}</span></p>
+              <div className="text-center p-4 rounded-2xl bg-accent-green/10 border border-accent-green/20">
+                <p className="text-xs font-medium text-accent-green">Dev Mode — Your code: <span className="font-bold text-sm">{devCode}</span></p>
               </div>
             )}
             <p className="text-center text-sm text-white/30">
               Didn&apos;t receive the code?{" "}
-              <button type="button" onClick={handleOtpLogin} className="text-white/60 underline hover:text-white/80">
+              <button type="button" onClick={handleOtpLogin} className="text-accent-green/80 underline hover:text-accent-green transition-colors">
                 Resend
               </button>
             </p>
           </div>
         ) : signupPhase === 2 ? (
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div>
-              <label className="text-sm font-medium text-white mb-2 block">Choose Your Avatar</label>
-              <div className="grid grid-cols-5 gap-2">
+              <label className="text-sm font-medium text-white/80 mb-3 block">Choose Your Avatar</label>
+              <div className="grid grid-cols-5 gap-3">
                 {AVATAR_URLS.map((url, i) => (
                   <button key={i} type="button" onClick={() => setSelectedAvatar(url)}
-                    className={`w-12 h-12 rounded-full overflow-hidden border-2 transition-all duration-200 hover:scale-110 ${
-                      selectedAvatar === url ? "border-white ring-2 ring-white/30 scale-110" : "border-white/10 hover:border-white/30"
+                    className={`w-14 h-14 rounded-full overflow-hidden border-2 transition-all duration-300 hover:scale-110 ${
+                      selectedAvatar === url ? "border-accent-green ring-2 ring-accent-green/30 scale-110" : "border-white/[0.08] hover:border-white/20"
                     }`}>
                     <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full" />
                   </button>
                 ))}
               </div>
             </div>
-            <InputGroup label="Occupation" placeholder="e.g. Designer, Developer" type="text" value={occupation} onChange={setOccupation} />
-            <InputGroup label="Phone Number" placeholder="+977 98XXXXXXXX" type="tel" value={phone} onChange={setPhone} />
-            <InputGroup label="Who you are" placeholder="A short bio about yourself" type="text" value={whoYouAre} onChange={setWhoYouAre} />
-            <InputGroup label="Where did you find us?" placeholder="Google, Friend, Social Media..." type="text" value={findUs} onChange={setFindUs} />
+            <InputGroup label="Occupation" placeholder="e.g. Designer, Developer" type="text" value={occupation} onChange={setOccupation} icon={Briefcase} />
+            <InputGroup label="Phone Number" placeholder="+977 98XXXXXXXX" type="tel" value={phone} onChange={setPhone} icon={Phone} />
+            <InputGroup label="Who you are" placeholder="A short bio about yourself" type="text" value={whoYouAre} onChange={setWhoYouAre} icon={MessageSquare} />
+            <InputGroup label="Where did you find us?" placeholder="Google, Friend, Social Media..." type="text" value={findUs} onChange={setFindUs} icon={Globe} />
           </div>
         ) : signupPhase === 3 ? (
           <div className="space-y-6 pt-4 text-center">
-            <div className="w-20 h-20 rounded-full overflow-hidden mx-auto border-2 border-white/20">
+            <div className="w-24 h-24 rounded-full overflow-hidden mx-auto border-2 border-accent-green/30 ring-4 ring-accent-green/10">
               <img src={selectedAvatar} alt="Your avatar" className="w-full h-full" />
             </div>
             <div>
-              <p className="text-white/80 text-lg font-medium">Profile Complete</p>
+              <p className="text-white/90 text-lg font-semibold">Profile Complete</p>
               <p className="text-white/40 text-sm mt-1">
                 {firstName} {lastName} &middot; {occupation || "Member"}
               </p>
             </div>
             <div className="flex justify-center gap-2 text-xs text-white/30">
-              {phone && <span className="bg-white/5 px-2 py-1 rounded">{phone}</span>}
-              {findUs && <span className="bg-white/5 px-2 py-1 rounded">Found via: {findUs}</span>}
+              {phone && <span className="bg-white/5 px-3 py-1 rounded-full">{phone}</span>}
+              {findUs && <span className="bg-white/5 px-3 py-1 rounded-full">Found via: {findUs}</span>}
             </div>
           </div>
         ) : (
           <>
             {isSignUp && (
               <div className="grid grid-cols-2 gap-4">
-                <InputGroup label="First Name" placeholder="John" type="text" value={firstName} onChange={setFirstName} />
-                <InputGroup label="Last Name" placeholder="Doe" type="text" value={lastName} onChange={setLastName} />
+                <InputGroup label="First Name" placeholder="John" type="text" value={firstName} onChange={setFirstName} icon={User} />
+                <InputGroup label="Last Name" placeholder="Doe" type="text" value={lastName} onChange={setLastName} icon={User} />
               </div>
             )}
             <InputGroup
@@ -422,6 +431,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
               value={email}
               onChange={(v) => { setEmail(v); setFieldErrors((p) => ({ ...p, email: undefined })); }}
               error={fieldErrors.email}
+              icon={Mail}
             />
             <InputGroup
               label="Password"
@@ -430,26 +440,26 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
               value={password}
               onChange={(v) => { setPassword(v); setFieldErrors((p) => ({ ...p, password: undefined })); }}
               error={fieldErrors.password}
+              icon={Shield}
             />
           </>
         )}
 
-        {error && <p className="text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2">{error}</p>}
+        {error && (
+          <div className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3">
+            <div className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
+            <p className="text-sm text-error">{error}</p>
+          </div>
+        )}
 
         {isOtpStep && (
           <button
             type="submit"
             disabled={loading || otpCode.length < 6}
-            className="w-full h-14 bg-white text-black font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent-green/20 hover:shadow-accent-green/30"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
-                  <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                </svg>
-                Verifying...
-              </span>
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : "Verify & Continue"}
           </button>
         )}
@@ -459,9 +469,9 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
             type="button"
             onClick={handleSaveProfile}
             disabled={loading}
-            className="w-full h-14 bg-white text-black font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent-green/20"
           >
-            {loading ? "Saving..." : "Continue"}
+            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Continue"}
           </button>
         )}
 
@@ -469,7 +479,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
           <button
             type="button"
             onClick={handleCompleteSetup}
-            className="w-full h-14 bg-white text-black font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all duration-200 mt-4"
+            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 mt-4 shadow-lg shadow-accent-green/20"
           >
             Go to Dashboard
           </button>
@@ -479,16 +489,10 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-14 bg-white text-black font-semibold rounded-xl hover:bg-white/90 active:scale-[0.98] transition-all duration-200 mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent-green/20 hover:shadow-accent-green/30"
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
-                  <path d="M4 12a8 8 0 018-8" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
-                </svg>
-                {isSignUp ? "Sending..." : "Signing in..."}
-              </span>
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : isSignUp ? "Send Verification Code" : "Sign In"}
           </button>
         )}
@@ -498,7 +502,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
             type="button"
             onClick={handleOtpLogin}
             disabled={loading}
-            className="w-full h-12 glass rounded-xl text-sm font-medium text-white/80 hover:text-white transition-all disabled:opacity-50"
+            className="w-full h-12 rounded-2xl border border-white/[0.08] bg-white/[0.02] text-sm font-medium text-white/60 hover:text-white/80 hover:bg-white/[0.04] transition-all disabled:opacity-50"
           >
             Send one-time code
           </button>
@@ -506,9 +510,9 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
       </form>
 
       {!isOtpStep && signupPhase < 2 && (
-        <p className="text-center text-sm text-white/40">
+        <p className="text-center text-sm text-white/30">
           {isSignUp ? "Already have an account? " : "Don't have an account? "}
-          <button type="button" onClick={switchMode} className="text-white underline hover:text-white/80 transition-colors">
+          <button type="button" onClick={switchMode} className="text-accent-green/80 hover:text-accent-green font-medium transition-colors">
             {isSignUp ? "Sign in" : "Sign up"}
           </button>
         </p>
@@ -527,11 +531,18 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <main className="flex min-h-screen w-full selection:bg-white/30 transition-all duration-500 lg:h-screen lg:overflow-hidden" style={{ background: "#0B0B0D" }}>
+    <main className="flex min-h-screen w-full selection:bg-accent-green/30 transition-all duration-500 lg:h-screen lg:overflow-hidden" style={{ background: "#08150F" }}>
+      {/* Left: Brand / Video Column */}
       <div className="hidden lg:flex relative flex-col items-center justify-end pb-32 px-12 rounded-3xl overflow-hidden shadow-2xl h-full w-[52%]">
-        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-dark/90 via-surface-dark/80 to-rich-black/90" />
+        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay">
           <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260506_081238_406ed0e3-5d83-436e-a512-0bbff7ec5b95.mp4" type="video/mp4" />
         </video>
+
+        {/* Glowing orbs */}
+        <div className="absolute top-20 left-20 w-64 h-64 bg-accent-green/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-32 right-16 w-48 h-48 bg-primary-green/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -539,10 +550,10 @@ export default function LoginPage() {
           className="relative z-10 w-full max-w-xs space-y-8"
         >
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
-            <h2 className="text-4xl font-medium tracking-tight whitespace-nowrap">
+            <h2 className="text-4xl font-bold tracking-tight whitespace-nowrap text-white">
               {showSteps ? "Join Tirbeo" : "Welcome Back"}
             </h2>
-            <p className="text-white/60 text-sm leading-relaxed px-4 mt-2">
+            <p className="text-white/50 text-sm leading-relaxed px-4 mt-3">
               {showSteps
                 ? "Follow these 3 quick phases to activate your space."
                 : "Sign in to your account to continue."}
@@ -558,11 +569,15 @@ export default function LoginPage() {
         </motion.div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center py-12 lg:py-6 px-4 sm:px-12 lg:px-16 xl:px-24 overflow-y-auto lg:overflow-hidden">
-        <div className="w-full max-w-xl">
+      {/* Right: Form Column */}
+      <div className="flex-1 flex flex-col items-center justify-center py-12 lg:py-6 px-4 sm:px-12 lg:px-16 xl:px-24 overflow-y-auto lg:overflow-hidden relative">
+        {/* Subtle background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent-green/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="w-full max-w-xl relative z-10">
           <Suspense fallback={
-            <div className="flex items-center justify-center h-full">
-              <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            <div className="flex items-center justify-center h-64">
+              <div className="w-8 h-8 border-2 border-accent-green/20 border-t-accent-green rounded-full animate-spin" />
             </div>
           }>
             <LoginForm onPhaseChange={handlePhaseChange} />

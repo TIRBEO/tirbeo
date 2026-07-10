@@ -2,22 +2,23 @@
 @import "tailwindcss";
 
 @theme {
-  --color-rich-black: #0B0B0D;
-  --color-dark-surface: #121417;
-  --color-surface: #16181C;
-  --color-elevated: #252B31;
+  --color-rich-black: #08150F;
+  --color-surface-dark: #101c13;
+  --color-surface: #12271D;
+  --color-elevated: #1a3326;
   --color-off-white: #F2EEE8;
-  --color-text-secondary: #A6A6A6;
-  --color-text-muted: #7B7E84;
+  --color-text-secondary: #B7C6BE;
+  --color-text-muted: #6b8a7a;
 
-  --color-gold: #D8B36A;
-  --color-moss: #5F7352;
-  --color-olive: #7D8461;
-  --color-cream: #F5EFE7;
-  --color-dusty-rose: #D98A9D;
+  --color-primary-dark: #022b22;
+  --color-primary-green: #275d46;
+  --color-accent-green: #569578;
+  --color-success: #59C173;
+  --color-warning: #F4B942;
+  --color-error: #E45D5D;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-heading: "Inter", "SF Pro Display", system-ui, sans-serif;
+  --font-heading: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -40,15 +41,15 @@ html::-webkit-scrollbar {
 body {
   background-color: var(--color-rich-black);
   background-image:
-    radial-gradient(ellipse at 50% 0%, rgba(18,20,23,1) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 50%, rgba(22,24,28,1) 0%, transparent 50%);
+    radial-gradient(ellipse at 50% 0%, rgba(16,28,19,0.8) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 50%, rgba(18,39,29,0.5) 0%, transparent 50%);
   color: var(--color-off-white);
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
 ::selection {
-  background: var(--color-gold);
+  background: var(--color-accent-green);
   color: var(--color-rich-black);
 }
 
