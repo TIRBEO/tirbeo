@@ -15,12 +15,6 @@ function seededRandom(x: number, y: number): number {
   return (hash(x, y) & 0x7fffffff) / 0x7fffffff;
 }
 
-function getScrollProgress() {
-  const doc = document.documentElement;
-  const total = doc.scrollHeight - window.innerHeight;
-  return total > 0 ? Math.min(1, window.scrollY / total) : 0;
-}
-
 export function CityScene() {
   const mountRef = useRef<HTMLDivElement>(null);
 
@@ -28,54 +22,47 @@ export function CityScene() {
     const mount = mountRef.current;
     if (!mount) return;
 
-    const w = mount.clientWidth;
-    const h = mount.clientHeight;
+    const w = mount.clientWidth || window.innerWidth;
+    const h = mount.clientHeight || window.innerHeight;
 
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x0a0a0f, 0.015);
+    scene.background = new THREE.Color(0x0b0b0d);
+    scene.fog = new THREE.FogExp2(0x0b0b0d, 0.008);
 
-    const camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 200);
+    const camera = new THREE.PerspectiveCamera(50, w / h, 0.1, 300);
+    camera.position.set(25, 15, 25);
+    camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      alpha: true,
-    });
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     renderer.setSize(w, h);
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
+    renderer.toneMappingExposure = 0.8;
     mount.appendChild(renderer.domElement);
-
-    scene.background = new THREE.Color(0x0a0a0f);
 
     // Ground
     const ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(140, 140),
-      new THREE.MeshStandardMaterial({ color: 0x0d0d12, roughness: 1, metalness: 0 }),
+      new THREE.PlaneGeometry(100, 100),
+      new THREE.MeshStandardMaterial({ color: 0x0d0d12, roughness: 1 }),
     );
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.5;
     scene.add(ground);
 
     // Grid
-    const grid = new THREE.GridHelper(120, 60, 0x1a1a2e, 0x111122);
+    const grid = new THREE.GridHelper(80, 40, 0x1a1a2e, 0x111122);
     grid.position.y = -0.45;
     scene.add(grid);
 
     // Buildings
     const offset = (GRID * SPACING) / 2;
-    const colors = [0x1a1a2e, 0x16213e, 0x0f3460, 0x1b1b3a, 0x201547, 0x2d1b69, 0x1c1c3a, 0x151530];
-    const geos = [
-      new THREE.BoxGeometry(1, 1, 1),
-      new THREE.BoxGeometry(0.8, 1, 0.8),
-      new THREE.BoxGeometry(1.2, 1, 1.2),
-    ];
+    const colors = [0x1a1a2e, 0x16213e, 0x0f3460, 0x1b1b3a, 0x201547, 0x2d1b69];
+    const geo = new THREE.BoxGeometry(1, 1, 1);
 
     for (let ix = 0; ix < GRID; ix++) {
       for (let iz = 0; iz < GRID; iz++) {
         const r = seededRandom(ix, iz);
         const height = Math.max(0.5, Math.pow(r, 1.5) * 14 + 1);
-        const geo = geos[Math.floor(r * 3) % 3];
         const c = colors[Math.floor(r * colors.length) % colors.length];
 
         const mesh = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
@@ -112,95 +99,44 @@ export function CityScene() {
       }
     }
 
-    // Particles
-    const pc = 600;
-    const pg = new THREE.BufferGeometry();
-    const pos = new Float32Array(pc * 3);
-    for (let i = 0; i < pc; i++) {
-      const t = Math.random() * Math.PI * 2;
-      const p = Math.random() * Math.PI * 0.3;
-      const r2 = 50 + Math.random() * 40;
-      pos[i * 3] = Math.cos(t) * Math.sin(p) * r2;
-      pos[i * 3 + 1] = Math.cos(p) * r2 * 0.3 + 10;
-      pos[i * 3 + 2] = Math.sin(t) * Math.sin(p) * r2;
-    }
-    pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    const particles = new THREE.Points(pg, new THREE.PointsMaterial({
-      color: 0x4488ff, size: 0.4, transparent: true, opacity: 0.3, blending: THREE.AdditiveBlending,
-    }));
-    scene.add(particles);
-
     // Lights
-    scene.add(new THREE.AmbientLight(0x222244, 0.4));
-    const dl = new THREE.DirectionalLight(0xff8844, 0.6);
-    dl.position.set(-20, 30, 20);
-    scene.add(dl);
-    const fl = new THREE.DirectionalLight(0x4466ff, 0.2);
-    fl.position.set(20, 10, -20);
-    scene.add(fl);
-    const rl = new THREE.DirectionalLight(0x8844ff, 0.15);
-    rl.position.set(0, -10, -30);
-    scene.add(rl);
+    scene.add(new THREE.AmbientLight(0x222244, 0.5));
+    const dir = new THREE.DirectionalLight(0xff8844, 0.8);
+    dir.position.set(-20, 30, 20);
+    scene.add(dir);
+    const fill = new THREE.DirectionalLight(0x4466ff, 0.3);
+    fill.position.set(20, 10, -20);
+    scene.add(fill);
 
-    // --- Animation (scroll-driven camera) ---
-    let mouseX = 0, mouseY = 0, tx = 0, ty = 0;
-    const onMouse = (e: MouseEvent) => { tx = (e.clientX / window.innerWidth) * 2 - 1; ty = (e.clientY / window.innerHeight) * 2 - 1; };
-    window.addEventListener('mousemove', onMouse);
-
+    // Slow auto-orbit, no mouse tracking
     let animId = 0;
-
-    function frame() {
-      mouseX += (tx - mouseX) * 0.03;
-      mouseY += (ty - mouseY) * 0.03;
-
-      const p = getScrollProgress();
-
-      // Camera path:
-      // p=0: close to ground, walking the streets
-      // p=0.3: rising up, mid orbit
-      // p=0.6: wide aerial
-      // p=1.0: bird's eye above city
-      const angle = Date.now() * 0.00003 + mouseX * 0.4 + p * Math.PI * 2;
-      const radius = 20 + p * 40;
-      const height = 6 + p * 35 - mouseY * 2;
-      const lookY = -1 + p * 8;
-
+    function frame(t: number) {
+      const angle = t * 0.00005;
+      const radius = 28;
       camera.position.x = Math.cos(angle) * radius;
       camera.position.z = Math.sin(angle) * radius;
-      camera.position.y = height;
-      camera.lookAt(0, lookY, 0);
-
-      // Fog thickens with height
-      if (scene.fog instanceof THREE.FogExp2) {
-        scene.fog.density = 0.015 + p * 0.012;
-      }
-
-      particles.rotation.y += 0.0002;
-
+      camera.lookAt(0, 0, 0);
       renderer.render(scene, camera);
       animId = requestAnimationFrame(frame);
     }
-    frame();
+    animId = requestAnimationFrame(frame);
 
-    const ro = new ResizeObserver(() => {
-      const w2 = mount.clientWidth;
-      const h2 = mount.clientHeight;
+    const resize = () => {
+      const w2 = mount.clientWidth || window.innerWidth;
+      const h2 = mount.clientHeight || window.innerHeight;
       camera.aspect = w2 / h2;
       camera.updateProjectionMatrix();
       renderer.setSize(w2, h2);
-    });
-    ro.observe(mount);
+    };
+    window.addEventListener('resize', resize);
 
     return () => {
       cancelAnimationFrame(animId);
-      window.removeEventListener('mousemove', onMouse);
-      ro.disconnect();
+      window.removeEventListener('resize', resize);
       renderer.dispose();
-      mount.removeChild(renderer.domElement);
+      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement);
     };
   }, []);
 
-  return (
-    <div ref={mountRef} className="fixed inset-0 h-full w-full" style={{ zIndex: 0 }} />
-  );
+  return <div ref={mountRef} className="fixed inset-0 h-full w-full" />;
 }

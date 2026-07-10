@@ -117,7 +117,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <div className="flex-1 flex flex-col min-h-screen" style={{ marginLeft: "var(--sidebar-w)" }}>
         <header className="sticky top-0 z-30 h-14 flex items-center justify-between px-4 md:px-6"
-          style={{ background: "rgba(9,9,11,0.8)", backdropFilter: "blur(20px)", borderBottom: "1px solid var(--border)" }}>
+          style={{ background: "rgba(11,11,13,0.8)", backdropFilter: "blur(24px)", borderBottom: "1px solid var(--border)" }}>
           <div className="flex items-center gap-3">
             <button onClick={() => setSidebarOpen(true)} className="md:hidden" style={{ color: "var(--text-secondary)" }}>
               <Menu size={20} />

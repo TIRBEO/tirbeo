@@ -515,7 +515,7 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <main className="flex min-h-screen w-full bg-black selection:bg-white/30 transition-all duration-500 lg:h-screen lg:overflow-hidden">
+    <main className="flex min-h-screen w-full selection:bg-white/30 transition-all duration-500 lg:h-screen lg:overflow-hidden" style={{ background: "#0B0B0D" }}>
       <div className="hidden lg:flex relative flex-col items-center justify-end pb-32 px-12 rounded-3xl overflow-hidden shadow-2xl h-full w-[52%]">
         <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover">
           <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260506_081238_406ed0e3-5d83-436e-a512-0bbff7ec5b95.mp4" type="video/mp4" />
