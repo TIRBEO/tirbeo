@@ -1,141 +1,165 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Shield, Lock, Mail, Smartphone, Key, Monitor, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Shield, KeyRound, Smartphone, Lock, AlertTriangle, Eye, EyeOff } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 
-type Me = { email: string; emailVerified: boolean; phoneVerified: boolean; is2FAEnabled: boolean; phoneNumber: string | null };
-type Session = { id: string; userAgent: string | null; ipAddress: string | null; createdAt: string };
+type SecurityInfo = {
+  hasPassword: boolean;
+  is2FAEnabled: boolean;
+  recoveryCodesCount: number;
+  sessions: { id: string; createdAt: string; userAgent?: string; ipAddress?: string }[];
+};
 
 export default function SecurityPage() {
-  const [me, setMe] = useState<Me | null>(null);
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [info, setInfo] = useState<SecurityInfo | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const fetched = useRef(false);
+
   const [currentPw, setCurrentPw] = useState("");
   const [newPw, setNewPw] = useState("");
-  const [toast, setToast] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const fetched = useRef(false);
+  const [confirmPw, setConfirmPw] = useState("");
+  const [changingPw, setChangingPw] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
 
   useEffect(() => {
     if (fetched.current) return;
     fetched.current = true;
-    fetch(`${API}/api/profile`, { credentials: "include" }).then(r => r.ok ? r.json() : null).then(setMe).catch(() => {});
-    fetch(`${API}/api/security/sessions`, { credentials: "include" }).then(r => r.ok ? r.json() : []).then(setSessions).catch(() => {});
+    fetch(`${API}/api/profile`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setInfo({ hasPassword: d.hasPassword, is2FAEnabled: d.is2FAEnabled, recoveryCodesCount: 0, sessions: [] }); })
+      .catch(() => {});
+    fetch(`${API}/api/security/sessions`, { credentials: "include" })
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.sessions) setInfo(prev => prev ? { ...prev, sessions: d.sessions } : prev); })
+      .catch(() => {});
   }, []);
 
-  const changePassword = useCallback(async () => {
-    if (!currentPw || newPw.length < 8) { setToast("Password must be 8+ characters"); setTimeout(() => setToast(null), 3000); return; }
-    setLoading(true);
+  const changePassword = async () => {
+    if (!currentPw || !newPw) { setToast("Fill in all fields"); return; }
+    if (newPw.length < 8) { setToast("New password must be 8+ characters"); return; }
+    if (newPw !== confirmPw) { setToast("Passwords don't match"); return; }
+    setChangingPw(true);
     try {
       const res = await fetch(`${API}/api/security/password`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
       });
-      if (res.ok) { setToast("Password changed"); setCurrentPw(""); setNewPw(""); }
-      else setToast(await res.text() || "Failed");
+      if (res.ok) {
+        setToast("Password changed successfully");
+        setCurrentPw(""); setNewPw(""); setConfirmPw("");
+      } else {
+        const msg = await res.text();
+        setToast(msg || "Failed to change password");
+      }
     } catch { setToast("Connection error"); }
-    setLoading(false);
-    setTimeout(() => setToast(null), 3000);
-  }, [currentPw, newPw]);
+    setChangingPw(false);
+  };
 
-  const terminateSession = useCallback(async (id: string) => {
-    try {
-      await fetch(`${API}/api/security/sessions`, {
-        method: "DELETE", credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sessionId: id }),
-      });
-      setSessions(s => s.filter(x => x.id !== id));
-      setToast("Session terminated");
-    } catch { setToast("Failed"); }
-    setTimeout(() => setToast(null), 3000);
-  }, []);
-
-  if (!me) return null;
-
-  const score = [me.emailVerified, me.phoneVerified, me.is2FAEnabled, true].filter(Boolean).length;
-  const scorePct = Math.round((score / 4) * 100);
+  if (!info) return null;
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>Security</h1>
-        <p className="text-sm mt-0.5" style={{ color: "var(--text-muted)" }}>Protect your account</p>
+        <h1 className="text-xl font-bold" style={{ color: "#F2EEE8" }}>Security</h1>
+        <p className="text-sm mt-0.5" style={{ color: "#7B7E84" }}>Manage your password, 2FA, and sessions</p>
       </div>
 
-      <div className="glass" style={{ padding: "20px 24px" }}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Shield size={20} style={{ color: "var(--text)" }} />
+      <div className="glass card-section space-y-4">
+        <div className="flex items-center gap-2.5">
+          <KeyRound size={16} style={{ color: "#7B7E84" }} />
+          <h3>Change Password</h3>
+        </div>
+        {info.hasPassword ? (
+          <div className="space-y-3" style={{ maxWidth: 420 }}>
             <div>
-              <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>Security Score</p>
-              <p className="text-xs" style={{ color: "var(--text-muted)" }}>Based on your security settings</p>
-            </div>
-          </div>
-          <span className="stat-value" style={{ color: scorePct >= 75 ? "var(--success)" : "var(--danger)" }}>{scorePct}%</span>
-        </div>
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        {[
-          { label: "Password", desc: "Change your password", icon: Lock, active: true },
-          { label: "Email Verification", desc: me.emailVerified ? "Verified" : "Not verified", icon: Mail, badge: me.emailVerified },
-          { label: "Phone Verification", desc: me.phoneVerified ? "Verified" : "Not verified", icon: Smartphone, badge: me.phoneVerified },
-          { label: "Two-Factor Auth", desc: me.is2FAEnabled ? "Enabled" : "Disabled", icon: Key, badge: me.is2FAEnabled },
-        ].map(item => (
-          <div key={item.label} className="glass" style={{ padding: "18px 20px" }}>
-            <div className="flex items-center gap-3">
-              <item.icon size={18} style={{ color: "var(--text-secondary)" }} />
-              <div className="flex-1">
-                <p className="text-sm font-medium" style={{ color: "var(--text)" }}>{item.label}</p>
-                <p className="text-xs mt-0.5" style={{ color: "var(--text-muted)" }}>{item.desc}</p>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#7B7E84" }}>Current Password</label>
+              <div style={{ position: "relative" }}>
+                <input type={showCurrentPw ? "text" : "password"} value={currentPw} onChange={e => setCurrentPw(e.target.value)}
+                  className="input-field" style={{ paddingRight: 40 }} placeholder="Enter current password" />
+                <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)}
+                  style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#7B7E84", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                  {showCurrentPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
               </div>
-              {item.badge !== undefined && (
-                <span className={`badge ${item.badge ? "badge-success" : "badge-danger"}`}>{item.badge ? "Active" : "Inactive"}</span>
-              )}
             </div>
+            <div>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#7B7E84" }}>New Password</label>
+              <div style={{ position: "relative" }}>
+                <input type={showNewPw ? "text" : "password"} value={newPw} onChange={e => setNewPw(e.target.value)}
+                  className="input-field" style={{ paddingRight: 40 }} placeholder="8+ characters" />
+                <button type="button" onClick={() => setShowNewPw(!showNewPw)}
+                  style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", color: "#7B7E84", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                  {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#7B7E84" }}>Confirm Password</label>
+              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
+                className="input-field" placeholder="Repeat new password" />
+            </div>
+            <button onClick={changePassword} disabled={changingPw} className="btn btn-primary" style={{ fontSize: 13 }}>
+              {changingPw ? "Changing..." : "Change Password"}
+            </button>
           </div>
-        ))}
+        ) : (
+          <p className="text-sm" style={{ color: "#7B7E84" }}>
+            You signed in with a social account. No password is set.
+          </p>
+        )}
       </div>
 
       <div className="glass card-section space-y-4">
-        <h3>Change Password</h3>
-        <input type="password" placeholder="Current password" value={currentPw} onChange={e => setCurrentPw(e.target.value)} className="input-field" />
-        <input type="password" placeholder="New password (8+ characters)" value={newPw} onChange={e => setNewPw(e.target.value)} className="input-field" />
-        <button onClick={changePassword} disabled={loading} className="btn btn-primary">{loading ? "Changing..." : "Change Password"}</button>
+        <div className="flex items-center gap-2.5">
+          <Shield size={16} style={{ color: "#7B7E84" }} />
+          <h3>Two-Factor Authentication</h3>
+        </div>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium" style={{ color: "#F2EEE8" }}>
+              {info.is2FAEnabled ? "2FA is enabled" : "2FA is not enabled"}
+            </p>
+            <p className="text-xs mt-0.5" style={{ color: "#7B7E84" }}>
+              {info.is2FAEnabled ? "Your account has an extra layer of security" : "Add a second factor to secure your account"}
+            </p>
+          </div>
+          <span className={`badge ${info.is2FAEnabled ? "badge-success" : "badge-danger"}`}>
+            {info.is2FAEnabled ? "Active" : "Inactive"}
+          </span>
+        </div>
+        {info.is2FAEnabled && info.recoveryCodesCount > 0 && (
+          <p className="text-xs" style={{ color: "#7B7E84" }}>
+            {info.recoveryCodesCount} recovery codes remaining
+          </p>
+        )}
       </div>
 
       <div className="glass card-section space-y-4">
-        <div className="flex items-center gap-2">
-          <Monitor size={16} style={{ color: "var(--text-muted)" }} />
-          <h3 style={{ marginBottom: 0 }}>Login Sessions</h3>
+        <div className="flex items-center gap-2.5">
+          <Smartphone size={16} style={{ color: "#7B7E84" }} />
+          <h3>Active Sessions</h3>
         </div>
-        {sessions.length === 0 ? (
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>No active sessions</p>
-        ) : sessions.map((s, i) => (
-          <div key={s.id} className="table-row">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <Monitor size={16} style={{ color: "var(--text-muted)", flexShrink: 0 }} />
-              <div className="min-w-0">
-                <p className="text-sm truncate" style={{ color: "var(--text)" }}>{s.userAgent || "Unknown device"}</p>
-                <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {s.ipAddress || "Unknown IP"} · {new Date(s.createdAt).toLocaleDateString()}
-                  {i === 0 && " · Current"}
-                </p>
+        {info.sessions.length === 0 ? (
+          <p className="text-sm" style={{ color: "#7B7E84" }}>No session data available</p>
+        ) : (
+          <div className="space-y-2">
+            {info.sessions.map(s => (
+              <div key={s.id} className="table-row">
+                <div>
+                  <p className="text-sm" style={{ color: "#A6A6A6" }}>{s.userAgent || "Unknown device"}</p>
+                  <p className="text-xs" style={{ color: "#7B7E84" }}>{s.ipAddress || "Unknown IP"} · {new Date(s.createdAt).toLocaleDateString()}</p>
+                </div>
               </div>
-            </div>
-            {i !== 0 && (
-              <button onClick={() => terminateSession(s.id)} className="btn btn-ghost" style={{ height: 32, fontSize: 12 }}>
-                Terminate
-              </button>
-            )}
+            ))}
           </div>
-        ))}
+        )}
       </div>
 
-      {toast && <div className={`toast ${toast.includes("changed") || toast.includes("terminated") ? "toast-success" : "toast-error"}`}>{toast}</div>}
+      {toast && <div className={`toast ${toast.includes("success") || toast.includes("Success") ? "toast-success" : "toast-error"}`}>{toast}</div>}
     </div>
   );
 }

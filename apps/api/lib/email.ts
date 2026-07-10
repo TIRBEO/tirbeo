@@ -25,29 +25,38 @@ export async function sendEmail(
   htmlBody: string,
   options?: { fromEmail?: string; fromName?: string }
 ): Promise<EmailResult> {
-  const config = await getEmailConfig();
-
-  if (!config || !config.enabled) {
-    console.log(`[EMAIL] Config disabled or missing. Would send to ${to}: ${subject}`);
-    return { success: true, messageId: 'noop' };
+  let config: any = null;
+  try {
+    config = await getEmailConfig();
+  } catch (e: any) {
+    console.warn('[EMAIL] Failed to load config from DB:', e?.message);
   }
 
-  const apiKey = config.apiKey || process.env.RESEND_API_KEY || '';
+  const apiKey = config?.apiKey || process.env.RESEND_API_KEY || '';
+  const provider = config?.provider || 'resend';
+  const enabled = config?.enabled !== false;
+
   if (!apiKey) {
-    console.log(`[EMAIL] No API key configured. Would send to ${to}: ${subject}`);
+    console.error(`[EMAIL] No API key configured. Cannot send to ${to}: ${subject}`);
+    return { success: false, error: 'No email API key configured' };
+  }
+
+  if (!enabled && config) {
+    console.log(`[EMAIL] Config disabled. Would send to ${to}: ${subject}`);
     return { success: true, messageId: 'noop' };
   }
 
-  const fromEmail = options?.fromEmail || config.fromEmail;
-  const fromName = options?.fromName || config.fromName;
+  const fromEmail = options?.fromEmail || config?.fromEmail || 'noreply@tirbeo.app';
+  const fromName = options?.fromName || config?.fromName || 'Tirbeo';
 
-  if (config.provider === 'resend') {
+  if (provider === 'resend' || (!config && apiKey)) {
     return sendViaResend(apiKey, to, fromEmail, fromName, subject, htmlBody);
-  } else if (config.provider === 'smtp') {
+  } else if (provider === 'smtp') {
     return sendViaSmtp(config, to, fromEmail, fromName, subject, htmlBody);
   }
-  console.log(`[EMAIL] No provider configured. Would send to ${to}: ${subject}`);
-  return { success: true, messageId: 'noop' };
+
+  console.error(`[EMAIL] Unknown provider "${provider}". Cannot send to ${to}`);
+  return { success: false, error: `Unknown email provider: ${provider}` };
 }
 
 async function sendViaResend(apiKey: string, to: string, fromEmail: string, fromName: string, subject: string, html: string): Promise<EmailResult> {

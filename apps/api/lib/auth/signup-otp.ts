@@ -38,6 +38,7 @@ export async function sendSignupOtpEmail(email: string, code: string) {
   const result = await sendTemplateEmail(email, 'signup_otp', { otp: code });
   if (!result.success) {
     console.error(`[SIGNUP OTP] Email send failed for ${email}: ${result.error}`);
-    console.log(`[SIGNUP OTP] Fallback: Code for ${email} is ${code}`);
+    console.log(`[SIGNUP OTP] FALLBACK CODE for ${email}: ${code}`);
   }
+  return result;
 }

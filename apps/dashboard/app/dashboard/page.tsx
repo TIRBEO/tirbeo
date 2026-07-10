@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   User, Shield, Building2, Bell, ArrowRight, Clock, Zap, Key,
+  Mail, Globe, Settings, Activity, ArrowUpRight, CheckCircle2, XCircle,
 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
@@ -12,7 +13,8 @@ type Me = {
   id: string; email: string; name: string | null; photoUrl: string | null;
   occupation: string | null; adminRole: string | null;
   createdAt: string; emailVerified: boolean; phoneVerified: boolean;
-  is2FAEnabled: boolean;
+  is2FAEnabled: boolean; bio: string | null; secondaryEmail: string | null;
+  language: string | null; country: string | null; theme: string | null;
 };
 
 type ActivityLog = { id: string; action: string; createdAt: string };
@@ -32,74 +34,127 @@ export default function DashboardHome() {
   if (!user) return null;
 
   const initials = user.name ? user.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : user.email[0].toUpperCase();
-  const completion = [user.name, user.occupation, user.emailVerified, user.phoneVerified, user.is2FAEnabled].filter(Boolean).length;
-  const pct = Math.round((completion / 5) * 100);
+  const checks = [
+    { label: "Name set", ok: !!user.name },
+    { label: "Email verified", ok: user.emailVerified },
+    { label: "2FA enabled", ok: user.is2FAEnabled },
+    { label: "Secondary email", ok: !!user.secondaryEmail },
+    { label: "Country set", ok: !!user.country },
+  ];
+  const pct = Math.round((checks.filter(c => c.ok).length / checks.length) * 100);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="avatar" style={{ width: 56, height: 56, fontSize: 20 }}>
+        <div className="avatar" style={{ width: 56, height: 56, fontSize: 20, border: "2px solid rgba(255,255,255,0.08)" }}>
           {user.photoUrl ? <img src={user.photoUrl} alt="" /> : initials}
         </div>
         <div className="flex-1">
-          <h1 className="text-xl font-bold" style={{ color: "var(--text)" }}>{user.name || "Welcome"}</h1>
-          <p className="text-sm mt-0.5" style={{ color: "var(--text-secondary)" }}>{user.occupation || "Member"}{user.adminRole ? ` · ${user.adminRole.replace("_", " ")}` : ""}</p>
+          <h1 className="text-xl font-bold" style={{ color: "#F2EEE8" }}>{user.name || "Welcome"}</h1>
+          <p className="text-sm mt-0.5" style={{ color: "#A6A6A6" }}>
+            {user.occupation || "Member"}{user.adminRole ? ` · ${user.adminRole.replace("_", " ")}` : ""}
+          </p>
         </div>
+        <Link href="/dashboard/profile" className="btn btn-ghost" style={{ fontSize: 13 }}>
+          <User size={14} /> Edit Profile <ArrowUpRight size={12} />
+        </Link>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Account Completion", value: `${pct}%`, icon: Zap },
-          { label: "Role", value: user.adminRole?.replace("_", " ") || "Member", icon: User },
-          { label: "2FA", value: user.is2FAEnabled ? "Enabled" : "Disabled", icon: Shield },
-          { label: "Verified", value: user.emailVerified ? "Yes" : "No", icon: Key },
+          { label: "Completion", value: `${pct}%`, icon: Zap, color: "#F2EEE8" },
+          { label: "Role", value: user.adminRole?.replace("_", " ") || "Member", icon: User, color: "#A6A6A6" },
+          { label: "2FA", value: user.is2FAEnabled ? "Active" : "Off", icon: Shield, color: user.is2FAEnabled ? "#22c55e" : "#ef4444" },
+          { label: "Verified", value: user.emailVerified ? "Yes" : "No", icon: Key, color: user.emailVerified ? "#22c55e" : "#ef4444" },
         ].map((s) => (
           <div key={s.label} className="glass" style={{ padding: "16px 18px" }}>
             <div className="flex items-center gap-2 mb-2">
-              <s.icon size={14} style={{ color: "var(--text-muted)" }} />
-              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>{s.label}</span>
+              <s.icon size={14} style={{ color: "#7B7E84" }} />
+              <span className="text-xs font-medium uppercase tracking-wider" style={{ color: "#7B7E84" }}>{s.label}</span>
             </div>
-            <p className="text-lg font-bold" style={{ color: "var(--text)" }}>{s.value}</p>
+            <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
           </div>
-        ))}
-      </div>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {[
-          { label: "Edit Profile", href: "/dashboard/profile", icon: User },
-          { label: "Security", href: "/dashboard/security", icon: Shield },
-          { label: "Workspace", href: "/dashboard/workspace", icon: Building2 },
-          { label: "Notifications", href: "/dashboard/notifications", icon: Bell },
-        ].map(q => (
-          <Link key={q.href} href={q.href} className="glass group" style={{ padding: "14px 16px", display: "block", textDecoration: "none" }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <q.icon size={16} style={{ color: "var(--text-muted)" }} />
-                <span className="text-sm font-medium" style={{ color: "var(--text)" }}>{q.label}</span>
-              </div>
-              <ArrowRight size={14} style={{ color: "var(--text-muted)" }} className="transition-transform group-hover:translate-x-0.5" />
-            </div>
-          </Link>
         ))}
       </div>
 
       <div className="glass" style={{ padding: "20px 24px" }}>
-        <div className="flex items-center gap-2 mb-4">
-          <Clock size={16} style={{ color: "var(--text-muted)" }} />
-          <h3 className="text-sm font-semibold" style={{ color: "var(--text)" }}>Recent Activity</h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Activity size={16} style={{ color: "#7B7E84" }} />
+            <h3 className="text-sm font-semibold" style={{ color: "#F2EEE8" }}>Quick Actions</h3>
+          </div>
         </div>
-        {activity.length === 0 ? (
-          <p className="text-sm" style={{ color: "var(--text-muted)" }}>No recent activity</p>
-        ) : (
-          <div className="space-y-0">
-            {activity.map((a) => (
-              <div key={a.id} className="table-row">
-                <span className="text-sm" style={{ color: "var(--text-secondary)" }}>{a.action}</span>
-                <span className="text-xs" style={{ color: "var(--text-muted)" }}>{new Date(a.createdAt).toLocaleDateString()}</span>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { label: "Profile", desc: "Edit your info", href: "/dashboard/profile", icon: User },
+            { label: "Security", desc: "Password & 2FA", href: "/dashboard/security", icon: Shield },
+            { label: "Notifications", desc: "Manage alerts", href: "/dashboard/notifications", icon: Bell },
+            { label: "Integrations", desc: "Connect services", href: "/dashboard/integrations", icon: Settings },
+          ].map(q => (
+            <Link key={q.href} href={q.href} className="glass-subtle group" style={{ padding: "14px 16px", display: "block", textDecoration: "none", transition: "all 0.2s" }}>
+              <div className="flex items-center justify-between mb-2">
+                <q.icon size={18} style={{ color: "#A6A6A6" }} />
+                <ArrowUpRight size={12} style={{ color: "#7B7E84" }} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+              <p className="text-sm font-medium" style={{ color: "#F2EEE8" }}>{q.label}</p>
+              <p className="text-xs mt-0.5" style={{ color: "#7B7E84" }}>{q.desc}</p>
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="glass" style={{ padding: "20px 24px" }}>
+          <div className="flex items-center gap-2 mb-4">
+            <CheckCircle2 size={16} style={{ color: "#7B7E84" }} />
+            <h3 className="text-sm font-semibold" style={{ color: "#F2EEE8" }}>Account Status</h3>
+          </div>
+          <div className="space-y-2">
+            {checks.map(c => (
+              <div key={c.label} className="flex items-center justify-between py-1.5" style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <span className="text-sm" style={{ color: "#A6A6A6" }}>{c.label}</span>
+                {c.ok ? (
+                  <CheckCircle2 size={14} style={{ color: "#22c55e" }} />
+                ) : (
+                  <XCircle size={14} style={{ color: "#7B7E84" }} />
+                )}
               </div>
             ))}
           </div>
-        )}
+          {pct < 100 && (
+            <Link href="/dashboard/profile" className="text-xs mt-3 inline-block" style={{ color: "#D8B36A", textDecoration: "none" }}>
+              Complete your profile →
+            </Link>
+          )}
+        </div>
+
+        <div className="glass" style={{ padding: "20px 24px" }}>
+          <div className="flex items-center gap-2 mb-4">
+            <Clock size={16} style={{ color: "#7B7E84" }} />
+            <h3 className="text-sm font-semibold" style={{ color: "#F2EEE8" }}>Recent Activity</h3>
+          </div>
+          {activity.length === 0 ? (
+            <p className="text-sm" style={{ color: "#7B7E84" }}>No recent activity</p>
+          ) : (
+            <div className="space-y-0">
+              {activity.map((a) => (
+                <div key={a.id} className="table-row">
+                  <span className="text-sm" style={{ color: "#A6A6A6" }}>{a.action}</span>
+                  <span className="text-xs" style={{ color: "#7B7E84" }}>{new Date(a.createdAt).toLocaleDateString()}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="glass-subtle" style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", flexShrink: 0 }} />
+        <p className="text-xs" style={{ color: "#7B7E84" }}>
+          Member since {new Date(user.createdAt).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+          {user.country ? ` · ${user.country}` : ""}
+          {user.language ? ` · ${user.language.toUpperCase()}` : ""}
+        </p>
       </div>
     </div>
   );

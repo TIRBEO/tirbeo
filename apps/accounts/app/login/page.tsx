@@ -144,6 +144,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
+  const [devCode, setDevCode] = useState<string | null>(null);
   const submittedRef = useRef(false);
 
   const isSignUp = step === "signup" || step === "otp-signup";
@@ -219,7 +220,10 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
         setError(await res.text() || "Invalid credentials");
       } else {
         const res = await apiFetch("/api/auth/signup-otp/request", { email }, { noCreds: true });
-        if (res.ok) { setStep("otp-signup"); setOtpCode(""); return; }
+        if (res.ok) {
+          try { const j = await res.json(); if (j.devCode) setDevCode(j.devCode); } catch {}
+          setStep("otp-signup"); setOtpCode(""); return;
+        }
         setError(await res.text() || "Failed to send code");
       }
     } catch (err: any) {
@@ -239,7 +243,10 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
     setLoading(true);
     try {
       const res = await apiFetch("/api/auth/login-otp/request", { email }, { noCreds: true });
-      if (res.ok) { setStep("otp-login"); setOtpCode(""); return; }
+        if (res.ok) {
+          try { const j = await res.json(); if (j.devCode) setDevCode(j.devCode); } catch {}
+          setStep("otp-login"); setOtpCode(""); return;
+        }
       setError(await res.text() || "Failed to send code");
     } catch (err: any) {
       setError(err?.message || "Connection error. Please try again.");
@@ -352,6 +359,11 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
         {isOtpStep ? (
           <div className="space-y-6 pt-4">
             <OtpInput length={6} value={otpCode} onChange={setOtpCode} />
+            {devCode && (
+              <div className="text-center p-3 rounded-lg" style={{ background: 'rgba(255,200,50,0.1)', border: '1px solid rgba(255,200,50,0.3)' }}>
+                <p className="text-xs font-medium" style={{ color: '#D8B36A' }}>Dev Mode — Your code: <span className="font-bold text-sm">{devCode}</span></p>
+              </div>
+            )}
             <p className="text-center text-sm text-white/30">
               Didn&apos;t receive the code?{" "}
               <button type="button" onClick={handleOtpLogin} className="text-white/60 underline hover:text-white/80">

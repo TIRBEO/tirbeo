@@ -284,3 +284,57 @@ export async function verifyProfileEditOtpHandler(request: NextRequest) {
 
   return NextResponse.json({ verified: true, message: 'Profile edit authorized' });
 }
+
+// POST /api/profile/avatar — upload avatar image
+export async function avatarUploadHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+  const formData = await request.formData();
+  const file = formData.get('avatar') as File | null;
+  if (!file) return new NextResponse('No file uploaded', { status: 400 });
+
+  const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+  if (!allowed.includes(file.type)) return new NextResponse('Invalid file type. Allowed: JPEG, PNG, WebP, GIF', { status: 400 });
+  if (file.size > 5 * 1024 * 1024) return new NextResponse('File too large. Max 5MB', { status: 400 });
+
+  const ext = file.name.split('.').pop() || 'jpg';
+  const fileName = `avatar-${session.userId}-${Date.now()}.${ext}`;
+
+  // If R2/S3 credentials are configured, upload there; otherwise use base64 data URL
+  const r2Endpoint = process.env.R2_ENDPOINT;
+  const r2AccessKey = process.env.R2_ACCESS_KEY;
+  const r2SecretKey = process.env.R2_SECRET_KEY;
+  const r2Bucket = process.env.R2_BUCKET;
+  const r2PublicUrl = process.env.R2_PUBLIC_URL;
+
+  let photoUrl: string;
+
+  if (r2Endpoint && r2AccessKey && r2SecretKey && r2Bucket && r2PublicUrl) {
+    // Upload to R2/S3-compatible storage
+    const arrayBuffer = await file.arrayBuffer();
+    const { putObject } = await import('./storage');
+    await putObject({
+      endpoint: r2Endpoint,
+      accessKey: r2AccessKey,
+      secretKey: r2SecretKey,
+      bucket: r2Bucket,
+      key: `avatars/${fileName}`,
+      body: Buffer.from(arrayBuffer),
+      contentType: file.type,
+    });
+    photoUrl = `${r2PublicUrl}/avatars/${fileName}`;
+  } else {
+    // Fallback: store as base64 data URL in DB (fine for dev, not for prod)
+    const arrayBuffer = await file.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+    photoUrl = `data:${file.type};base64,${base64}`;
+  }
+
+  await prisma.user.update({
+    where: { id: session.userId },
+    data: { photoUrl },
+  });
+
+  return NextResponse.json({ photoUrl, message: 'Avatar updated' });
+}

@@ -37,6 +37,7 @@ import {
   setPasswordHandler,
   requestProfileEditOtpHandler,
   verifyProfileEditOtpHandler,
+  avatarUploadHandler,
 } from '../../../lib/userHandlers';
 
 import {
@@ -59,7 +60,7 @@ const INTERNAL_ROUTES = [
   'auth/verify-2fa', 'auth/recovery-2fa',
   'users/me', 'activity', 'workspaces',
   'profile', 'security/password', 'security/sessions', 'security/set-password',
-  'profile/request-edit-otp', 'profile/verify-edit-otp',
+  'profile/request-edit-otp', 'profile/verify-edit-otp', 'profile/avatar',
   'notifications', 'integrations', 'user/activity', 'preferences',
   'email/config', 'email/templates', 'email/test',
 ];
@@ -115,6 +116,7 @@ function matchRoute(slug: string[], method: string, routes: any[]) {
       'security/set-password': ['POST'],
       'profile/request-edit-otp': ['POST'],
       'profile/verify-edit-otp': ['POST'],
+      'profile/avatar': ['POST'],
       'notifications': ['GET', 'PATCH'],
       'integrations': ['GET', 'POST', 'DELETE'],
       'user/activity': ['GET'],
@@ -265,6 +267,9 @@ async function handler(request: NextRequest, slug: string[], method: string) {
         break;
       case 'profile/verify-edit-otp':
         resp = await verifyProfileEditOtpHandler(request);
+        break;
+      case 'profile/avatar':
+        resp = await avatarUploadHandler(request);
         break;
       case 'notifications':
         resp = await notificationsHandler(request);

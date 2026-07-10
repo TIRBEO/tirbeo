@@ -172,12 +172,20 @@ export async function requestSignupOtpHandler(request: NextRequest) {
 
     const code = genSignupOtp();
     await storeSignupOtp(email, code);
+    let emailSent = false;
     try {
-      await sendSignupOtpEmail(email, code);
+      const result = await sendSignupOtpEmail(email, code);
+      emailSent = result.success;
     } catch (emailErr) {
-      console.error('[SIGNUP OTP] Email send failed, but OTP stored:', emailErr);
+      console.error('[SIGNUP OTP] Email send error:', emailErr);
     }
-    return new NextResponse('Verification code sent to email', { status: 200 });
+    const resp: any = { message: 'Verification code sent to email' };
+    if (!emailSent) {
+      resp.devCode = code;
+      resp.devMessage = 'Email delivery failed — use this code for testing';
+      console.log(`[SIGNUP OTP] Dev mode: code for ${email} is ${code}`);
+    }
+    return NextResponse.json(resp, { status: 200 });
   } catch (err: any) {
     console.error('[SIGNUP OTP REQUEST]', err?.message || err, err?.stack);
     return new NextResponse(`Failed to process request: ${err?.message || 'unknown'}`, { status: 500 });
@@ -198,12 +206,20 @@ export async function requestLoginOtpHandler(request: NextRequest) {
 
     const code = genSignupOtp();
     await storeSignupOtp(email, code);
+    let emailSent = false;
     try {
-      await sendSignupOtpEmail(email, code);
+      const result = await sendSignupOtpEmail(email, code);
+      emailSent = result.success;
     } catch (emailErr) {
-      console.error('[LOGIN OTP] Email send failed, but OTP stored:', emailErr);
+      console.error('[LOGIN OTP] Email send error:', emailErr);
     }
-    return new NextResponse('Verification code sent to your email', { status: 200 });
+    const resp: any = { message: 'Verification code sent to your email' };
+    if (!emailSent) {
+      resp.devCode = code;
+      resp.devMessage = 'Email delivery failed — use this code for testing';
+      console.log(`[LOGIN OTP] Dev mode: code for ${email} is ${code}`);
+    }
+    return NextResponse.json(resp, { status: 200 });
   } catch (err: any) {
     console.error('[LOGIN OTP REQUEST]', err?.message || err, err?.stack);
     return new NextResponse(`Failed to process request: ${err?.message || 'unknown'}`, { status: 500 });
