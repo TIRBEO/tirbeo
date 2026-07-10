@@ -166,11 +166,15 @@ export async function requestSignupOtpHandler(request: NextRequest) {
 
     const code = genSignupOtp();
     await storeSignupOtp(email, code);
-    await sendSignupOtpEmail(email, code);
+    try {
+      await sendSignupOtpEmail(email, code);
+    } catch (emailErr) {
+      console.error('[SIGNUP OTP] Email send failed, but OTP stored:', emailErr);
+    }
     return new NextResponse('Verification code sent to email', { status: 200 });
   } catch (err) {
     console.error('[SIGNUP OTP REQUEST]', err);
-    return new NextResponse('Failed to send code', { status: 500 });
+    return new NextResponse('Failed to process request', { status: 500 });
   }
 }
 
@@ -188,11 +192,15 @@ export async function requestLoginOtpHandler(request: NextRequest) {
 
     const code = genSignupOtp();
     await storeSignupOtp(email, code);
-    await sendSignupOtpEmail(email, code);
+    try {
+      await sendSignupOtpEmail(email, code);
+    } catch (emailErr) {
+      console.error('[LOGIN OTP] Email send failed, but OTP stored:', emailErr);
+    }
     return new NextResponse('Verification code sent to your email', { status: 200 });
   } catch (err) {
     console.error('[LOGIN OTP REQUEST]', err);
-    return new NextResponse('Failed to send code', { status: 500 });
+    return new NextResponse('Failed to process request', { status: 500 });
   }
 }
 

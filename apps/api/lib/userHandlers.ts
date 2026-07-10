@@ -1,0 +1,221 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
+import { prisma } from './db/prisma';
+import { getSession } from './session';
+import { hashPassword, verifyPassword } from './auth/password';
+
+export async function extendedProfileHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+  if (request.method === 'GET') {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: {
+        id: true, email: true, name: true, photoUrl: true,
+        phoneNumber: true, occupation: true, bio: true,
+        website: true, linkedin: true, github: true, twitter: true,
+        country: true, timezone: true, language: true, theme: true,
+        dateFormat: true, timeFormat: true, fontSize: true,
+        reduceMotion: true, highContrast: true,
+        emailVerified: true, phoneVerified: true, is2FAEnabled: true,
+        companyName: true, companyRole: true, industry: true, companySize: true,
+        createdAt: true, updatedAt: true,
+      },
+    });
+    if (!user) return new NextResponse('User not found', { status: 404 });
+    return NextResponse.json(user);
+  }
+
+  if (request.method === 'PATCH') {
+    const body = await request.json();
+    const schema = z.object({
+      name: z.string().min(1).optional(),
+      photoUrl: z.string().url().optional().nullable(),
+      phoneNumber: z.string().optional().nullable(),
+      occupation: z.string().optional().nullable(),
+      bio: z.string().optional().nullable(),
+      website: z.string().url().optional().nullable(),
+      linkedin: z.string().optional().nullable(),
+      github: z.string().optional().nullable(),
+      twitter: z.string().optional().nullable(),
+      country: z.string().optional().nullable(),
+      timezone: z.string().optional().nullable(),
+      language: z.string().optional().nullable(),
+      theme: z.enum(['light', 'dark', 'system']).optional().nullable(),
+      dateFormat: z.string().optional().nullable(),
+      timeFormat: z.string().optional().nullable(),
+      fontSize: z.string().optional().nullable(),
+      reduceMotion: z.boolean().optional(),
+      highContrast: z.boolean().optional(),
+      companyName: z.string().optional().nullable(),
+      companyRole: z.string().optional().nullable(),
+      industry: z.string().optional().nullable(),
+      companySize: z.string().optional().nullable(),
+    });
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) return new NextResponse('Invalid payload', { status: 400 });
+    const updated = await prisma.user.update({ where: { id: session.userId }, data: parsed.data });
+    return NextResponse.json(updated);
+  }
+
+  return new NextResponse('Method not allowed', { status: 405 });
+}
+
+export async function changePasswordHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+  const body = await request.json();
+  const { currentPassword, newPassword } = body;
+  if (!currentPassword || !newPassword || newPassword.length < 8) {
+    return new NextResponse('Invalid payload', { status: 400 });
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: session.userId } });
+  if (!user) return new NextResponse('User not found', { status: 404 });
+
+  if (user.passwordHash && !(await verifyPassword(user.passwordHash, currentPassword))) {
+    return new NextResponse('Current password is incorrect', { status: 401 });
+  }
+
+  const newHash = await hashPassword(newPassword);
+  await prisma.user.update({ where: { id: session.userId }, data: { passwordHash: newHash } });
+  return new NextResponse('Password changed', { status: 200 });
+}
+
+export async function sessionsHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+  if (request.method === 'GET') {
+    const sessions = await prisma.session.findMany({
+      where: { userId: session.userId },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, userAgent: true, ipAddress: true, createdAt: true, expiresAt: true },
+    });
+    return NextResponse.json(sessions);
+  }
+
+  if (request.method === 'DELETE') {
+    const body = await request.json();
+    const { sessionId } = body;
+    if (!sessionId) return new NextResponse('sessionId required', { status: 400 });
+    if (sessionId === session.sessionId) return new NextResponse('Cannot terminate current session', { status: 400 });
+    await prisma.session.delete({ where: { id: sessionId } });
+    return new NextResponse('Session terminated', { status: 200 });
+  }
+
+  return new NextResponse('Method not allowed', { status: 405 });
+}
+
+export async function notificationsHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+  if (request.method === 'GET') {
+    const limit = Number(request.nextUrl.searchParams.get('limit')) || 20;
+    const notifications = await prisma.notification.findMany({
+      where: { userId: session.userId },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+    });
+    const unread = await prisma.notification.count({ where: { userId: session.userId, read: false } });
+    return NextResponse.json({ notifications, unread });
+  }
+
+  if (request.method === 'PATCH') {
+    const body = await request.json();
+    const { notificationIds, markAll } = body;
+    if (markAll) {
+      await prisma.notification.updateMany({ where: { userId: session.userId, read: false }, data: { read: true } });
+    } else if (notificationIds && Array.isArray(notificationIds)) {
+      await prisma.notification.updateMany({ where: { id: { in: notificationIds }, userId: session.userId }, data: { read: true } });
+    }
+    return new NextResponse('Notifications updated', { status: 200 });
+  }
+
+  return new NextResponse('Method not allowed', { status: 405 });
+}
+
+export async function integrationsHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+  if (request.method === 'GET') {
+    const integrations = await prisma.integration.findMany({ where: { userId: session.userId }, orderBy: { createdAt: 'desc' } });
+    return NextResponse.json(integrations);
+  }
+
+  if (request.method === 'POST') {
+    const body = await request.json();
+    const { provider, connected } = body;
+    if (!provider) return new NextResponse('provider required', { status: 400 });
+    const integration = await prisma.integration.upsert({
+      where: { userId_provider: { userId: session.userId, provider } },
+      update: { connected: connected ?? true },
+      create: { userId: session.userId, provider, connected: connected ?? true },
+    });
+    return NextResponse.json(integration);
+  }
+
+  if (request.method === 'DELETE') {
+    const body = await request.json();
+    const { provider } = body;
+    if (!provider) return new NextResponse('provider required', { status: 400 });
+    await prisma.integration.deleteMany({ where: { userId: session.userId, provider } });
+    return new NextResponse('Integration removed', { status: 200 });
+  }
+
+  return new NextResponse('Method not allowed', { status: 405 });
+}
+
+export async function userActivityHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+  const limit = Number(request.nextUrl.searchParams.get('limit')) || 30;
+  const logs = await prisma.auditEvent.findMany({
+    where: { actorId: session.userId },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    select: { id: true, action: true, targetType: true, targetId: true, metadata: true, severity: true, createdAt: true },
+  });
+  return NextResponse.json(logs);
+}
+
+export async function preferencesHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
+  if (request.method === 'GET') {
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: {
+        theme: true, language: true, timezone: true, dateFormat: true,
+        timeFormat: true, fontSize: true, reduceMotion: true, highContrast: true, preferences: true,
+      },
+    });
+    return NextResponse.json(user);
+  }
+
+  if (request.method === 'PATCH') {
+    const body = await request.json();
+    const schema = z.object({
+      theme: z.enum(['light', 'dark', 'system']).optional(),
+      language: z.string().optional(),
+      timezone: z.string().optional(),
+      dateFormat: z.string().optional(),
+      timeFormat: z.string().optional(),
+      fontSize: z.string().optional(),
+      reduceMotion: z.boolean().optional(),
+      highContrast: z.boolean().optional(),
+      preferences: z.any().optional(),
+    });
+    const parsed = schema.safeParse(body);
+    if (!parsed.success) return new NextResponse('Invalid payload', { status: 400 });
+    await prisma.user.update({ where: { id: session.userId }, data: parsed.data });
+    return new NextResponse('Preferences updated', { status: 200 });
+  }
+
+  return new NextResponse('Method not allowed', { status: 405 });
+}

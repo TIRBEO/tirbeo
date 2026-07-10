@@ -26,6 +26,16 @@ import {
   verifyLoginOtpHandler,
 } from '../../../lib/authHandlers';
 
+import {
+  extendedProfileHandler,
+  changePasswordHandler,
+  sessionsHandler,
+  notificationsHandler,
+  integrationsHandler,
+  userActivityHandler,
+  preferencesHandler,
+} from '../../../lib/userHandlers';
+
 const appUrl = (subdomain: string, path: string) =>
   `https://${subdomain}.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}${path}`;
 
@@ -38,6 +48,8 @@ const INTERNAL_ROUTES = [
   'auth/google', 'auth/google/callback', 'auth/github', 'auth/github/callback',
   'auth/verify-2fa', 'auth/recovery-2fa',
   'users/me', 'activity', 'workspaces',
+  'profile', 'security/password', 'security/sessions',
+  'notifications', 'integrations', 'user/activity', 'preferences',
 ];
 
 async function loadRoutes() {
@@ -75,6 +87,13 @@ function matchRoute(slug: string[], method: string, routes: any[]) {
       'users/me': ['GET', 'PATCH'],
       'activity': ['GET'],
       'workspaces': ['GET', 'POST'],
+      'profile': ['GET', 'PATCH'],
+      'security/password': ['POST'],
+      'security/sessions': ['GET', 'DELETE'],
+      'notifications': ['GET', 'PATCH'],
+      'integrations': ['GET', 'POST', 'DELETE'],
+      'user/activity': ['GET'],
+      'preferences': ['GET', 'PATCH'],
     };
     const allowed = methodMap[pathPart];
     if (allowed && allowed.includes(method.toUpperCase())) {
@@ -187,6 +206,27 @@ async function handler(request: NextRequest, slug: string[], method: string) {
         if (method === 'GET') resp = await listWorkspacesHandler(request);
         else if (method === 'POST') resp = await createWorkspaceHandler(request);
         else resp = new NextResponse('Method not allowed', { status: 405 });
+        break;
+      case 'profile':
+        resp = await extendedProfileHandler(request);
+        break;
+      case 'security/password':
+        resp = await changePasswordHandler(request);
+        break;
+      case 'security/sessions':
+        resp = await sessionsHandler(request);
+        break;
+      case 'notifications':
+        resp = await notificationsHandler(request);
+        break;
+      case 'integrations':
+        resp = await integrationsHandler(request);
+        break;
+      case 'user/activity':
+        resp = await userActivityHandler(request);
+        break;
+      case 'preferences':
+        resp = await preferencesHandler(request);
         break;
       default:
         resp = new NextResponse('Internal route not implemented', { status: 501 });

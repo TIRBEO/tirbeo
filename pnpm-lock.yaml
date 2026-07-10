@@ -232,6 +232,9 @@ importers:
       '@tirbeo/utils':
         specifier: workspace:*
         version: link:../../packages/utils
+      lucide-react:
+        specifier: ^0.460.0
+        version: 0.460.0(react@19.2.7)
       motion:
         specifier: 12.6.5
         version: 12.6.5(@emotion/is-prop-valid@0.8.8)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -272,9 +275,6 @@ importers:
 
   apps/landing:
     dependencies:
-      '@tirbeo/design-system':
-        specifier: workspace:*
-        version: link:../../packages/design-system
       '@vercel/speed-insights':
         specifier: ^2.0.0
         version: 2.0.0(next@15.5.19(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react@19.2.7)

@@ -13,6 +13,7 @@
     "@tirbeo/database": "workspace:*",
     "@tirbeo/ui": "workspace:*",
     "@tirbeo/utils": "workspace:*",
+    "lucide-react": "^0.460.0",
     "motion": "12.6.5",
     "next": "^15.1.0",
     "react": "^19.0.0",

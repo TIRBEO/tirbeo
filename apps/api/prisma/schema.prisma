@@ -28,6 +28,26 @@ model User {
   is2FAEnabled     Boolean     @default(false)
   lastActiveAt     DateTime?   // online/offline tracking
   preferences      Json        @default("{}") // per-user admin prefs { sidebarCollapsed, theme, etc }
+  bio              String?
+  website          String?
+  linkedin         String?
+  github           String?
+  twitter          String?
+  country          String?
+  timezone         String?
+  language         String?    @default("en")
+  theme            String?    @default("system")  // 'light' | 'dark' | 'system'
+  dateFormat       String?    @default("MM/DD/YYYY")
+  timeFormat       String?    @default("12h")
+  fontSize         String?    @default("default")
+  reduceMotion     Boolean    @default(false)
+  highContrast     Boolean    @default(false)
+  emailVerified    Boolean    @default(false)
+  phoneVerified    Boolean    @default(false)
+  companyName      String?
+  companyRole      String?
+  industry         String?
+  companySize      String?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
@@ -43,6 +63,7 @@ model User {
   mediaUploads         Media[]
   auditEvents          AuditEvent[]
   recoveryCodes        RecoveryCode[]
+  integrations         Integration[]
 
   @@index([email])
   @@index([adminRole])
@@ -362,6 +383,22 @@ model Subscriber {
   @@index([email])
   @@index([status])
   @@index([createdAt])
+}
+
+model Integration {
+  id          String   @id @default(cuid())
+  userId      String
+  provider    String   // 'google' | 'github' | 'slack' | 'discord' | 'zapier' | 'notion' | 'linear' | 'figma' | 'openai'
+  connected   Boolean  @default(false)
+  accessToken String?
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
 }
 
 

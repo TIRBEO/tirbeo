@@ -3,13 +3,13 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Dashboard — Tirbeo",
-  description: "Manage your Tirbeo account and settings",
+  description: "Manage your Tirbeo account",
 };
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardRootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="noise-overlay">{children}</body>
+      <body>{children}</body>
     </html>
   );
 }
