@@ -3,6 +3,7 @@
 import { useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useLandingConfig } from "./LandingContentProvider";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -22,7 +23,8 @@ const stages = [
 ];
 
 export function AboutSection() {
-  const sectionRef = useRef<HTMLDivElement>(null);
+	const cfg = useLandingConfig().about;
+	const sectionRef = useRef<HTMLDivElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const panelsRef = useRef<(HTMLDivElement | null)[]>([]);
   const titleRef = useRef<HTMLDivElement>(null);
@@ -167,13 +169,15 @@ export function AboutSection() {
           </span>
           <h2
             className="mt-3 text-6xl font-bold tracking-tight md:text-8xl lg:text-9xl"
-            style={{ color: "#F25604", textShadow: "0 0 120px rgba(242,86,4,0.3)" }}
+            style={{ color: cfg.textColor, textShadow: `0 0 120px ${cfg.textColor}4D` }}
           >
-            Tirbeo
+            {cfg.headline}
           </h2>
-          <p className="mt-3 text-xs uppercase tracking-[0.35em] text-white/15">
-            A new kind of social platform
-          </p>
+          {cfg.paragraphs[0] && (
+            <p className="mt-3 text-xs uppercase tracking-[0.35em] text-white/15">
+              {cfg.paragraphs[0]}
+            </p>
+          )}
         </div>
       </div>
 
@@ -206,18 +210,18 @@ export function AboutSection() {
                 <div className="mb-6 flex items-center justify-center">
                   <span
                     className="block h-2 w-2 rounded-full"
-                    style={{ background: "#F25604", boxShadow: "0 0 20px rgba(242,86,4,0.6)" }}
+                    style={{ background: cfg.textColor, boxShadow: `0 0 20px ${cfg.textColor}99` }}
                   />
                 </div>
 
                 <span
                   className="mx-auto mb-8 block h-px w-[120px]"
-                  style={{ background: "linear-gradient(90deg, transparent, #F25604, transparent)" }}
+                  style={{ background: `linear-gradient(90deg, transparent, ${cfg.textColor}, transparent)` }}
                 />
 
                 <p
-                  className="text-2xl leading-relaxed text-[#F25604] md:text-3xl md:leading-relaxed lg:text-4xl lg:leading-relaxed"
-                  style={{ textShadow: "0 0 60px rgba(0,0,0,0.4)" }}
+                  style={{ color: cfg.textColor, textShadow: "0 0 60px rgba(0,0,0,0.4)" }}
+                  className="text-2xl leading-relaxed md:text-3xl md:leading-relaxed lg:text-4xl lg:leading-relaxed"
                 >
                   {stage.body}
                 </p>

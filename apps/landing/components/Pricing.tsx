@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLandingConfig } from "./LandingContentProvider";
 
 const faqItems = [
   {
@@ -22,6 +23,7 @@ const faqItems = [
 
 export function Pricing() {
   const [openIndex, setOpenIndex] = useState(0);
+  const cfg = useLandingConfig().newsletter;
 
   return (
     <section id="pricing" className="relative overflow-hidden px-6 py-28 bg-black">
@@ -29,10 +31,10 @@ export function Pricing() {
 
       <div className="relative mx-auto max-w-3xl text-center">
         <h2 className="gsap-reveal font-heading text-4xl font-bold text-white sm:text-5xl">
-          Stay in the loop
+          {cfg.headline}
         </h2>
         <p className="gsap-reveal mx-auto mt-5 max-w-2xl text-lg leading-relaxed text-[#94A3B8]">
-          Be first to hear about new Tirbeo features, early access opportunities, and community milestones.
+          {cfg.subtext}
         </p>
 
         <div className="gsap-reveal mt-12 space-y-4 text-left">
@@ -65,17 +67,17 @@ export function Pricing() {
         <div className="gsap-reveal mt-14 rounded-3xl border border-white/10 bg-white/5 shadow-xl backdrop-blur-2xl">
           <div className="rounded-[1.75rem] bg-black/80 px-6 py-8 sm:px-8">
             <div className="text-left">
-              <p className="text-sm uppercase tracking-[0.32em] text-[orange] opacity-90">Newsletter</p>
-              <h3 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Never miss an update</h3>
+              <p className="text-sm uppercase tracking-[0.32em] text-[orange] opacity-90">{cfg.badge}</p>
+              <h3 className="mt-3 text-3xl font-bold text-white sm:text-4xl">{cfg.headline}</h3>
               <p className="mt-3 max-w-2xl text-sm text-[#94a3b8] sm:text-base">
-                Subscribe for launch announcements, feature drops, and exclusive early access.
+                {cfg.subtext}
               </p>
             </div>
 
             <form onSubmit={(e) => e.preventDefault()} className="mt-8 grid gap-4 sm:grid-cols-[1fr_auto]">
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder={cfg.placeholder}
                 required
                 className="min-w-0 rounded-2xl border border-white/10 bg-white/[0.06] px-5 py-4 text-sm text-white outline-none transition duration-300 placeholder:text-[#94a3b8] focus:border-[#2F4FC4]/40 focus:ring-2 focus:ring-[#2F4FC4]/15"
                 style={{ backdropFilter: "blur(18px)" }}
@@ -84,11 +86,11 @@ export function Pricing() {
                 type="submit"
                 className="rounded-2xl bg-gradient-to-r from-[#FE8624] to-[#FE8624] px-7 py-4 text-sm font-semibold text-white transition duration-300 hover:shadow-[0_24px_60px_rgba(36,61,230,0.28)]"
               >
-                Subscribe
+                {cfg.buttonLabel}
               </button>
             </form>
 
-            <p className="mt-4 text-xs text-[#FE8624]">No spam. Unsubscribe anytime.</p>
+            <p className="mt-4 text-xs" style={{ color: cfg.accentColor }}>{cfg.disclaimer}</p>
           </div>
         </div>
       </div>

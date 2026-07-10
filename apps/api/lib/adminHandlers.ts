@@ -294,3 +294,37 @@ export async function seedAdminHandler(request: NextRequest) {
 
   return NextResponse.json({ message: `User ${email} promoted to ${adminRole}${password ? ' with new password' : ''}` });
 }
+
+// ─── Password Reset (super_admin only) ───
+
+export async function resetUserPassword(request: NextRequest, userId: string) {
+  const session = await requireRole(request, 'super_admin');
+  if (session instanceof NextResponse) return session;
+
+  const body = await request.json();
+  const { password } = body;
+  if (!password || typeof password !== 'string' || password.length < 8) {
+    return new NextResponse('Password must be at least 8 characters', { status: 400 });
+  }
+
+  const existing = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existing) return new NextResponse('User not found', { status: 404 });
+
+  const { hashPassword } = await import('./auth/password');
+  const passwordHash = await hashPassword(password);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash },
+  });
+
+  await createAuditEvent({
+    actorId: session.userId ?? session.id ?? '',
+    action: 'password.reset',
+    targetType: 'user',
+    targetId: userId,
+    severity: 'info',
+    metadata: { from: 'admin_panel', resetBy: 'super_admin' },
+  });
+
+  return NextResponse.json({ message: 'Password reset successfully' });
+}

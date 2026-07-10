@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { appUrl } from "@/lib/domains";
+import { useLandingConfig } from "./LandingContentProvider";
 
 type DropdownItem = { label: string; description: string; link: string };
 
@@ -113,6 +114,7 @@ function MegaDropdown({ label, items }: { label: string; items: DropdownItem[] }
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
+  const cfg = useLandingConfig().navbar;
 
   useEffect(() => {
     const about = document.getElementById("about");
@@ -175,11 +177,11 @@ export function Header() {
     <header className={`fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-1.5 md:px-4 md:pt-5 transition-all duration-500 ${hidden ? '-translate-y-full' : 'translate-y-0'}`}>
       <div className="flex w-full max-w-md min-w-0 items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.03] px-2 py-2 md:max-w-6xl md:rounded-2xl md:px-6 md:py-3 backdrop-blur-2xl shadow-lg shadow-black/10">
         <a href="/" className="flex-shrink-0 min-w-0">
-          <img src="/logo1.png" alt="Tirbeo" className="h-6 w-auto max-w-[90px] object-contain md:h-10 md:max-w-[180px]" />
+          <img src={cfg.logoUrl || "/logo1.png"} alt={cfg.siteName} className="h-6 w-auto max-w-[90px] object-contain md:h-10 md:max-w-[180px]" />
         </a>
 
         <nav className="hidden items-center md:flex md:gap-1">
-          {dropdowns.map((d, i) => (
+          {cfg.dropdowns.map((d, i) => (
             <div key={d.label} className={i === 0 ? "ml-4" : ""}>
               <MegaDropdown label={d.label} items={d.items} />
             </div>
@@ -200,10 +202,10 @@ export function Header() {
             </svg>
           </button>
           <a
-            href={appUrl("accounts", "/login")}
+            href={appUrl("accounts", cfg.ctaUrl)}
             className="hidden md:inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:underline hover:decoration-dashed hover:decoration-2 hover:decoration-[#F25604] hover:underline-offset-4"
           >
-                 <span>Get Started</span>
+                 <span>{cfg.ctaText}</span>
             <svg className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
             </svg>
@@ -216,17 +218,17 @@ export function Header() {
           <div className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden" onClick={() => setMobileOpen(false)} />
           <div className="fixed inset-x-4 top-14 z-50 max-h-[calc(100dvh-4rem)] overflow-hidden rounded-lg border border-[#F25604]/10 bg-[#010006]/95 backdrop-blur-3xl shadow-2xl shadow-black/50 md:hidden">
             <div className="max-h-[calc(100dvh-10rem)] overflow-y-auto overscroll-contain md:max-h-[calc(100vh-8rem)]">
-              {dropdowns.map((d) => (
+              {cfg.dropdowns.map((d) => (
                 <MobileNavItem key={d.label} label={d.label} items={d.items} />
               ))}
             </div>
             <div className="border-t border-white/[0.06] px-4 py-3 md:px-6 md:py-4">
               <a
-                href={appUrl("accounts", "/login")}
+                href={appUrl("accounts", cfg.ctaUrl)}
                 onClick={() => setMobileOpen(false)}
                 className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-[#F25604] to-[#F97316] px-4 py-2.5 text-xs font-semibold text-white shadow-lg shadow-[#F25604]/25 transition-all hover:shadow-xl hover:shadow-[#F25604]/30 active:scale-[0.98] md:rounded-xl md:px-6 md:py-3 md:text-sm"
               >
-                Get Started
+                {cfg.ctaText}
                 <svg className="h-3 w-3 md:h-3.5 md:w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                 </svg>

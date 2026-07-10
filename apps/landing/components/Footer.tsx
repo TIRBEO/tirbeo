@@ -1,6 +1,12 @@
+"use client";
+
 import { appUrl } from "@/lib/domains";
+import { useLandingConfig } from "./LandingContentProvider";
 
 export function Footer() {
+  const cfg = useLandingConfig();
+  const { footer, newsletter, navbar } = cfg;
+
   return (
     <footer className="relative border-t border-white/[0.06] px-6 py-16">
       
@@ -10,10 +16,10 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-[2fr_1fr_1fr_1fr_1fr] items-start">
           <div className="gsap-reveal flex flex-col items-start space-y-5">
             <a href="/" className="flex-shrink-99 ">
-              <img src="/logo1.png" alt="Tirbeo" className="h-10 w-auto max-w-[180px] object-contain" />
+              <img src={navbar.logoUrl || "/logo1.png"} alt={navbar.siteName} className="h-10 w-auto max-w-[180px] object-contain" />
             </a>
             <p className="max-w-xs text-sm leading-relaxed text-[#94A3B8]">
-              Connecting communities through meaningful conversations, real-time collaboration, and shared experiences.
+              {footer.tagline}
             </p>
           </div>
 
@@ -44,32 +50,33 @@ export function Footer() {
             </ul>
             </div>
 
-          {/* Newsletter */}
+          {footer.showNewsletterForm && (
           <div className="gsap-reveal flex flex-col items-start">
-            <h4 className="mb-5 text-sm font-semibold text-[#F97316]">Stay in the loop</h4>
+            <h4 className="mb-5 text-sm font-semibold text-[#F97316]">{newsletter.headline}</h4>
             <p className="mb-4 max-w-xs text-sm text-white/70">
-              Be first to hear about new Tirbeo features, early access opportunities, and community milestones.
+              {newsletter.subtext}
             </p>
             <form className="flex flex-col gap-2">
               <input
                 type="email"
-                placeholder="Enter your email"
+                placeholder={newsletter.placeholder}
                 className="rounded bg-black/70 backdrop-blur-lg px-3 py-2 text-sm text-white placeholder-white focus:outline-none border border-white/20"
               />
               <button
                 type="submit"
                 className="rounded bg-gradient-to-r from-[#F25604] to-[#F97316] px-4 py-2 text-sm font-medium text-white hover:shadow-[0_12px_30px_rgba(242,86,4,0.25)] transition-all"
               >
-                Subscribe
+                {newsletter.buttonLabel}
               </button>
-              <p className="text-xs text-white/70">No spam. Unsubscribe anytime.</p>
+              <p className="text-xs text-white/70">{newsletter.disclaimer}</p>
             </form>
           </div>
+          )}
 
           </div>
 
         <div className="gsap-reveal mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/[0.06] pt-8 text-sm text-[#64748B] md:flex-row">
-          <p>&copy; {new Date().getFullYear()} Tirbeo. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {navbar.siteName}. {footer.copyright}</p>
         </div>
       </div>
     </footer>
