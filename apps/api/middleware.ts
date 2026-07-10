@@ -57,7 +57,7 @@ export async function middleware(request: NextRequest) {
     return new NextResponse('Too many requests', { status: 429 });
   }
 
-  const publicPaths = ['/api/auth/login', '/api/auth/signup', '/api/auth/signup-otp/request', '/api/auth/login-otp/request', '/api/auth/login-otp/verify', '/api/auth/verify-2fa', '/api/auth/recovery-2fa', '/api/auth/google', '/api/auth/google/callback', '/api/admin/login', '/api/admin/seed'];
+  const publicPaths = ['/api/auth/login', '/api/auth/signup', '/api/auth/signup-otp/request', '/api/auth/login-otp/request', '/api/auth/login-otp/verify', '/api/auth/verify-2fa', '/api/auth/recovery-2fa', '/api/auth/google', '/api/auth/google/callback', '/api/auth/github', '/api/auth/github/callback', '/api/admin/login', '/api/admin/seed', '/api/profile'];
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method) && !publicPaths.some(p => pathname.startsWith(p))) {
     const cookie = request.cookies.get('__session')?.value;
     if (!cookie) {
