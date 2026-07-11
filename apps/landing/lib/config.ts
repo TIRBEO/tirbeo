@@ -52,6 +52,50 @@ export interface FooterConfig {
   tagline: string;
   copyright: string;
   showNewsletterForm: boolean;
+  logoUrl?: string;
+  linkColumns?: { title: string; links: { label: string; href: string }[] }[];
+}
+
+export interface StageItem {
+  label: string;
+  color: string;
+  heading: string;
+  body: string;
+}
+
+export interface FeaturesConfig {
+  headline: string;
+  subtitle: string;
+  items: FeatureItem[];
+  stages?: StageItem[];
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface FaqConfig {
+  heading?: string;
+  subheading?: string;
+  items?: FaqItem[];
+}
+
+export interface PreloaderConfig {
+  enabled?: boolean;
+  greetings?: string;
+  cycleIntervalMs?: number;
+  durationMs?: number;
+  textColor?: string;
+  backgroundColor?: string;
+}
+
+export interface SeoConfig {
+  title?: string;
+  description?: string;
+  keywords?: string[];
+  ogImage?: string;
+  favicon?: string;
 }
 
 export interface LandingConfig {
@@ -61,6 +105,9 @@ export interface LandingConfig {
   features: FeaturesConfig;
   newsletter: NewsletterConfig;
   footer: FooterConfig;
+  faq?: FaqConfig;
+  preloader?: PreloaderConfig;
+  seo?: SeoConfig;
 }
 
 const DEFAULTS: LandingConfig = {
@@ -130,12 +177,12 @@ const DEFAULTS: LandingConfig = {
   },
 };
 
-const SECTIONS: (keyof LandingConfig)[] = ['navbar', 'hero', 'about', 'features', 'newsletter', 'footer'];
+const SECTIONS: (keyof LandingConfig)[] = ['navbar', 'hero', 'about', 'features', 'newsletter', 'footer', 'faq', 'preloader', 'seo'];
 
 export async function fetchLandingConfig(): Promise<LandingConfig> {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-tirbeo.vercel.app';
-    const res = await fetch(`${apiUrl}/api/public/landing`, { next: { revalidate: 30 } });
+    const res = await fetch(`${apiUrl}/api/public/landing-config`, { next: { revalidate: 30 } });
     if (res.ok) {
       const raw = await res.json();
       const merged = { ...DEFAULTS };
@@ -149,3 +196,5 @@ export async function fetchLandingConfig(): Promise<LandingConfig> {
   } catch {}
   return DEFAULTS;
 }
+
+export const getLandingConfig = fetchLandingConfig;

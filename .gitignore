@@ -24,3 +24,5 @@ apps/landing/pnpm-lock.yaml
 apps/landing/pnpm-workspace.yaml
 apps/landing/turbo.json
 apps/landing/.npmrc
+.vercel
+.env*

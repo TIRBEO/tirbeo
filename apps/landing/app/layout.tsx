@@ -4,7 +4,7 @@ import { CustomCursor } from "../components/CustomCursor";
 import "./globals.css";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { getLandingConfig } from "../lib/config";
-import { LandingConfigProvider } from "../lib/LandingConfigContext";
+import { LandingContentProvider } from "../components/LandingContentProvider";
 
 export async function generateMetadata(): Promise<Metadata> {
   const config = await getLandingConfig();
@@ -35,14 +35,13 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const config = await getLandingConfig();
   return (
     <html lang="en">
       <body className="min-h-screen antialiased" suppressHydrationWarning>
         <CustomCursor />
-        <LandingConfigProvider config={config}>
+        <LandingContentProvider>
           <SmoothScroll>{children}</SmoothScroll>
-        </LandingConfigProvider>
+        </LandingContentProvider>
         <SpeedInsights />
       </body>
     </html>

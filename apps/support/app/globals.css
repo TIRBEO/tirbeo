@@ -1,2 +1,29 @@
 @import "tailwindcss";
-@import "@tirbeo/ui/theme";
+
+@theme {
+  --color-tirbeo-crimson-50: #fef2f4;
+  --color-tirbeo-crimson-100: #fde6e9;
+  --color-tirbeo-crimson-200: #fbd0d7;
+  --color-tirbeo-crimson-300: #f7a8b8;
+  --color-tirbeo-crimson-400: #f17a96;
+  --color-tirbeo-crimson-500: #e74d73;
+  --color-tirbeo-crimson-600: #d42a5a;
+  --color-tirbeo-crimson-700: #b21d48;
+  --color-tirbeo-crimson-800: #951b42;
+  --color-tirbeo-crimson-900: #7f1b3d;
+  --color-tirbeo-crimson-950: #460a1e;
+
+  --color-tirbeo-dark-50: #fafafa;
+  --color-tirbeo-dark-100: #f4f4f5;
+  --color-tirbeo-dark-200: #e4e4e7;
+  --color-tirbeo-dark-300: #d4d4d8;
+  --color-tirbeo-dark-400: #a1a1aa;
+  --color-tirbeo-dark-500: #71717a;
+  --color-tirbeo-dark-600: #52525b;
+  --color-tirbeo-dark-700: #3f3f46;
+  --color-tirbeo-dark-800: #27272a;
+  --color-tirbeo-dark-900: #18181b;
+  --color-tirbeo-dark-950: #09090b;
+
+  --font-heading: "Inter", system-ui, sans-serif;
+}

@@ -1,5 +1,3 @@
-import { appUrl } from "@tirbeo/utils";
-
 export default function ContactPage() {
   return (
     <main className="mx-auto max-w-2xl p-6">

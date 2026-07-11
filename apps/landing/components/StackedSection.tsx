@@ -8,7 +8,7 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
-import { useLandingConfig } from "@/lib/LandingConfigContext";
+import { useLandingConfig } from "./LandingContentProvider";
 
 gsap.registerPlugin(ScrollTrigger);
 

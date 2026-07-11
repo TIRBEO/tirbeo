@@ -1,4 +1,4 @@
-import { appUrl } from "@tirbeo/utils";
+import { appUrl } from "@/lib/domains";
 
 export default function SupportHome() {
   return (
