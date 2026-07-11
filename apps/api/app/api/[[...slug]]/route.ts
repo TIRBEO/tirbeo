@@ -21,9 +21,12 @@ import {
   activityHandler,
   listWorkspacesHandler,
   createWorkspaceHandler,
+  deleteWorkspaceHandler,
   requestSignupOtpHandler,
   requestLoginOtpHandler,
   verifyLoginOtpHandler,
+  requestMagicLinkHandler,
+  verifyMagicLinkHandler,
   requestPasswordResetHandler,
   verifyPasswordResetHandler,
   confirmPasswordResetHandler,
@@ -59,10 +62,11 @@ const INTERNAL_ROUTES = [
   'auth/phone-otp/request', 'auth/phone-otp/verify',
   'auth/signup-otp/request',
   'auth/login-otp/request', 'auth/login-otp/verify',
+  'auth/magic-link/request', 'auth/magic-link/verify',
   'auth/google', 'auth/google/callback', 'auth/github', 'auth/github/callback',
   'auth/verify-2fa', 'auth/recovery-2fa',
   'auth/password-reset/request', 'auth/password-reset/verify', 'auth/password-reset/confirm',
-  'users/me', 'activity', 'workspaces',
+  'users/me', 'activity', 'workspaces', 'workspaces/delete',
   'profile', 'security/password', 'security/sessions', 'security/set-password',
   'profile/request-edit-otp', 'profile/verify-edit-otp', 'profile/avatar',
   'notifications', 'integrations', 'user/activity', 'preferences',
@@ -105,6 +109,8 @@ function matchRoute(slug: string[], method: string, routes: any[]) {
       'auth/signup-otp/request': ['POST'],
       'auth/login-otp/request': ['POST'],
       'auth/login-otp/verify': ['POST'],
+      'auth/magic-link/request': ['POST'],
+      'auth/magic-link/verify': ['POST'],
       'auth/google': ['GET'],
       'auth/google/callback': ['GET'],
       'auth/github': ['GET'],
@@ -117,6 +123,7 @@ function matchRoute(slug: string[], method: string, routes: any[]) {
       'users/me': ['GET', 'PATCH'],
       'activity': ['GET'],
       'workspaces': ['GET', 'POST'],
+      'workspaces/delete': ['POST'],
       'profile': ['GET', 'PATCH'],
       'security/password': ['POST'],
       'security/sessions': ['GET', 'DELETE'],
@@ -231,6 +238,12 @@ async function handler(request: NextRequest, slug: string[], method: string) {
       case 'auth/login-otp/verify':
         resp = await verifyLoginOtpHandler(request);
         break;
+      case 'auth/magic-link/request':
+        resp = await requestMagicLinkHandler(request);
+        break;
+      case 'auth/magic-link/verify':
+        resp = await verifyMagicLinkHandler(request);
+        break;
       case 'auth/google':
         resp = await googleAuthRedirectHandler(request);
         break;
@@ -265,6 +278,9 @@ async function handler(request: NextRequest, slug: string[], method: string) {
         if (method === 'GET') resp = await listWorkspacesHandler(request);
         else if (method === 'POST') resp = await createWorkspaceHandler(request);
         else resp = new NextResponse('Method not allowed', { status: 405 });
+        break;
+      case 'workspaces/delete':
+        resp = await deleteWorkspaceHandler(request);
         break;
       case 'profile':
         resp = await extendedProfileHandler(request);

@@ -20,7 +20,12 @@ export async function emailConfigHandler(request: NextRequest) {
   if (request.method === 'GET') {
     const config = await prisma.emailConfig.findFirst({ orderBy: { updatedAt: 'desc' } });
     if (!config) return NextResponse.json({ provider: 'resend', enabled: false, fromEmail: 'noreply@tirbeo.app', fromName: 'Tirbeo' });
-    return NextResponse.json(config);
+    const { apiKey, smtpPass, ...safeConfig } = config as any;
+    return NextResponse.json({
+      ...safeConfig,
+      apiKey: apiKey ? '••••' + apiKey.slice(-4) : null,
+      smtpPass: smtpPass ? '••••' : null,
+    });
   }
 
   if (request.method === 'PATCH') {

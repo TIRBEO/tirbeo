@@ -57,6 +57,8 @@ export async function listUsers(request: NextRequest) {
         occupation: true,
         createdAt: true,
         lastActiveAt: true,
+        isBanned: true,
+        isSuspended: true,
         roleAssignments: {
           select: { role: { select: { id: true, name: true, color: true, icon: true } } },
         },
@@ -92,12 +94,28 @@ export async function getUserDetail(request: NextRequest, userId: string) {
       secondaryEmail: true,
       phoneNumber: true,
       occupation: true,
-      googleId: true,
+      bio: true,
+      website: true,
+      linkedin: true,
+      github: true,
+      twitter: true,
+      country: true,
+      timezone: true,
+      isBanned: true,
+      isSuspended: true,
+      is2FAEnabled: true,
+      emailVerified: true,
       createdAt: true,
       updatedAt: true,
-      _count: { select: { sessions: true, memberships: true, ownedWorkspaces: true } },
+      lastActiveAt: true,
+      _count: { select: { sessions: true, memberships: true, ownedWorkspaces: true, notifications: true } },
       roleAssignments: {
         select: { role: { select: { id: true, name: true, color: true, icon: true } } },
+      },
+      sessions: {
+        select: { id: true, userAgent: true, ipAddress: true, createdAt: true, expiresAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
       },
     },
   });
@@ -141,8 +159,19 @@ export async function updateUser(request: NextRequest, userId: string) {
       photoUrl: true,
       phoneNumber: true,
       occupation: true,
+      isBanned: true,
+      isSuspended: true,
     },
   });
+
+  await createAuditEvent({
+    actorId: session.userId,
+    action: 'user.updated',
+    targetType: 'user',
+    targetId: userId,
+    metadata: { changes: parsed.data, previous: { adminRole: existing.adminRole, name: existing.name } },
+  });
+
   return NextResponse.json(updated);
 }
 
@@ -154,6 +183,16 @@ export async function deleteUser(request: NextRequest, userId: string) {
   if (!existing) return new NextResponse('User not found', { status: 404 });
 
   await prisma.user.delete({ where: { id: userId } });
+
+  await createAuditEvent({
+    actorId: session.userId,
+    action: 'user.deleted',
+    targetType: 'user',
+    targetId: userId,
+    severity: 'warning',
+    metadata: { email: existing.email, name: existing.name },
+  });
+
   return new NextResponse('User deleted', { status: 200 });
 }
 
@@ -195,7 +234,185 @@ export async function deleteWorkspace(request: NextRequest, workspaceId: string)
   if (!existing) return new NextResponse('Workspace not found', { status: 404 });
 
   await prisma.workspace.delete({ where: { id: workspaceId } });
+
+  await createAuditEvent({
+    actorId: session.userId,
+    action: 'workspace.deleted',
+    targetType: 'workspace',
+    targetId: workspaceId,
+    severity: 'warning',
+    metadata: { name: existing.name, slug: existing.slug },
+  });
+
   return new NextResponse('Workspace deleted', { status: 200 });
+}
+
+// ─── Ban / Suspend (super_admin only) ───
+
+export async function banUser(request: NextRequest, userId: string) {
+  const session = await requireRole(request, 'super_admin');
+  if (session instanceof NextResponse) return session;
+
+  const existing = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existing) return new NextResponse('User not found', { status: 404 });
+  if (existing.adminRole === 'super_admin') return new NextResponse('Cannot ban a super admin', { status: 403 });
+
+  const { reason } = await request.json().catch(() => ({}));
+
+  await prisma.user.update({ where: { id: userId }, data: { isBanned: true } });
+  // Invalidate all sessions for banned user
+  await prisma.session.deleteMany({ where: { userId } });
+
+  await createAuditEvent({
+    actorId: session.userId,
+    action: 'user.banned',
+    targetType: 'user',
+    targetId: userId,
+    severity: 'warning',
+    metadata: { email: existing.email, reason: reason || 'No reason provided' },
+  });
+
+  return NextResponse.json({ message: 'User banned', isBanned: true });
+}
+
+export async function unbanUser(request: NextRequest, userId: string) {
+  const session = await requireRole(request, 'super_admin');
+  if (session instanceof NextResponse) return session;
+
+  const existing = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existing) return new NextResponse('User not found', { status: 404 });
+
+  await prisma.user.update({ where: { id: userId }, data: { isBanned: false } });
+
+  await createAuditEvent({
+    actorId: session.userId,
+    action: 'user.unbanned',
+    targetType: 'user',
+    targetId: userId,
+    metadata: { email: existing.email },
+  });
+
+  return NextResponse.json({ message: 'User unbanned', isBanned: false });
+}
+
+export async function suspendUser(request: NextRequest, userId: string) {
+  const session = await requireRole(request, 'super_admin');
+  if (session instanceof NextResponse) return session;
+
+  const existing = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existing) return new NextResponse('User not found', { status: 404 });
+  if (existing.adminRole === 'super_admin') return new NextResponse('Cannot suspend a super admin', { status: 403 });
+
+  const { reason } = await request.json().catch(() => ({}));
+
+  await prisma.user.update({ where: { id: userId }, data: { isSuspended: true } });
+  await prisma.session.deleteMany({ where: { userId } });
+
+  await createAuditEvent({
+    actorId: session.userId,
+    action: 'user.suspended',
+    targetType: 'user',
+    targetId: userId,
+    severity: 'warning',
+    metadata: { email: existing.email, reason: reason || 'No reason provided' },
+  });
+
+  return NextResponse.json({ message: 'User suspended', isSuspended: true });
+}
+
+export async function unsuspendUser(request: NextRequest, userId: string) {
+  const session = await requireRole(request, 'super_admin');
+  if (session instanceof NextResponse) return session;
+
+  const existing = await prisma.user.findUnique({ where: { id: userId } });
+  if (!existing) return new NextResponse('User not found', { status: 404 });
+
+  await prisma.user.update({ where: { id: userId }, data: { isSuspended: false } });
+
+  await createAuditEvent({
+    actorId: session.userId,
+    action: 'user.unsuspended',
+    targetType: 'user',
+    targetId: userId,
+    metadata: { email: existing.email },
+  });
+
+  return NextResponse.json({ message: 'User unsuspended', isSuspended: false });
+}
+
+// ─── Workspace Members ───
+
+export async function listWorkspaceMembers(request: NextRequest, workspaceId: string) {
+  const session = await requireRole(request, 'admin');
+  if (session instanceof NextResponse) return session;
+
+  const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+  if (!workspace) return new NextResponse('Workspace not found', { status: 404 });
+
+  const members = await prisma.membership.findMany({
+    where: { workspaceId },
+    include: { user: { select: { id: true, email: true, name: true, photoUrl: true, lastActiveAt: true } } },
+    orderBy: { createdAt: 'asc' },
+  });
+
+  return NextResponse.json({ members, workspace: { id: workspace.id, name: workspace.name, slug: workspace.slug } });
+}
+
+export async function addWorkspaceMember(request: NextRequest, workspaceId: string) {
+  const session = await requireRole(request, 'admin');
+  if (session instanceof NextResponse) return session;
+
+  const body = await request.json();
+  const { email, role } = body;
+  if (!email) return new NextResponse('email required', { status: 400 });
+
+  const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+  if (!user) return new NextResponse('User not found', { status: 404 });
+
+  const existing = await prisma.membership.findUnique({
+    where: { userId_workspaceId: { userId: user.id, workspaceId } },
+  });
+  if (existing) return new NextResponse('User is already a member', { status: 409 });
+
+  const membership = await prisma.membership.create({
+    data: { userId: user.id, workspaceId, role: role === 'ADMIN' ? 'ADMIN' : 'MEMBER' },
+  });
+
+  await createAuditEvent({
+    actorId: session.userId,
+    action: 'workspace.member_added',
+    targetType: 'workspace',
+    targetId: workspaceId,
+    metadata: { addedUserId: user.id, addedEmail: email, role: membership.role },
+  });
+
+  return NextResponse.json(membership, { status: 201 });
+}
+
+export async function removeWorkspaceMember(request: NextRequest, workspaceId: string) {
+  const session = await requireRole(request, 'admin');
+  if (session instanceof NextResponse) return session;
+
+  const body = await request.json();
+  const { userId } = body;
+  if (!userId) return new NextResponse('userId required', { status: 400 });
+
+  const membership = await prisma.membership.findUnique({
+    where: { userId_workspaceId: { userId, workspaceId } },
+  });
+  if (!membership) return new NextResponse('Member not found', { status: 404 });
+
+  await prisma.membership.delete({ where: { id: membership.id } });
+
+  await createAuditEvent({
+    actorId: session.userId,
+    action: 'workspace.member_removed',
+    targetType: 'workspace',
+    targetId: workspaceId,
+    metadata: { removedUserId: userId },
+  });
+
+  return new NextResponse('Member removed', { status: 200 });
 }
 
 // ─── Stats (all admin roles) ───
@@ -240,6 +457,12 @@ export async function updateUserRoles(request: NextRequest, userId: string) {
   const existing = await prisma.user.findUnique({ where: { id: userId } });
   if (!existing) return new NextResponse('User not found', { status: 404 });
 
+  // Capture existing roles before deletion for audit
+  const existingAssignments = await prisma.userRole.findMany({
+    where: { userId },
+    select: { roleId: true },
+  });
+
   // Delete all existing role assignments
   await prisma.userRole.deleteMany({ where: { userId } });
 
@@ -262,6 +485,15 @@ export async function updateUserRoles(request: NextRequest, userId: string) {
     where: { userId },
     include: { role: { select: { id: true, name: true, color: true, icon: true } } },
   });
+
+  await createAuditEvent({
+    actorId: session.userId,
+    action: 'user.roles_updated',
+    targetType: 'user',
+    targetId: userId,
+    metadata: { roleIds, previousRoleIds: existingAssignments.map(a => a.roleId) },
+  });
+
   return NextResponse.json({ roles: updated.map(a => a.role) });
 }
 
@@ -273,7 +505,10 @@ export async function seedAdminHandler(request: NextRequest) {
     return new NextResponse('email and adminRole required', { status: 400 });
   }
 
-  if (process.env.ADMIN_SEED_EMAIL && email !== process.env.ADMIN_SEED_EMAIL) {
+  if (!process.env.ADMIN_SEED_EMAIL) {
+    return new NextResponse('Seed endpoint is disabled. Set ADMIN_SEED_EMAIL env var.', { status: 403 });
+  }
+  if (email !== process.env.ADMIN_SEED_EMAIL) {
     return new NextResponse('Unauthorized', { status: 403 });
   }
 

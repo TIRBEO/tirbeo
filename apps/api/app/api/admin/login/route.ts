@@ -9,6 +9,8 @@ const loginSchema = z.object({
   password: z.string().min(8),
 });
 
+const DUMMY_HASH = '$argon2id$v=19$m=65536,t=3,p=4$bWFzdGVy';
+
 export async function POST(request: NextRequest) {
   try {
     const parsed = loginSchema.safeParse(await request.json());
@@ -16,7 +18,12 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = parsed.data;
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !(await verifyPassword(user.passwordHash, password))) {
+
+    const passwordValid = user
+      ? await verifyPassword(user.passwordHash, password)
+      : await verifyPassword(DUMMY_HASH, password);
+
+    if (!user || !passwordValid) {
       return new NextResponse('Invalid email or password', { status: 401 });
     }
 
@@ -32,11 +39,11 @@ export async function POST(request: NextRequest) {
 
     const ip = request.headers.get('x-forwarded-for') || '';
     const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
-    const res = NextResponse.json({ id: user.id, email: user.email, adminRole: user.adminRole });
+    const res = NextResponse.json({ id: user.id, email: user.email });
     setSessionCookie(res, token);
     return res;
   } catch (err) {
-    console.error('[ADMIN LOGIN]', err?.message || err);
+    console.error('[ADMIN LOGIN] Authentication error');
     return new NextResponse('Login failed', { status: 400 });
   }
 }

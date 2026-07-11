@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-  User, Shield, Building2, Bell, ArrowRight, Clock, Zap, Key,
+  User, Shield, Building2, Bell, ArrowRight, Clock, Zap,
   Mail, Globe, Settings, Activity, ArrowUpRight, CheckCircle2, XCircle,
 } from "lucide-react";
 
@@ -52,7 +52,7 @@ export default function DashboardHome() {
         <div className="flex-1">
           <h1 className="text-xl font-bold" style={{ color: "#F2EEE8" }}>{user.name || "Welcome"}</h1>
           <p className="text-sm mt-0.5" style={{ color: "#B7C6BE" }}>
-            {user.occupation || "Member"}{user.adminRole ? ` · ${user.adminRole.replace("_", " ")}` : ""}
+            {user.occupation || "Member"}
           </p>
         </div>
         <Link href="/dashboard/profile" className="btn btn-ghost" style={{ fontSize: 13 }}>
@@ -60,12 +60,10 @@ export default function DashboardHome() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {[
           { label: "Completion", value: `${pct}%`, icon: Zap, color: "#F2EEE8" },
-          { label: "Role", value: user.adminRole?.replace("_", " ") || "Member", icon: User, color: "#B7C6BE" },
           { label: "2FA", value: user.is2FAEnabled ? "Active" : "Off", icon: Shield, color: user.is2FAEnabled ? "#59C173" : "#E45D5D" },
-          { label: "Verified", value: user.emailVerified ? "Yes" : "No", icon: Key, color: user.emailVerified ? "#59C173" : "#E45D5D" },
         ].map((s) => (
           <div key={s.label} className="glass" style={{ padding: "16px 18px" }}>
             <div className="flex items-center gap-2 mb-2">

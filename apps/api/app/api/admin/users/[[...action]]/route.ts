@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { listUsers, getUserDetail, updateUser, deleteUser, updateUserRoles } from '../../../../../lib/adminHandlers';
+import { listUsers, getUserDetail, updateUser, deleteUser, updateUserRoles, banUser, unbanUser, suspendUser, unsuspendUser } from '../../../../../lib/adminHandlers';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ action: string[] }> }) {
   const { action } = await params;
@@ -15,6 +15,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
   if (action?.[1] === 'roles') {
     return updateUserRoles(request, userId);
+  }
+  if (action?.[1] === 'ban') {
+    return banUser(request, userId);
+  }
+  if (action?.[1] === 'unban') {
+    return unbanUser(request, userId);
+  }
+  if (action?.[1] === 'suspend') {
+    return suspendUser(request, userId);
+  }
+  if (action?.[1] === 'unsuspend') {
+    return unsuspendUser(request, userId);
   }
   return updateUser(request, userId);
 }

@@ -26,6 +26,8 @@ model User {
   adminRole        String?     // 'super_admin' | 'admin' | 'manager' | 'editor' | null (legacy)
   totpSecret       String?
   is2FAEnabled     Boolean     @default(false)
+  isBanned         Boolean     @default(false)
+  isSuspended      Boolean     @default(false)
   lastActiveAt     DateTime?   // online/offline tracking
   preferences      Json        @default("{}") // per-user admin prefs { sidebarCollapsed, theme, etc }
   bio              String?

@@ -2,11 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from './db/prisma';
 import { requireAdmin } from './session';
 import { createAuditEvent } from './audit';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
-
-const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads');
 
 function getFileExt(mime: string): string {
   const map: Record<string, string> = {
@@ -69,20 +65,43 @@ export async function uploadMediaHandler(request: NextRequest) {
   const file = formData.get('file') as File | null;
   if (!file) return new NextResponse('No file uploaded', { status: 400 });
 
+  if (file.size > 50 * 1024 * 1024) {
+    return new NextResponse('File too large. Max 50MB', { status: 400 });
+  }
+
   const folder = (formData.get('folder') as string) || 'general';
   const altText = (formData.get('altText') as string) || '';
   const tags = formData.get('tags') as string || '[]';
 
   const ext = getFileExt(file.type);
   const fileName = `${uuidv4()}${ext}`;
-  const folderPath = path.join(UPLOAD_DIR, folder);
-  const filePath = path.join(folderPath, fileName);
-
-  await mkdir(folderPath, { recursive: true });
+  const r2Key = `media/${folder}/${fileName}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-  await writeFile(filePath, buffer);
 
-  const url = `/uploads/${folder}/${fileName}`;
+  let url: string;
+
+  const r2Endpoint = process.env.R2_ENDPOINT;
+  const r2AccessKey = process.env.R2_ACCESS_KEY;
+  const r2SecretKey = process.env.R2_SECRET_KEY;
+  const r2Bucket = process.env.R2_BUCKET;
+  const r2PublicUrl = process.env.R2_PUBLIC_URL;
+
+  if (r2Endpoint && r2AccessKey && r2SecretKey && r2Bucket && r2PublicUrl) {
+    const { putObject } = await import('./storage');
+    await putObject({
+      endpoint: r2Endpoint,
+      accessKey: r2AccessKey,
+      secretKey: r2SecretKey,
+      bucket: r2Bucket,
+      key: r2Key,
+      body: buffer,
+      contentType: file.type,
+    });
+    url = `${r2PublicUrl}/${r2Key}`;
+  } else {
+    const base64 = buffer.toString('base64');
+    url = `data:${file.type};base64,${base64}`;
+  }
   let width: number | null = null;
   let height: number | null = null;
 

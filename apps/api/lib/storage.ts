@@ -1,4 +1,4 @@
-import { createHmac } from 'crypto';
+import { createHmac, createHash } from 'crypto';
 
 interface PutObjectParams {
   endpoint: string;
@@ -18,17 +18,18 @@ export async function putObject(params: PutObjectParams): Promise<void> {
   const dateStr = now.toISOString().replace(/[:-]|\.\d{3}/g, '');
   const dateOnly = dateStr.slice(0, 8);
 
+  const payloadHash = createHash('sha256').update(body).digest('hex');
+
   const headers: Record<string, string> = {
-    'Content-Type': contentType,
-    'Content-Length': String(body.length),
+    'content-type': contentType,
     'x-amz-date': dateStr,
-    'x-amz-content-sha256': 'UNSIGNED-PAYLOAD',
+    'x-amz-content-sha256': payloadHash,
   };
 
-  const signedHeaders = Object.keys(headers).sort().join('\n');
-  const canonicalHeaders = Object.entries(headers)
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([k, v]) => `${k.toLowerCase()}:${v}`)
+  const signedHeaderKeys = Object.keys(headers).sort();
+  const signedHeaders = signedHeaderKeys.join(';');
+  const canonicalHeaders = signedHeaderKeys
+    .map((k) => `${k}:${headers[k]}`)
     .join('\n') + '\n';
 
   const canonicalRequest = [
@@ -37,14 +38,14 @@ export async function putObject(params: PutObjectParams): Promise<void> {
     '',
     canonicalHeaders,
     signedHeaders,
-    'UNSIGNED-PAYLOAD',
+    payloadHash,
   ].join('\n');
 
   const stringToSign = [
     'AWS4-HMAC-SHA256',
     dateStr,
     `${dateOnly}/auto/s3/aws4_request`,
-    createHmac('sha256', '').update(canonicalRequest).digest('hex'),
+    createHash('sha256').update(canonicalRequest).digest('hex'),
   ].join('\n');
 
   const hmac = (key: string | Buffer, msg: string) =>
@@ -62,12 +63,16 @@ export async function putObject(params: PutObjectParams): Promise<void> {
     .update(stringToSign)
     .digest('hex');
 
-  headers['Authorization'] = `AWS4-HMAC-SHA256 Credential=${accessKey}/${dateOnly}/auto/s3/aws4_request, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-  delete headers['Content-Length'];
+  const authHeader = `AWS4-HMAC-SHA256 Credential=${accessKey}/${dateOnly}/auto/s3/aws4_request, SignedHeaders=${signedHeaders}, Signature=${signature}`;
 
   const res = await fetch(url, {
     method: 'PUT',
-    headers,
+    headers: {
+      'Content-Type': contentType,
+      'x-amz-date': dateStr,
+      'x-amz-content-sha256': payloadHash,
+      'Authorization': authHeader,
+    },
     body,
   });
 

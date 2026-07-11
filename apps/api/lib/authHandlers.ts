@@ -5,10 +5,11 @@ import { generateOtpCode, storeOtp, verifyOtpCode, sendEmailOtp, sendPhoneOtp } 
 import { generateOtpCode as genSignupOtp, storeSignupOtp, verifySignupOtp, sendSignupOtpEmail } from './auth/signup-otp';
 import { hashPassword, verifyPassword } from './auth/password';
 import { createSession, setSessionCookie, clearSessionCookie, revokeSession, getSession } from './session';
-import { signTemp2faToken, verifyTemp2faToken } from './auth/jwt';
+import { signTemp2faToken, verifyTemp2faToken, signMagicLinkToken, verifyMagicLinkToken } from './auth/jwt';
 import { verifyTotp } from './auth/totp';
 import { sendTemplateEmail } from './email';
 import { requestPasswordReset, verifyPasswordReset, confirmPasswordReset } from './auth/password-reset';
+import { createAuditEvent } from './audit';
 
 function isAllowedRedirect(url: string): boolean {
   try {
@@ -155,9 +156,8 @@ export async function signupHandler(request: NextRequest) {
     }
 
     const passwordHash = await hashPassword(password);
-    const adminCount = await prisma.user.count({ where: { adminRole: { not: null } } });
     const user = await prisma.user.create({
-      data: { email, passwordHash, name, adminRole: adminCount === 0 ? 'super_admin' : undefined },
+      data: { email, passwordHash, name },
     });
 
     const ip = request.headers.get('x-forwarded-for') || '';
@@ -218,15 +218,16 @@ export async function requestLoginOtpHandler(request: NextRequest) {
     }
 
     const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    // Always return success to prevent email enumeration
     if (!user) {
-      return new NextResponse('No account found with this email', { status: 404 });
+      return NextResponse.json({ message: 'If an account exists, a code has been sent.' });
     }
 
     const code = genSignupOtp();
     await storeSignupOtp(email, code);
     let emailSent = false;
     try {
-      const result = await sendSignupOtpEmail(email, code);
+      const result = await sendSignupOtpEmail(email, code, 'login_otp');
       emailSent = result.success;
     } catch (emailErr) {
       console.error('[LOGIN OTP] Email send error:', emailErr);
@@ -417,11 +418,9 @@ export async function googleAuthCallbackHandler(request: NextRequest) {
       });
     } else {
       // create new user (no password needed for OAuth)
-      const adminCount = await prisma.user.count({ where: { adminRole: { not: null } } });
       user = await prisma.user.create({
         data: {
           email, name, googleId, photoUrl: photoUrl || undefined,
-          adminRole: adminCount === 0 ? 'super_admin' : undefined,
         },
       });
       // Log the new OAuth user creation
@@ -527,12 +526,10 @@ export async function githubAuthCallbackHandler(request: NextRequest) {
         data: { githubId, photoUrl: user.photoUrl || photoUrl || undefined },
       });
     } else {
-      const adminCount = await prisma.user.count({ where: { adminRole: { not: null } } });
       user = await prisma.user.create({
         data: {
           email: email || `${githubId}@github.user`, name, githubId,
           photoUrl: photoUrl || undefined,
-          adminRole: adminCount === 0 ? 'super_admin' : undefined,
         },
       });
       await prisma.auditEvent.create({
@@ -731,4 +728,105 @@ export async function confirmPasswordResetHandler(request: NextRequest) {
     console.error('[PASSWORD RESET CONFIRM]', err?.message || err);
     return new NextResponse('Failed to reset password', { status: 500 });
   }
+}
+
+// ─── Magic Link (one-time login link via email) ───
+
+export async function requestMagicLinkHandler(request: NextRequest) {
+  try {
+    const { email } = await request.json();
+    if (!email || typeof email !== 'string') {
+      return new NextResponse('Email is required', { status: 400 });
+    }
+
+    const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+    // Always return success to prevent email enumeration
+    if (!user) {
+      return NextResponse.json({ message: 'If an account exists, a magic link has been sent.' });
+    }
+
+    const { signMagicLinkToken } = await import('./auth/jwt');
+    const token = await signMagicLinkToken(user.id);
+    const appDomain = process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app';
+    const callbackUrl = `https://accounts.${appDomain}/callback?magic_token=${token}`;
+
+    let emailSent = false;
+    try {
+      const result = await sendTemplateEmail(email, 'magic_link', {
+        magicLink: callbackUrl,
+        name: user.name || 'there',
+      });
+      emailSent = result.success;
+    } catch (emailErr) {
+      console.error('[MAGIC LINK] Email send error:', emailErr);
+    }
+
+    const resp: any = { message: 'If an account exists, a magic link has been sent.' };
+    if (!emailSent && process.env.NODE_ENV === 'development') {
+      resp.devLink = callbackUrl;
+      resp.devMessage = 'Dev mode: use this link to log in';
+      console.log(`[MAGIC LINK] Dev mode: link for ${email} is ${callbackUrl}`);
+    }
+    return NextResponse.json(resp, { status: 200 });
+  } catch (err: any) {
+    console.error('[MAGIC LINK REQUEST]', err?.message || err, err?.stack);
+    return new NextResponse('Failed to process request', { status: 500 });
+  }
+}
+
+export async function verifyMagicLinkHandler(request: NextRequest) {
+  try {
+    const { token } = await request.json();
+    if (!token || typeof token !== 'string') {
+      return new NextResponse('Token required', { status: 400 });
+    }
+
+    const { verifyMagicLinkToken } = await import('./auth/jwt');
+    const userId = await verifyMagicLinkToken(token);
+    if (!userId) {
+      return new NextResponse('Invalid or expired magic link', { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return new NextResponse('User not found', { status: 404 });
+    }
+
+    const ip = request.headers.get('x-forwarded-for') || '';
+    const { token: sessionToken } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
+    const res = NextResponse.json({ id: user.id, email: user.email });
+    setSessionCookie(res, sessionToken);
+
+    await createAuditEvent({
+      actorId: user.id,
+      action: 'user.login',
+      targetType: 'user',
+      targetId: user.id,
+      metadata: { method: 'magic_link', ip },
+    });
+
+    return res;
+  } catch (err: any) {
+    console.error('[MAGIC LINK VERIFY]', err?.message || err);
+    return new NextResponse('Magic link verification failed', { status: 500 });
+  }
+}
+
+// ─── Workspace Delete (user-facing) ───
+
+export async function deleteWorkspaceHandler(request: NextRequest) {
+  const session = await getSession(request);
+  if (!session) return new NextResponse('Unauthenticated', { status: 401 });
+
+  const { workspaceId } = await request.json();
+  if (!workspaceId) return new NextResponse('workspaceId required', { status: 400 });
+
+  const workspace = await prisma.workspace.findUnique({ where: { id: workspaceId } });
+  if (!workspace) return new NextResponse('Workspace not found', { status: 404 });
+  if (workspace.ownerId !== session.userId) {
+    return new NextResponse('Only the owner can delete a workspace', { status: 403 });
+  }
+
+  await prisma.workspace.delete({ where: { id: workspaceId } });
+  return new NextResponse('Workspace deleted', { status: 200 });
 }

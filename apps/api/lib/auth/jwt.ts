@@ -65,3 +65,21 @@ export async function verifyPasswordResetToken(token: string): Promise<string | 
 }
 
 export { COOKIE_NAME };
+
+export async function signMagicLinkToken(userId: string): Promise<string> {
+  return new SignJWT({ sub: userId, purpose: 'magic-link' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .sign(SECRET);
+}
+
+export async function verifyMagicLinkToken(token: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(token, SECRET, { algorithms: ['HS256'] });
+    if (payload.sub && payload.purpose === 'magic-link') return payload.sub as string;
+    return null;
+  } catch {
+    return null;
+  }
+}

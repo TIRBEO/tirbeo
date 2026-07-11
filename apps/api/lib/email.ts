@@ -163,7 +163,28 @@ function buildFallbackTemplates(): Record<string, { subject: string; html: strin
       subject: 'Verify your Tirbeo email',
       html: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Verify Your Email</title></head><body style="margin:0;padding:0;background:#08150F;font-family:Inter,Segoe UI,Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#08150F;padding:50px 20px;"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#12271D;border:1px solid rgba(255,255,255,.08);border-radius:24px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#022B22,#275D46,#569578);padding:45px 40px;text-align:center;"><img src="${LOGO}" width="48" alt="Tirbeo" style="margin-bottom:18px;"><h1 style="margin:0;font-size:32px;font-weight:700;color:#ffffff;">Verify your email</h1><p style="margin:14px 0 0;font-size:16px;line-height:26px;color:rgba(255,255,255,.85);">Confirm your email address securely.</p></td></tr><tr><td style="padding:45px;"><p style="margin:0;font-size:16px;line-height:28px;color:#B7C6BE;">Your verification code:</p><table width="100%" cellpadding="0" cellspacing="0" style="margin-top:24px;background:#101C13;border:1px solid #275D46;border-radius:18px;"><tr><td align="center" style="padding:30px;font-size:38px;font-weight:800;letter-spacing:12px;color:#ffffff;font-family:monospace;">{{OTP}}</td></tr></table><p style="margin:28px 0 0;font-size:15px;line-height:26px;color:#8DA39A;">This code expires in 10 minutes.</p></td></tr><tr><td style="padding:30px;background:#101C13;text-align:center;"><p style="margin:0;font-size:15px;font-weight:600;color:#ffffff;">Tirbeo</p><p style="margin-top:22px;font-size:12px;color:#6E8078;">© 2026 Tirbeo. All rights reserved.</p></td></tr></table></td></tr></table></body></html>`,
     },
+    magic_link: {
+      subject: 'Sign in to Tirbeo',
+      html: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Sign in to Tirbeo</title></head><body style="margin:0;padding:0;background:#08150F;font-family:Inter,Segoe UI,Arial,sans-serif;"><table width="100%" cellpadding="0" cellspacing="0" style="background:#08150F;padding:50px 20px;"><tr><td align="center"><table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#12271D;border:1px solid rgba(255,255,255,.08);border-radius:24px;overflow:hidden;"><tr><td style="background:linear-gradient(135deg,#022B22,#275D46,#569578);padding:45px 40px;text-align:center;"><img src="${LOGO}" width="48" alt="Tirbeo" style="margin-bottom:18px;"><h1 style="margin:0;font-size:32px;font-weight:700;color:#ffffff;">Sign in to Tirbeo</h1><p style="margin:14px 0 0;font-size:16px;line-height:26px;color:rgba(255,255,255,.85);">One click and you are in.</p></td></tr><tr><td style="padding:45px;"><p style="margin:0;font-size:16px;line-height:28px;color:#B7C6BE;">Hi {{name}},</p><p style="margin:20px 0 35px;font-size:16px;line-height:28px;color:#B7C6BE;">Click the button below to sign in to your Tirbeo account. This link expires in <strong style="color:#ffffff;">15 minutes</strong>.</p><table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0;"><tr><td align="center"><a href="{{magicLink}}" style="display:inline-block;padding:16px 48px;background:linear-gradient(135deg,#275D46,#569578);color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;border-radius:14px;letter-spacing:0.5px;">Sign In to Tirbeo</a></td></tr></table><p style="margin:32px 0 0;font-size:14px;line-height:24px;color:#8DA39A;">If the button does not work, copy and paste this link into your browser:</p><p style="margin:8px 0 0;font-size:13px;line-height:20px;color:#569578;word-break:break-all;">{{magicLink}}</p><div style="margin:35px 0;height:1px;background:rgba(255,255,255,.08);"></div><p style="margin:0;font-size:15px;line-height:26px;color:#8DA39A;">If you did not request this, you can safely ignore this email.</p></td></tr><tr><td style="padding:30px;background:#101C13;text-align:center;"><p style="margin:0;font-size:15px;font-weight:600;color:#ffffff;">Tirbeo</p><p style="margin-top:22px;font-size:12px;color:#6E8078;">This is a one-time login link. Never share it with anyone.</p></td></tr></table></td></tr></table></body></html>`,
+    },
   };
+}
+
+function applyThemeColors(html: string, colors: Record<string, string>): string {
+  const colorMap: Record<string, string> = {};
+  if (colors.BG_PRIMARY) colorMap['#08150F'] = colors.BG_PRIMARY;
+  if (colors.BG_CARD) colorMap['#12271D'] = colors.BG_CARD;
+  if (colors.BG_PRIMARY) colorMap['#101C13'] = colors.BG_PRIMARY;
+  if (colors.ACCENT_SECONDARY) colorMap['#275D46'] = colors.ACCENT_SECONDARY;
+  if (colors.ACCENT_PRIMARY) colorMap['#569578'] = colors.ACCENT_PRIMARY;
+  if (colors.TEXT_SECONDARY) colorMap['#B7C6BE'] = colors.TEXT_SECONDARY;
+  if (colors.ACCENT_SECONDARY) colorMap['#214434'] = colors.ACCENT_SECONDARY;
+  if (colors.ACCENT_SECONDARY) colorMap['#173124'] = colors.ACCENT_SECONDARY;
+  let result = html;
+  for (const [from, to] of Object.entries(colorMap)) {
+    result = result.split(from).join(to);
+  }
+  return result;
 }
 
 export async function sendTemplateEmail(
@@ -189,8 +210,12 @@ export async function sendTemplateEmail(
   const fallback = fallbacks[templateName];
   if (fallback) {
     console.log(`[EMAIL] Template '${templateName}' not in DB, using built-in fallback`);
-    const subject = renderTemplate(fallback.subject, mergedVars);
-    const htmlBody = renderTemplate(fallback.html, mergedVars);
+    let subject = renderTemplate(fallback.subject, mergedVars);
+    let htmlBody = renderTemplate(fallback.html, mergedVars);
+    if (Object.keys(themeColors).length > 0) {
+      htmlBody = applyThemeColors(htmlBody, themeColors);
+      subject = applyThemeColors(subject, themeColors);
+    }
     return sendEmail(to, subject, htmlBody, options);
   }
 

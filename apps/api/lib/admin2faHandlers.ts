@@ -122,7 +122,6 @@ export async function status2faHandler(request: NextRequest) {
 
   return NextResponse.json({
     enabled: user?.is2FAEnabled || false,
-    hasSecret: !!user?.totpSecret,
     remainingRecoveryCodes: recoveryCount,
   });
 }

@@ -169,15 +169,15 @@ a:hover { color: var(--accent-hover); text-decoration: none; }
    LAYOUT
    ═══════════════════════════════════════ */
 
-.admin-layout { display: flex; min-height: 100vh; }
+.admin-layout { display: flex; height: 100vh; overflow: hidden; }
 
 .main {
   flex: 1;
   padding: 32px 36px;
   max-width: 1200px;
   min-width: 0;
-  margin: 0 auto;
   width: 100%;
+  overflow-y: auto;
 }
 
 .main > h2:first-child,
@@ -205,7 +205,10 @@ a:hover { color: var(--accent-hover); text-decoration: none; }
   display: flex; flex-direction: column;
   flex-shrink: 0;
   padding: 0;
-  position: relative;
+  position: sticky; top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sidebar::before {
@@ -1018,15 +1021,16 @@ tr:hover td { background: var(--bg-hover); color: var(--text-primary); }
    ═══════════════════════════════════════ */
 
 @media (max-width: 768px) {
-  .sidebar { width: 100%; position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-    height: auto; border-right: none; border-top: 1px solid var(--border-default);
+  .admin-layout { height: auto; overflow: visible; }
+  .sidebar { width: 100%; position: fixed; bottom: 0; left: 0; right: 0; top: auto; z-index: 50;
+    height: auto; max-height: none; overflow-y: visible; border-right: none; border-top: 1px solid var(--border-default);
     flex-direction: row; padding: 4px 8px; }
   .sidebar .brand, .nav-section-label, .sidebar .footer { display: none; }
   .sidebar > nav, .app-nav { flex-direction: row; padding: 0; gap: 2px; flex: 1; overflow-x: auto; }
   .sidebar > nav a, .app-nav a { padding: 10px 12px; justify-content: center; font-size: 11px; flex-direction: column; gap: 4px; }
   .sidebar > nav a::before, .app-nav a::before { display: none; }
   .sidebar > nav a.active, .app-nav a.active { background: var(--accent-subtle); border-radius: var(--radius-md); }
-  .main { padding: 20px 16px 80px; }
+  .main { padding: 20px 16px 80px; overflow-y: visible; height: auto; }
 }
 
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

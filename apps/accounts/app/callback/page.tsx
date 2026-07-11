@@ -4,11 +4,15 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { appUrl } from "@tirbeo/utils";
 
+const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
+
 function CallbackHandler() {
   const searchParams = useSearchParams();
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const magicToken = searchParams.get("magic_token");
     const code = searchParams.get("code");
     const redirectTo = searchParams.get("redirect") || appUrl("dashboard");
 
@@ -21,14 +25,33 @@ function CallbackHandler() {
       return appUrl('dashboard');
     })();
 
-    if (code) {
-      // API handles the OAuth exchange and sets the session cookie
-      // This page is only reached if the API callback redirects here
-      // In normal flow, API redirects directly to dashboard with cookie set
+    if (magicToken) {
+      // Magic link verification
+      fetch(`${API}/api/auth/magic-link/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ token: magicToken }),
+      })
+        .then(async (res) => {
+          if (res.ok) {
+            window.location.href = validatedRedirect;
+          } else {
+            const text = await res.text();
+            setError(text || "Magic link expired or invalid");
+            setLoading(false);
+          }
+        })
+        .catch(() => {
+          setError("Failed to verify magic link");
+          setLoading(false);
+        });
+    } else if (code) {
+      // OAuth callback — API already set the cookie, just redirect
       window.location.href = validatedRedirect;
     } else {
-      // No code - might be direct access or error
-      setError("No authorization code provided");
+      setError("No authorization token provided");
+      setLoading(false);
     }
   }, [searchParams]);
 
@@ -43,6 +66,9 @@ function CallbackHandler() {
           </div>
           <p className="text-white/80 font-medium">Authentication failed</p>
           <p className="text-white/40 text-sm mt-1">{error}</p>
+          <a href="/login" className="inline-block mt-4 text-sm text-accent-green/80 hover:text-accent-green transition-colors">
+            Back to sign in
+          </a>
         </div>
       </main>
     );

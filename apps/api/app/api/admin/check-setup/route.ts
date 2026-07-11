@@ -1,8 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '../../../../lib/db/prisma';
+import { getSession } from '../../../../lib/session';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const session = await getSession(request);
+    if (!session) return new NextResponse('Unauthorized', { status: 401 });
+
     const adminCount = await prisma.user.count({
       where: { adminRole: { not: null } },
     });
@@ -26,10 +30,9 @@ export async function GET() {
     return NextResponse.json({
       dbConnected: dbOk,
       sessionTableExists,
-      adminCount,
       setupRequired: adminCount === 0,
     });
   } catch (err: any) {
-    return NextResponse.json({ error: err?.message || 'Unknown error' }, { status: 500 });
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

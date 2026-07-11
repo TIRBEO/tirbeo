@@ -30,9 +30,15 @@ export async function verifyOtpCode(userId: string, type: 'email' | 'phone', cod
     where: { userId, type },
     orderBy: { createdAt: 'desc' },
   });
-  if (!otp) return false;
+
+  // Always run verification to prevent timing-based OTP enumeration
+  if (!otp) {
+    await verifyOtp('$argon2id$v=19$m=65536,t=3,p=4$fakehash', code);
+    return false;
+  }
   if (otp.expiresAt < new Date()) {
     await prisma.otp.delete({ where: { id: otp.id } });
+    await verifyOtp('$argon2id$v=19$m=65536,t=3,p=4$fakehash', code);
     return false;
   }
   const ok = await verifyOtp(otp.otpHash, code);

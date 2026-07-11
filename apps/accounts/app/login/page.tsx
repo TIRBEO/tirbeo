@@ -132,7 +132,7 @@ function OtpInput({ length = 6, value, onChange }: { length?: number; value: str
   );
 }
 
-type AuthStep = "login" | "signup" | "otp-login" | "otp-signup";
+type AuthStep = "login" | "signup" | "otp-login" | "otp-signup" | "magic-link-sent";
 type FieldErrors = { email?: string; password?: string };
 type SignupPhase = 0 | 1 | 2 | 3;
 
@@ -154,6 +154,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
   const [devCode, setDevCode] = useState<string | null>(null);
+  const [devLink, setDevLink] = useState<string | null>(null);
   const submittedRef = useRef(false);
 
   const isSignUp = step === "signup" || step === "otp-signup";
@@ -177,7 +178,7 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
   const validate = useCallback((): boolean => {
     const errors: FieldErrors = {};
     if (!email || !EMAIL_RE.test(email)) errors.email = "Enter a valid email address";
-    if (!isOtpStep && !password || password.length < 8) errors.password = "Min 8 characters";
+    if (!isOtpStep && (!password || password.length < 8)) errors.password = "Min 8 characters";
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   }, [email, password, isOtpStep]);
@@ -266,6 +267,28 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
           setStep("otp-login"); setOtpCode(""); return;
         }
       setError(await res.text() || "Failed to send code");
+    } catch (err: any) {
+      setError(err?.message || "Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+      submittedRef.current = false;
+    }
+  }, [email, apiFetch]);
+
+  const handleMagicLinkRequest = useCallback(async () => {
+    if (submittedRef.current) return;
+    if (!EMAIL_RE.test(email)) { setFieldErrors({ email: "Enter a valid email address" }); return; }
+    submittedRef.current = true;
+    setError(null);
+    setFieldErrors({});
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/auth/magic-link/request", { email }, { noCreds: true });
+      if (res.ok) {
+        try { const j = await res.json(); if (j.devLink) setDevLink(j.devLink); } catch {}
+        setStep("magic-link-sent"); return;
+      }
+      setError(await res.text() || "Failed to send magic link");
     } catch (err: any) {
       setError(err?.message || "Connection error. Please try again.");
     } finally {
@@ -374,7 +397,30 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {isOtpStep ? (
+        {step === "magic-link-sent" ? (
+          <div className="space-y-6 pt-4 text-center">
+            <div className="w-20 h-20 rounded-full bg-accent-green/10 border border-accent-green/20 flex items-center justify-center mx-auto">
+              <Mail className="w-10 h-10 text-accent-green" />
+            </div>
+            <div>
+              <p className="text-white/90 text-lg font-semibold">Check your email</p>
+              <p className="text-white/40 text-sm mt-2">
+                We sent a one-time login link to <span className="text-white/70">{email}</span>
+              </p>
+              <p className="text-white/30 text-xs mt-2">Link expires in 15 minutes. Check your spam folder if you don't see it.</p>
+            </div>
+            {devLink && (
+              <div className="p-4 rounded-2xl bg-accent-green/10 border border-accent-green/20 text-left">
+                <p className="text-xs font-medium text-accent-green mb-2">Dev Mode — Magic link:</p>
+                <a href={devLink} className="text-xs text-accent-green/80 underline break-all">{devLink}</a>
+              </div>
+            )}
+            <button type="button" onClick={() => { setStep("login"); setDevLink(null); setError(null); }}
+              className="text-sm text-white/40 hover:text-white/70 transition-colors">
+              Back to sign in
+            </button>
+          </div>
+        ) : isOtpStep ? (
           <div className="space-y-6 pt-4">
             <OtpInput length={6} value={otpCode} onChange={setOtpCode} />
             {devCode && process.env.NODE_ENV === 'development' && (
@@ -384,7 +430,18 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
             )}
             <p className="text-center text-sm text-white/30">
               Didn&apos;t receive the code?{" "}
-              <button type="button" onClick={handleOtpLogin} className="text-accent-green/80 underline hover:text-accent-green transition-colors">
+              <button type="button" onClick={step === "otp-login" ? handleOtpLogin : async () => {
+                if (submittedRef.current) return;
+                submittedRef.current = true;
+                setError(null);
+                setLoading(true);
+                try {
+                  const res = await apiFetch("/api/auth/signup-otp/request", { email }, { noCreds: true });
+                  if (res.ok) { try { const j = await res.json(); if (j.devCode) setDevCode(j.devCode); } catch {} return; }
+                  setError(await res.text() || "Failed to resend code");
+                } catch (err: any) { setError(err?.message || "Connection error"); }
+                finally { setLoading(false); submittedRef.current = false; }
+              }} className="text-accent-green/80 underline hover:text-accent-green transition-colors">
                 Resend
               </button>
             </p>
@@ -514,6 +571,18 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
             className="w-full h-12 rounded-2xl border border-white/[0.08] bg-white/[0.02] text-sm font-medium text-white/60 hover:text-white/80 hover:bg-white/[0.04] transition-all disabled:opacity-50"
           >
             Send one-time code
+          </button>
+        )}
+
+        {!isOtpStep && signupPhase < 2 && !isSignUp && (
+          <button
+            type="button"
+            onClick={handleMagicLinkRequest}
+            disabled={loading}
+            className="w-full h-12 rounded-2xl border border-white/[0.08] bg-white/[0.02] text-sm font-medium text-white/60 hover:text-white/80 hover:bg-white/[0.04] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <Mail size={14} />
+            Sign in with magic link
           </button>
         )}
 

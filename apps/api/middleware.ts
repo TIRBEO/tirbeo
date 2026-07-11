@@ -58,11 +58,28 @@ export async function middleware(request: NextRequest) {
     return new NextResponse('Too many requests', { status: 429 });
   }
 
-  const publicPaths = ['/api/auth/login', '/api/auth/signup', '/api/auth/signup-otp/request', '/api/auth/login-otp/request', '/api/auth/login-otp/verify', '/api/auth/verify-2fa', '/api/auth/recovery-2fa', '/api/auth/google', '/api/auth/google/callback', '/api/auth/github', '/api/auth/github/callback', '/api/auth/password-reset/request', '/api/auth/password-reset/verify', '/api/auth/password-reset/confirm', '/api/admin/login', '/api/admin/seed', '/api/profile'];
+  const publicPaths = ['/api/auth/login', '/api/auth/signup', '/api/auth/signup-otp/request', '/api/auth/login-otp/request', '/api/auth/login-otp/verify', '/api/auth/magic-link/request', '/api/auth/magic-link/verify', '/api/auth/verify-2fa', '/api/auth/recovery-2fa', '/api/auth/google', '/api/auth/google/callback', '/api/auth/github', '/api/auth/github/callback', '/api/auth/password-reset/request', '/api/auth/password-reset/verify', '/api/auth/password-reset/confirm', '/api/public/', '/api/newsletter/'];
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method) && !publicPaths.some(p => pathname.startsWith(p))) {
     const cookie = request.cookies.get('__session')?.value;
     if (!cookie) {
       return new NextResponse('Missing authentication cookie', { status: 403 });
+    }
+    // Check if user is banned (lazy import to avoid circular deps)
+    try {
+      const { verifyToken } = await import('./lib/auth/jwt');
+      const payload = await verifyToken(cookie);
+      if (payload?.sub) {
+        const { prisma } = await import('./lib/db/prisma');
+        const user = await prisma.user.findUnique({ where: { id: payload.sub }, select: { isBanned: true, isSuspended: true } });
+        if (user?.isBanned) {
+          return new NextResponse('Account has been banned', { status: 403 });
+        }
+        if (user?.isSuspended) {
+          return new NextResponse('Account has been suspended', { status: 403 });
+        }
+      }
+    } catch {
+      // If token verification fails, let the route handler deal with it
     }
   }
 
