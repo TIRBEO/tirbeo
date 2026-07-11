@@ -8,10 +8,11 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { useLandingConfig } from "@/lib/LandingConfigContext";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const stages = [
+const DEFAULT_STAGES = [
   {
     label: "Foundation",
     color: "#C44A2B",
@@ -288,6 +289,14 @@ function createGlassFacadeTexture(litRatio = 0.25) {
 }
 
 export function StackedSection() {
+  const config = useLandingConfig();
+  const stages = config.features?.stages?.length ? config.features.stages.map((s: any) => ({
+    label: s.label || "Stage",
+    color: s.color || "#C44A2B",
+    heading: s.heading || "",
+    body: s.body || "",
+  })) : DEFAULT_STAGES;
+
   const sectionRef = useRef<HTMLElement>(null);
   const pinRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
