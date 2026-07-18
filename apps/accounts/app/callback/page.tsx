@@ -57,7 +57,7 @@ function CallbackHandler() {
 
   if (error) {
     return (
-      <main className="flex min-h-screen items-center justify-center p-6" style={{ background: "#08150F" }}>
+      <main className="flex min-h-screen items-center justify-center p-6" style={{ background: "#0A0A0B" }}>
         <div className="text-center max-w-sm">
           <div className="w-16 h-16 rounded-full bg-error/10 flex items-center justify-center mx-auto mb-4">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E45D5D" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -66,7 +66,7 @@ function CallbackHandler() {
           </div>
           <p className="text-white/80 font-medium">Authentication failed</p>
           <p className="text-white/40 text-sm mt-1">{error}</p>
-          <a href="/login" className="inline-block mt-4 text-sm text-accent-green/80 hover:text-accent-green transition-colors">
+          <a href="/login" className="inline-block mt-4 text-sm text-purple-secondary/80 hover:text-purple-secondary transition-colors">
             Back to sign in
           </a>
         </div>
@@ -75,9 +75,9 @@ function CallbackHandler() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6" style={{ background: "#08150F" }}>
+    <main className="flex min-h-screen items-center justify-center p-6" style={{ background: "#0A0A0B" }}>
       <div className="text-center">
-        <div className="w-8 h-8 border-2 border-accent-green/20 border-t-accent-green rounded-full animate-spin mx-auto" />
+        <div className="w-8 h-8 border-2 border-purple-primary/20 border-t-purple-primary rounded-full animate-spin mx-auto" />
         <p className="text-white/40 text-sm mt-4">Completing sign in...</p>
       </div>
     </main>
@@ -87,8 +87,8 @@ function CallbackHandler() {
 export default function AuthCallbackPage() {
   return (
     <Suspense fallback={
-      <main className="flex min-h-screen items-center justify-center" style={{ background: "#08150F" }}>
-        <div className="w-8 h-8 border-2 border-accent-green/20 border-t-accent-green rounded-full animate-spin" />
+      <main className="flex min-h-screen items-center justify-center" style={{ background: "#0A0A0B" }}>
+        <div className="w-8 h-8 border-2 border-purple-primary/20 border-t-purple-primary rounded-full animate-spin" />
       </main>
     }>
       <CallbackHandler />

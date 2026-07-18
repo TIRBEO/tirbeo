@@ -1,145 +1,28 @@
 "use client";
 
-import { useState, useEffect, Suspense, useCallback, useRef } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useCallback, useRef } from "react";
 import { appUrl } from "@tirbeo/utils";
-import { motion } from "motion/react";
-import { Chrome, Github, Eye, EyeOff, ArrowLeft, Check, Loader2, Shield, Mail, User, Briefcase, Phone, Globe, MessageSquare } from "lucide-react";
+import { Chrome, Github, Eye, EyeOff, Loader2, Shield, Mail, User, Briefcase, Phone, Globe, MessageSquare } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const AVATAR_SEEDS = ["Felix", "Luna", "Milo", "Nala", "Oscar", "Pixel", "Ruby", "Sage", "Tango", "Ursa", "Vex", "Willow", "Xena", "Yuki", "Zara", "Aria", "Blaze", "Cleo", "Dexter", "Ember"];
-const AVATAR_URLS = AVATAR_SEEDS.map(s => `https://api.dicebear.com/7.x/adventurer/svg?seed=${s}&backgroundColor=08150F,101c13,12271D,1a3326,275d46`);
+const AVATAR_SEEDS = ["Felix", "Luna", "Milo", "Nala", "Oscar", "Pixel", "Ruby", "Sage", "Tango", "Ursa", "Willow", "Xena", "Yuki", "Zara", "Aria", "Blaze", "Cleo", "Dexter", "Ember"];
+const AVATAR_URLS = AVATAR_SEEDS.map(s => `https://api.dicebear.com/7.x/adventurer/svg?seed=${s}&backgroundColor=050505,0A0A0A,111111,1A1A1A,2A2A2A`);
 
-function StepItem({ number, text, active, done }: { number: number; text: string; active?: boolean; done?: boolean }) {
-  return (
-    <div className={`flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300 ${
-      active ? "bg-accent-green/20 border border-accent-green/30" :
-      done ? "bg-white/5 border border-white/5" :
-      "bg-white/[0.02] border border-transparent"
-    }`}>
-      <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-300 ${
-        active ? "bg-gradient-to-br from-accent-green to-primary-green text-white shadow-lg shadow-accent-green/20" :
-        done ? "bg-success/20 text-success" :
-        "bg-white/5 text-white/30"
-      }`}>
-        {done ? <Check size={16} /> : number}
-      </div>
-      <div>
-        <span className={`text-sm font-semibold block ${active ? "text-white" : done ? "text-white/60" : "text-white/30"}`}>{text}</span>
-        <span className="text-xs text-white/20">{active ? "In progress" : done ? "Completed" : "Upcoming"}</span>
-      </div>
-    </div>
-  );
+type Mode = "login" | "signup";
+type SignupPhase = 1 | 1.5 | 2 | 3;
+
+function Spinner() {
+  return <Loader2 className="w-5 h-5 animate-spin" />;
 }
 
-function SocialButton({ icon: Icon, label, onClick, disabled }: { icon: React.ElementType; label: string; onClick?: () => void; disabled?: boolean }) {
-  return (
-    <button type="button" onClick={onClick} disabled={disabled} className="flex items-center justify-center gap-3 bg-white/[0.03] border border-white/[0.08] rounded-2xl px-5 py-4 text-sm font-medium text-white hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed group">
-      <Icon className="w-5 h-5 text-white/60 group-hover:text-white/80 transition-colors" />
-      <span>{label}</span>
-    </button>
+export default function LoginPage() {
+  const [mode, setMode] = useState<Mode>(() =>
+    (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "signup") ? "signup" : "login"
   );
-}
+  const [phase, setPhase] = useState<SignupPhase>(1);
 
-function InputGroup({ label, placeholder, type, value, onChange, error, icon: Icon }: {
-  label: string;
-  placeholder: string;
-  type: string;
-  value: string;
-  onChange: (v: string) => void;
-  error?: string;
-  icon?: React.ElementType;
-}) {
-  const [show, setShow] = useState(false);
-  const isPwd = type === "password";
-  return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-white/80">{label}</label>
-      <div className="relative group">
-        {Icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent-green transition-colors z-10">
-            <Icon size={16} />
-          </div>
-        )}
-        <input
-          type={isPwd ? (show ? "text" : "password") : type}
-          placeholder={placeholder}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={`w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl h-12 px-4 ${Icon ? 'pl-11' : ''} text-white placeholder:text-white/20 focus:border-accent-green/40 focus:ring-2 focus:ring-accent-green/10 outline-none text-sm transition-all duration-200`}
-        />
-        {isPwd && (
-          <button type="button" onClick={() => setShow(!show)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors">
-            {show ? <EyeOff size={16} /> : <Eye size={16} />}
-          </button>
-        )}
-      </div>
-      {isPwd && <p className="text-xs text-white/20">Requires at least 8 characters.</p>}
-      {error && <p className="text-xs text-error/80">{error}</p>}
-    </div>
-  );
-}
-
-function OtpInput({ length = 6, value, onChange }: { length?: number; value: string; onChange: (v: string) => void }) {
-  const inputs = useRef<(HTMLInputElement | null)[]>([]);
-
-  const handleChange = (index: number, char: string) => {
-    if (!/^\d*$/.test(char)) return;
-    const newVal = value.split("");
-    newVal[index] = char.slice(-1);
-    const joined = newVal.join("");
-    onChange(joined);
-    if (char && index < length - 1) {
-      inputs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKey = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === "Backspace" && !value[index] && index > 0) {
-      inputs.current[index - 1]?.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const paste = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
-    onChange(paste);
-    const nextIndex = Math.min(paste.length, length - 1);
-    inputs.current[nextIndex]?.focus();
-  };
-
-  useEffect(() => { inputs.current[0]?.focus(); }, []);
-
-  return (
-    <div className="flex gap-3 justify-center w-full" onPaste={handlePaste}>
-      {Array.from({ length }, (_, i) => (
-        <input
-          key={i}
-          ref={(el) => { inputs.current[i] = el; }}
-          type="text"
-          inputMode="numeric"
-          maxLength={1}
-          value={value[i] || ""}
-          onChange={(e) => handleChange(i, e.target.value)}
-          onKeyDown={(e) => handleKey(i, e)}
-          className="w-12 h-14 rounded-2xl border border-white/[0.08] bg-white/[0.03] text-white text-xl font-semibold text-center outline-none focus:border-accent-green/40 focus:ring-2 focus:ring-accent-green/10 transition-all duration-200"
-          autoComplete="one-time-code"
-        />
-      ))}
-    </div>
-  );
-}
-
-type AuthStep = "login" | "signup" | "otp-login" | "otp-signup" | "magic-link-sent";
-type FieldErrors = { email?: string; password?: string };
-type SignupPhase = 0 | 1 | 2 | 3;
-
-function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isSignup: boolean) => void }) {
-  const searchParams = useSearchParams();
-  const [step, setStep] = useState<AuthStep>("login");
-  const [signupPhase, setSignupPhase] = useState<SignupPhase>(1);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -149,48 +32,37 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
   const [whoYouAre, setWhoYouAre] = useState("");
   const [findUs, setFindUs] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_URLS[0]);
+  const [customAvatar, setCustomAvatar] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [showPwd, setShowPwd] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
-  const [devCode, setDevCode] = useState<string | null>(null);
-  const [devLink, setDevLink] = useState<string | null>(null);
   const submittedRef = useRef(false);
 
-  const isSignUp = step === "signup" || step === "otp-signup";
-  const isOtpStep = step === "otp-login" || step === "otp-signup";
+  const handleAvatarUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const url = reader.result as string;
+      setCustomAvatar(url);
+      setSelectedAvatar(url);
+    };
+    reader.readAsDataURL(file);
+  }, []);
 
-  const redirectTo = searchParams.get("redirect") || appUrl("dashboard");
+  const redirectTo = appUrl("dashboard");
 
-  // Validate redirect URL
-  const validatedRedirect = (() => {
-    try {
-      const url = new URL(redirectTo);
-      if (url.hostname.endsWith('tirbeo.app') || url.hostname === 'localhost') return redirectTo;
-    } catch {}
-    return appUrl('dashboard');
-  })();
-
-  useEffect(() => {
-    onPhaseChange?.(signupPhase, isSignUp);
-  }, [signupPhase, isSignUp, onPhaseChange]);
-
-  const validate = useCallback((): boolean => {
-    const errors: FieldErrors = {};
-    if (!email || !EMAIL_RE.test(email)) errors.email = "Enter a valid email address";
-    if (!isOtpStep && (!password || password.length < 8)) errors.password = "Min 8 characters";
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  }, [email, password, isOtpStep]);
-
-  const apiFetch = useCallback(async (path: string, body: Record<string, unknown>, opts?: { noCreds?: boolean }) => {
+  const apiFetch = useCallback(async (path: string, body: Record<string, unknown>) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
       const res = await fetch(`${API}${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: opts?.noCreds ? undefined : "include",
+        credentials: "include",
         body: JSON.stringify(body),
         signal: controller.signal,
       });
@@ -198,75 +70,77 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
       return res;
     } catch (err: any) {
       clearTimeout(timeout);
-      if (err?.name === 'AbortError') throw new Error('Request timed out. Check your connection.');
-      throw new Error(err?.message || 'Network request failed');
+      if (err?.name === "AbortError") throw new Error("Request timed out. Check your connection.");
+      throw new Error(err?.message || "Network request failed");
     }
   }, []);
 
-  const handleGoogleLogin = useCallback(() => {
-    window.location.href = `${API}/auth/google`;
-  }, []);
+  const handleGoogleLogin = useCallback(() => { window.location.href = `${API}/auth/google`; }, []);
+  const handleGithubLogin = useCallback(() => { window.location.href = `${API}/auth/github`; }, []);
 
-  const handleGithubLogin = useCallback(() => {
-    window.location.href = `${API}/auth/github`;
-  }, []);
-
-  const handleSubmit = useCallback(async (e: React.FormEvent) => {
+  const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (submittedRef.current) return;
-    if (!validate()) return;
+    if (!EMAIL_RE.test(email)) { setError("Enter a valid email address"); return; }
+    if (password.length < 8) { setError("Password must be at least 8 characters"); return; }
     submittedRef.current = true;
     setError(null);
     setLoading(true);
     try {
-      if (step === "otp-login") {
-        const res = await apiFetch("/api/auth/login-otp/verify", { email, otpCode });
-        if (res.ok) { window.location.href = validatedRedirect; return; }
-        setError(await res.text() || "Invalid code");
-      } else if (step === "otp-signup") {
-        const name = [firstName, lastName].filter(Boolean).join(" ").trim() || email.split("@")[0];
-        const res = await apiFetch("/api/auth/signup", { email, password, name, otpCode });
-        if (res.ok) {
-          setSignupPhase(2);
-          setStep("signup");
-          setOtpCode("");
-          return;
-        }
-        setError(await res.text() || "Signup failed");
-      } else if (step === "login") {
-        const res = await apiFetch("/api/auth/login", { email, password });
-        if (res.ok) { window.location.href = validatedRedirect; return; }
-        setError(await res.text() || "Invalid credentials");
-      } else {
-        const res = await apiFetch("/api/auth/signup-otp/request", { email }, { noCreds: true });
-        if (res.ok) {
-          try { const j = await res.json(); if (j.devCode) setDevCode(j.devCode); } catch {}
-          setStep("otp-signup"); setOtpCode(""); return;
-        }
-        setError(await res.text() || "Failed to send code");
-      }
+      const res = await apiFetch("/api/auth/login", { email, password });
+      if (res.ok) { window.location.href = redirectTo; return; }
+      setError(await res.text() || "Invalid credentials");
     } catch (err: any) {
       setError(err?.message || "Connection error. Please try again.");
     } finally {
       setLoading(false);
       submittedRef.current = false;
     }
-  }, [email, password, firstName, lastName, otpCode, step, signupPhase, validatedRedirect, validate, apiFetch]);
+  }, [email, password, redirectTo, apiFetch]);
 
-  const handleOtpLogin = useCallback(async () => {
+  const handleSignupSubmit = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
     if (submittedRef.current) return;
-    if (!EMAIL_RE.test(email)) { setFieldErrors({ email: "Enter a valid email address" }); return; }
+    const form = e.currentTarget as HTMLFormElement;
+    const fd = new FormData(form);
+    const liveEmail = (fd.get("email") as string) || email;
+    const livePassword = (fd.get("password") as string) || password;
+    const liveFirst = (fd.get("firstName") as string) || firstName;
+    const liveLast = (fd.get("lastName") as string) || lastName;
+    if (!EMAIL_RE.test(liveEmail)) { setError("Enter a valid email address"); return; }
+    if (livePassword.length < 8) { setError("Password must be at least 8 characters"); return; }
     submittedRef.current = true;
     setError(null);
-    setFieldErrors({});
     setLoading(true);
     try {
-      const res = await apiFetch("/api/auth/login-otp/request", { email }, { noCreds: true });
-        if (res.ok) {
-          try { const j = await res.json(); if (j.devCode) setDevCode(j.devCode); } catch {}
-          setStep("otp-login"); setOtpCode(""); return;
-        }
-      setError(await res.text() || "Failed to send code");
+      const name = [liveFirst, liveLast].filter(Boolean).join(" ").trim() || liveEmail.split("@")[0];
+      const res = await apiFetch("/api/auth/signup-otp/request", { email: liveEmail, password: livePassword, name });
+      if (res.ok) {
+        setPhase(1.5);
+        return;
+      }
+      setError(await res.text() || "Failed to send verification code");
+    } catch (err: any) {
+      setError(err?.message || "Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+      submittedRef.current = false;
+    }
+  }, [email, password, firstName, lastName, apiFetch]);
+
+  const handleResendOtp = useCallback(async () => {
+    if (submittedRef.current) return;
+    if (!EMAIL_RE.test(email)) { setError("Enter a valid email address"); return; }
+    submittedRef.current = true;
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/auth/signup-otp/request", { email });
+      if (res.ok) {
+        try { const j = await res.json().catch(() => ({})); if (j.devCode) setError(`Dev code: ${j.devCode}`); } catch {}
+        return;
+      }
+      setError(await res.text() || "Failed to resend code");
     } catch (err: any) {
       setError(err?.message || "Connection error. Please try again.");
     } finally {
@@ -275,19 +149,88 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
     }
   }, [email, apiFetch]);
 
-  const handleMagicLinkRequest = useCallback(async () => {
+  const handleVerifyOtp = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
     if (submittedRef.current) return;
-    if (!EMAIL_RE.test(email)) { setFieldErrors({ email: "Enter a valid email address" }); return; }
+    if (otpCode.length < 6) { setError("Enter the 6-digit code"); return; }
     submittedRef.current = true;
     setError(null);
-    setFieldErrors({});
     setLoading(true);
     try {
-      const res = await apiFetch("/api/auth/magic-link/request", { email }, { noCreds: true });
+      const name = [firstName, lastName].filter(Boolean).join(" ").trim() || email.split("@")[0];
+      const res = await apiFetch("/api/auth/signup", { email, password, name, otpCode });
       if (res.ok) {
-        try { const j = await res.json(); if (j.devLink) setDevLink(j.devLink); } catch {}
-        setStep("magic-link-sent"); return;
+        setPhase(2);
+        return;
       }
+      setError(await res.text() || "Signup failed");
+    } catch (err: any) {
+      setError(err?.message || "Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+      submittedRef.current = false;
+    }
+  }, [email, password, firstName, lastName, otpCode, apiFetch]);
+
+  const handleSaveProfile = useCallback(async () => {
+    if (submittedRef.current) return;
+    submittedRef.current = true;
+    setLoading(true);
+    try {
+      // Only send a remote URL for the avatar; custom data-URL uploads are
+      // kept client-side so we never hit the storage bucket / Cloudflare limit.
+      const photoUrl = selectedAvatar.startsWith("http") ? selectedAvatar : undefined;
+      const res = await fetch(`${API}/api/users/me`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          name: [firstName, lastName].filter(Boolean).join(" ").trim() || undefined,
+          phoneNumber: phone || undefined,
+          occupation: occupation || whoYouAre || undefined,
+          photoUrl,
+        }),
+      });
+      if (!res.ok) {
+        console.warn("[PROFILE] save failed:", await res.text().catch(() => "unknown"));
+      }
+    } catch (err: any) {
+      console.warn("[PROFILE] save error:", err?.message);
+    } finally {
+      setLoading(false);
+      submittedRef.current = false;
+      // Account is already created — never trap the user on this step.
+      setPhase(3);
+    }
+  }, [firstName, lastName, phone, occupation, whoYouAre, selectedAvatar, API]);
+
+  const handleOtpLogin = useCallback(async () => {
+    if (submittedRef.current) return;
+    if (!EMAIL_RE.test(email)) { setError("Enter a valid email address"); return; }
+    submittedRef.current = true;
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/auth/login-otp/request", { email });
+      if (res.ok) { window.location.href = redirectTo; return; }
+      setError(await res.text() || "Failed to send code");
+    } catch (err: any) {
+      setError(err?.message || "Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+      submittedRef.current = false;
+    }
+  }, [email, redirectTo, apiFetch]);
+
+  const handleMagicLink = useCallback(async () => {
+    if (submittedRef.current) return;
+    if (!EMAIL_RE.test(email)) { setError("Enter a valid email address"); return; }
+    submittedRef.current = true;
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/auth/magic-link/request", { email });
+      if (res.ok) { alert("Magic link sent to your email."); return; }
       setError(await res.text() || "Failed to send magic link");
     } catch (err: any) {
       setError(err?.message || "Connection error. Please try again.");
@@ -297,378 +240,387 @@ function LoginForm({ onPhaseChange }: { onPhaseChange?: (phase: SignupPhase, isS
     }
   }, [email, apiFetch]);
 
-  const handleSaveProfile = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`${API}/api/users/me`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          name: [firstName, lastName].filter(Boolean).join(" ").trim() || undefined,
-          phoneNumber: phone || undefined,
-          occupation: occupation || whoYouAre || undefined,
-          photoUrl: selectedAvatar,
-        }),
-      });
-      if (res.ok) {
-        setSignupPhase(3);
-      } else {
-        setError(await res.text() || "Failed to save profile");
-      }
-    } catch {
-      setError("Connection error");
-    } finally {
-      setLoading(false);
-    }
-  }, [firstName, lastName, phone, occupation, whoYouAre, selectedAvatar, API]);
-
-  const handleCompleteSetup = useCallback(() => {
-    window.location.href = validatedRedirect;
-  }, [validatedRedirect]);
-
-  const switchMode = () => {
-    const newStep = isSignUp ? "login" : "signup";
-    setStep(newStep);
-    setSignupPhase(isSignUp ? 0 as SignupPhase : 1);
-    setError(null);
-    setFieldErrors({});
-  };
-
-  const isLoginMode = step === "login" || step === "otp-login";
+  const inputCls =
+    "w-full bg-transparent border-0 border-b border-white/15 rounded-none h-12 pl-11 pr-4 text-white placeholder:text-white/30 focus:border-white/40 focus:ring-0 outline-none text-sm transition-all duration-200";
+  const labelCls = "text-sm font-medium text-white/70";
+  const fieldIcon = "absolute left-4 top-1/2 -translate-y-1/2 text-white/40";
 
   return (
-    <motion.div
-      key={isOtpStep ? "otp" : isSignUp ? `signup-phase-${signupPhase}` : "login"}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="w-full max-w-xl mx-auto space-y-8 lg:space-y-6 sm:space-y-10"
+    <main
+      className="min-h-screen w-full flex items-center justify-center p-4"
+      style={{
+        backgroundImage: "url('/login-hero.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
     >
-      <div className="flex items-center gap-4">
-        {isOtpStep && (
-          <button
-            type="button"
-            onClick={() => { setStep(isSignUp ? "signup" : "login"); setOtpCode(""); setError(null); }}
-            className="text-white/30 hover:text-white/80 transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </button>
-        )}
-        {signupPhase === 2 && (
-          <button
-            type="button"
-            onClick={() => { setStep("otp-signup"); setSignupPhase(1); }}
-            className="text-white/30 hover:text-white/80 transition-colors"
-          >
-            <ArrowLeft size={20} />
-          </button>
-        )}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">
-            {isOtpStep ? "Check Your Email" :
-             signupPhase === 2 ? "Configure Your Studio" :
-             signupPhase === 3 ? "Finalize Your Profile" :
-             isSignUp ? "Create New Profile" : "Welcome Back"}
-          </h1>
-          <p className="text-white/40 text-sm mt-2">
-            {isOtpStep ? `We sent a verification code to ${email}` :
-             signupPhase === 2 ? "Tell us a bit about yourself." :
-             signupPhase === 3 ? "You're all set. Ready to explore Tirbeo." :
-             isSignUp ? "Input your basic details to begin the journey." :
-             "Sign in to your account to continue."}
-          </p>
-        </div>
-      </div>
+      <div className="noise-overlay" />
+      <div className="pointer-events-none fixed inset-0" style={{ background: "rgba(0,0,0,0.55)" }} />
 
-      {!isOtpStep && signupPhase < 2 && (
-        <>
-          <div className="grid grid-cols-2 gap-4">
-            <SocialButton icon={Chrome} label="Google" onClick={handleGoogleLogin} disabled={loading} />
-            <SocialButton icon={Github} label="GitHub" onClick={handleGithubLogin} disabled={loading} />
-          </div>
-
-          <div className="flex items-center gap-4">
-            <div className="flex-1 h-px bg-white/[0.06]" />
-            <span className="text-xs font-medium text-white/20 uppercase tracking-widest">Or</span>
-            <div className="flex-1 h-px bg-white/[0.06]" />
-          </div>
-        </>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-        {step === "magic-link-sent" ? (
-          <div className="space-y-6 pt-4 text-center">
-            <div className="w-20 h-20 rounded-full bg-accent-green/10 border border-accent-green/20 flex items-center justify-center mx-auto">
-              <Mail className="w-10 h-10 text-accent-green" />
-            </div>
-            <div>
-              <p className="text-white/90 text-lg font-semibold">Check your email</p>
-              <p className="text-white/40 text-sm mt-2">
-                We sent a one-time login link to <span className="text-white/70">{email}</span>
-              </p>
-              <p className="text-white/30 text-xs mt-2">Link expires in 15 minutes. Check your spam folder if you don't see it.</p>
-            </div>
-            {devLink && (
-              <div className="p-4 rounded-2xl bg-accent-green/10 border border-accent-green/20 text-left">
-                <p className="text-xs font-medium text-accent-green mb-2">Dev Mode — Magic link:</p>
-                <a href={devLink} className="text-xs text-accent-green/80 underline break-all">{devLink}</a>
-              </div>
-            )}
-            <button type="button" onClick={() => { setStep("login"); setDevLink(null); setError(null); }}
-              className="text-sm text-white/40 hover:text-white/70 transition-colors">
-              Back to sign in
-            </button>
-          </div>
-        ) : isOtpStep ? (
-          <div className="space-y-6 pt-4">
-            <OtpInput length={6} value={otpCode} onChange={setOtpCode} />
-            {devCode && process.env.NODE_ENV === 'development' && (
-              <div className="text-center p-4 rounded-2xl bg-accent-green/10 border border-accent-green/20">
-                <p className="text-xs font-medium text-accent-green">Dev Mode — Your code: <span className="font-bold text-sm">{devCode}</span></p>
-              </div>
-            )}
-            <p className="text-center text-sm text-white/30">
-              Didn&apos;t receive the code?{" "}
-              <button type="button" onClick={step === "otp-login" ? handleOtpLogin : async () => {
-                if (submittedRef.current) return;
-                submittedRef.current = true;
-                setError(null);
-                setLoading(true);
-                try {
-                  const res = await apiFetch("/api/auth/signup-otp/request", { email }, { noCreds: true });
-                  if (res.ok) { try { const j = await res.json(); if (j.devCode) setDevCode(j.devCode); } catch {} return; }
-                  setError(await res.text() || "Failed to resend code");
-                } catch (err: any) { setError(err?.message || "Connection error"); }
-                finally { setLoading(false); submittedRef.current = false; }
-              }} className="text-accent-green/80 underline hover:text-accent-green transition-colors">
-                Resend
-              </button>
+      <div className="relative z-10 w-full max-w-xl">
+        <div
+          className="relative p-10 overflow-y-auto rounded-[28px]"
+          style={{
+            background: "rgba(255,255,255,0.08)",
+            backdropFilter: "blur(30px)",
+            WebkitBackdropFilter: "blur(30px)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 40px 100px rgba(0,0,0,0.45)",
+            maxHeight: "92vh",
+          }}
+        >
+          <div className="mb-8">
+            <h1 className="text-2xl font-semibold tracking-tight text-white">
+              {mode === "login" ? "Welcome to Tirbeo" : phase === 1.5 ? "Verify Your Email" : phase === 2 ? "Configure Your Studio" : phase === 3 ? "Finalize Your Profile" : "Create an Account"}
+            </h1>
+            <p className="text-white/60 text-sm mt-2">
+              {mode === "login"
+                ? "Sign in to access your workspace"
+                : phase === 1.5
+                ? `We sent a verification code to ${email}`
+                : phase === 2
+                ? "Tell us a bit about yourself."
+                : phase === 3
+                ? "You're all set. Ready to explore Tirbeo."
+                : "Sign up to get started."}
             </p>
           </div>
-        ) : signupPhase === 2 ? (
-          <div className="space-y-5">
-            <div>
-              <label className="text-sm font-medium text-white/80 mb-3 block">Choose Your Avatar</label>
-              <div className="grid grid-cols-5 gap-3">
-                {AVATAR_URLS.map((url, i) => (
-                  <button key={i} type="button" onClick={() => setSelectedAvatar(url)}
-                    className={`w-14 h-14 rounded-full overflow-hidden border-2 transition-all duration-300 hover:scale-110 ${
-                      selectedAvatar === url ? "border-accent-green ring-2 ring-accent-green/30 scale-110" : "border-white/[0.08] hover:border-white/20"
-                    }`}>
-                    <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full" />
+
+          {/* ── LOGIN ── */}
+          {mode === "login" && (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <button type="button" onClick={handleGoogleLogin} disabled={loading}
+                  className="flex items-center justify-center gap-2.5 bg-black rounded-2xl px-4 py-3 text-sm font-medium text-white hover:bg-black/80 transition-all duration-250 disabled:opacity-40">
+                  <Chrome className="w-5 h-5" /> Google
+                </button>
+                <button type="button" onClick={handleGithubLogin} disabled={loading}
+                  className="flex items-center justify-center gap-2.5 bg-black rounded-2xl px-4 py-3 text-sm font-medium text-white hover:bg-black/80 transition-all duration-250 disabled:opacity-40">
+                  <Github className="w-5 h-5" /> GitHub
+                </button>
+              </div>
+
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 h-px bg-white/10" />
+                <span className="text-xs font-medium text-white/35 uppercase tracking-widest">Or</span>
+                <div className="flex-1 h-px bg-white/10" />
+              </div>
+
+              <form onSubmit={handleLogin} className="space-y-4" noValidate>
+                <div className="space-y-2">
+                  <label className={labelCls}>Email</label>
+                  <div className="relative">
+                    <div className={fieldIcon}><Mail size={16} /></div>
+                    <input type="email" placeholder="hello@example.com" value={email}
+                      onChange={(e) => { setEmail(e.target.value); setError(null); }}
+                      className={inputCls} />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className={labelCls}>Password</label>
+                  <div className="relative">
+                    <div className={fieldIcon}><Shield size={16} /></div>
+                    <input type={showPwd ? "text" : "password"} name="password" placeholder="8+ characters" value={password}
+                      onChange={(e) => { setPassword(e.target.value); setError(null); }}
+                      className={inputCls} />
+                    <button type="button" onClick={() => setShowPwd((s) => !s)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors">
+                      {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
+                    <p className="text-sm text-[#E45D5D]">{error}</p>
+                  </div>
+                )}
+
+                <button type="submit" disabled={loading}
+                  className="w-full h-12 bg-black text-white font-semibold rounded-2xl border-0 hover:bg-black/80 active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                  {loading ? <Spinner /> : "Sign In"}
+                </button>
+
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  <button type="button" onClick={handleOtpLogin} disabled={loading}
+                    className="w-full h-11 rounded-2xl bg-black text-sm font-medium text-white/80 hover:bg-black/80 transition-all disabled:opacity-50">
+                    Send one-time code
                   </button>
+                  <button type="button" onClick={handleMagicLink} disabled={loading}
+                    className="w-full h-11 rounded-2xl bg-black text-sm font-medium text-white/80 hover:bg-black/80 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+                    <Mail size={14} /> Sign in with magic link
+                  </button>
+                </div>
+              </form>
+
+              <div className="text-center mt-4">
+                <a href="/reset-password" className="text-sm text-white/45 hover:text-white/70 transition-colors">Forgot your password?</a>
+              </div>
+            </>
+          )}
+
+          {/* ── SIGNUP PHASE 1 ── */}
+          {mode === "signup" && phase === 1 && (
+            <form onSubmit={handleSignupSubmit} className="space-y-4" noValidate>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className={labelCls}>First Name</label>
+                  <div className="relative">
+                    <div className={fieldIcon}><User size={16} /></div>
+                    <input type="text" name="firstName" placeholder="John" value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      className="w-full bg-transparent border-0 border-b border-white/15 rounded-none h-12 pl-11 pr-4 text-white placeholder:text-white/30 focus:border-white/40 focus:ring-0 outline-none text-sm transition-all duration-200" />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className={labelCls}>Last Name</label>
+                  <div className="relative">
+                    <div className={fieldIcon}><User size={16} /></div>
+                    <input type="text" name="lastName" placeholder="Doe" value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      className="w-full bg-transparent border-0 border-b border-white/15 rounded-none h-12 pl-11 pr-4 text-white placeholder:text-white/30 focus:border-white/40 focus:ring-0 outline-none text-sm transition-all duration-200" />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className={labelCls}>Email</label>
+                <div className="relative">
+                  <div className={fieldIcon}><Mail size={16} /></div>
+                  <input type="email" name="email" placeholder="hello@example.com" value={email}
+                    onChange={(e) => { setEmail(e.target.value); setError(null); }}
+                    className={inputCls} />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className={labelCls}>Password</label>
+                <div className="relative">
+                  <div className={fieldIcon}><Shield size={16} /></div>
+                  <input type={showPwd ? "text" : "password"} placeholder="8+ characters" value={password}
+                    onChange={(e) => { setPassword(e.target.value); setError(null); }}
+                    className={inputCls} />
+                  <button type="button" onClick={() => setShowPwd((s) => !s)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors">
+                    {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
+                  <p className="text-sm text-[#E45D5D]">{error}</p>
+                </div>
+              )}
+
+              <button type="submit" disabled={loading}
+                className="w-full h-12 bg-black text-white font-semibold rounded-2xl border-0 hover:bg-black/80 active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                {loading ? <Spinner /> : "Create Account"}
+              </button>
+            </form>
+          )}
+
+          {/* ── SIGNUP PHASE 1.5 — VERIFY EMAIL ── */}
+          {mode === "signup" && phase === 1.5 && (
+            <form onSubmit={handleVerifyOtp} className="space-y-5" noValidate>
+              <div className="flex gap-3 justify-center" onPaste={(e) => {
+                const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+                if (text) {
+                  e.preventDefault();
+                  setOtpCode(text);
+                  setError(null);
+                  const inputs = (e.currentTarget as HTMLDivElement).querySelectorAll("input");
+                  inputs?.[Math.min(text.length, 5)]?.focus();
+                }
+              }}>
+                {Array.from({ length: 6 }, (_, i) => (
+                  <input
+                    key={i}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={otpCode[i] || ""}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(-1);
+                      const next = otpCode.split("");
+                      next[i] = v;
+                      const joined = next.join("").slice(0, 6);
+                      setOtpCode(joined);
+                      setError(null);
+                      if (v && i < 5) {
+                        const inputs = (e.target as HTMLInputElement).parentElement?.querySelectorAll("input");
+                        inputs?.[i + 1]?.focus();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Backspace" && !otpCode[i] && i > 0) {
+                        const inputs = (e.target as HTMLInputElement).parentElement?.querySelectorAll("input");
+                        inputs?.[i - 1]?.focus();
+                      }
+                    }}
+                    className="w-12 h-14 rounded-xl border border-white/15 bg-transparent text-white text-xl font-semibold text-center outline-none focus:border-white/40 transition-all duration-200"
+                  />
                 ))}
               </div>
-            </div>
-            <InputGroup label="Occupation" placeholder="e.g. Designer, Developer" type="text" value={occupation} onChange={setOccupation} icon={Briefcase} />
-            <InputGroup label="Phone Number" placeholder="+977 98XXXXXXXX" type="tel" value={phone} onChange={setPhone} icon={Phone} />
-            <InputGroup label="Who you are" placeholder="A short bio about yourself" type="text" value={whoYouAre} onChange={setWhoYouAre} icon={MessageSquare} />
-            <InputGroup label="Where did you find us?" placeholder="Google, Friend, Social Media..." type="text" value={findUs} onChange={setFindUs} icon={Globe} />
-          </div>
-        ) : signupPhase === 3 ? (
-          <div className="space-y-6 pt-4 text-center">
-            <div className="w-24 h-24 rounded-full overflow-hidden mx-auto border-2 border-accent-green/30 ring-4 ring-accent-green/10">
-              <img src={selectedAvatar} alt="Your avatar" className="w-full h-full" />
-            </div>
-            <div>
-              <p className="text-white/90 text-lg font-semibold">Profile Complete</p>
-              <p className="text-white/40 text-sm mt-1">
-                {firstName} {lastName} &middot; {occupation || "Member"}
-              </p>
-            </div>
-            <div className="flex justify-center gap-2 text-xs text-white/30">
-              {phone && <span className="bg-white/5 px-3 py-1 rounded-full">{phone}</span>}
-              {findUs && <span className="bg-white/5 px-3 py-1 rounded-full">Found via: {findUs}</span>}
-            </div>
-          </div>
-        ) : (
-          <>
-            {isSignUp && (
-              <div className="grid grid-cols-2 gap-4">
-                <InputGroup label="First Name" placeholder="John" type="text" value={firstName} onChange={setFirstName} icon={User} />
-                <InputGroup label="Last Name" placeholder="Doe" type="text" value={lastName} onChange={setLastName} icon={User} />
-              </div>
-            )}
-            <InputGroup
-              label="Email"
-              placeholder="hello@example.com"
-              type="email"
-              value={email}
-              onChange={(v) => { setEmail(v); setFieldErrors((p) => ({ ...p, email: undefined })); }}
-              error={fieldErrors.email}
-              icon={Mail}
-            />
-            <InputGroup
-              label="Password"
-              placeholder="8+ characters"
-              type="password"
-              value={password}
-              onChange={(v) => { setPassword(v); setFieldErrors((p) => ({ ...p, password: undefined })); }}
-              error={fieldErrors.password}
-              icon={Shield}
-            />
-          </>
-        )}
 
-        {error && (
-          <div className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
-            <p className="text-sm text-error">{error}</p>
-          </div>
-        )}
+              {error && (
+                <div className="flex items-center gap-3 justify-center">
+                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
+                  <p className="text-sm text-[#E45D5D]">{error}</p>
+                </div>
+              )}
 
-        {isOtpStep && (
-          <button
-            type="submit"
-            disabled={loading || otpCode.length < 6}
-            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent-green/20 hover:shadow-accent-green/30"
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : "Verify & Continue"}
-          </button>
-        )}
+              <button type="submit" disabled={loading}
+                className="w-full h-12 bg-black text-white font-semibold rounded-2xl border-0 hover:bg-black/80 active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                {loading ? <Spinner /> : "Verify & Continue"}
+              </button>
 
-        {signupPhase === 2 && (
-          <button
-            type="button"
-            onClick={handleSaveProfile}
-            disabled={loading}
-            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent-green/20"
-          >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Continue"}
-          </button>
-        )}
-
-        {signupPhase === 3 && (
-          <button
-            type="button"
-            onClick={handleCompleteSetup}
-            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 mt-4 shadow-lg shadow-accent-green/20"
-          >
-            Go to Dashboard
-          </button>
-        )}
-
-        {!isOtpStep && signupPhase < 2 && (
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent-green/20 hover:shadow-accent-green/30"
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : isSignUp ? "Send Verification Code" : "Sign In"}
-          </button>
-        )}
-
-        {!isOtpStep && signupPhase < 2 && (
-          <button
-            type="button"
-            onClick={handleOtpLogin}
-            disabled={loading}
-            className="w-full h-12 rounded-2xl border border-white/[0.08] bg-white/[0.02] text-sm font-medium text-white/60 hover:text-white/80 hover:bg-white/[0.04] transition-all disabled:opacity-50"
-          >
-            Send one-time code
-          </button>
-        )}
-
-        {!isOtpStep && signupPhase < 2 && !isSignUp && (
-          <button
-            type="button"
-            onClick={handleMagicLinkRequest}
-            disabled={loading}
-            className="w-full h-12 rounded-2xl border border-white/[0.08] bg-white/[0.02] text-sm font-medium text-white/60 hover:text-white/80 hover:bg-white/[0.04] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <Mail size={14} />
-            Sign in with magic link
-          </button>
-        )}
-
-        {!isOtpStep && signupPhase < 2 && !isSignUp && (
-          <div className="text-center">
-            <a href="/reset-password" className="text-sm text-accent-green/60 hover:text-accent-green transition-colors">
-              Forgot your password?
-            </a>
-          </div>
-        )}
-      </form>
-
-      {!isOtpStep && signupPhase < 2 && (
-        <p className="text-center text-sm text-white/30">
-          {isSignUp ? "Already have an account? " : "Don't have an account? "}
-          <button type="button" onClick={switchMode} className="text-accent-green/80 hover:text-accent-green font-medium transition-colors">
-            {isSignUp ? "Sign in" : "Sign up"}
-          </button>
-        </p>
-      )}
-    </motion.div>
-  );
-}
-
-export default function LoginPage() {
-  const [signupPhase, setSignupPhase] = useState<SignupPhase>(0);
-  const [showSteps, setShowSteps] = useState(false);
-
-  const handlePhaseChange = useCallback((phase: SignupPhase, isSignup: boolean) => {
-    setSignupPhase(phase);
-    setShowSteps(isSignup);
-  }, []);
-
-  return (
-    <main className="flex min-h-screen w-full selection:bg-accent-green/30 transition-all duration-500 lg:h-screen lg:overflow-hidden" style={{ background: "#08150F" }}>
-      {/* Left: Brand / Video Column */}
-      <div className="hidden lg:flex relative flex-col items-center justify-end pb-32 px-12 rounded-3xl overflow-hidden shadow-2xl h-full w-[52%]">
-        <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://ipdwpivjwwaawelmczas.supabase.co/storage/v1/object/sign/TIRBEO/loginbg.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV80OGIyNGYwYS0yZWM2LTQ1NjUtODZhNi00YzE5YWQ4YmM5ZWYiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJUSVJCRU8vbG9naW5iZy5wbmciLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzgzNzE3OTk4LCJleHAiOjMxNTUzNTIxODE5OTh9.QRl5llUqZA7pdo8h361LUlVaSBg8ucJvz28Fc8TS4yY')" }} />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-dark/70 via-surface-dark/60 to-rich-black/80" />
-        <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay">
-          <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260506_081238_406ed0e3-5d83-436e-a512-0bbff7ec5b95.mp4" type="video/mp4" />
-        </video>
-
-        {/* Glowing orbs */}
-        <div className="absolute top-20 left-20 w-64 h-64 bg-accent-green/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-32 right-16 w-48 h-48 bg-primary-green/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative z-10 w-full max-w-xs space-y-8"
-        >
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="text-center">
-            <h2 className="text-4xl font-bold tracking-tight whitespace-nowrap text-white">
-              {showSteps ? "Join Tirbeo" : "Welcome Back"}
-            </h2>
-            <p className="text-white/50 text-sm leading-relaxed px-4 mt-3">
-              {showSteps
-                ? "Follow these 3 quick phases to activate your space."
-                : "Sign in to your account to continue."}
-            </p>
-          </motion.div>
-          {showSteps && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-3">
-              <StepItem number={1} text="Register your identity" active={signupPhase === 1} done={signupPhase > 1} />
-              <StepItem number={2} text="Configure your studio" active={signupPhase === 2} done={signupPhase > 2} />
-              <StepItem number={3} text="Finalize your profile" active={signupPhase === 3} />
-            </motion.div>
+              <button type="button" onClick={handleResendOtp} disabled={loading}
+                className="w-full text-center text-sm text-white/50 hover:text-white/80 transition-colors disabled:opacity-50">
+                Resend code
+              </button>
+            </form>
           )}
-        </motion.div>
-      </div>
 
-      {/* Right: Form Column */}
-      <div className="flex-1 flex flex-col items-center justify-center py-12 lg:py-6 px-4 sm:px-12 lg:px-16 xl:px-24 overflow-y-auto lg:overflow-hidden relative">
-        {/* Subtle background glow */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-accent-green/5 rounded-full blur-3xl pointer-events-none" />
+          {/* ── SIGNUP PHASE 2 ── */}
+          {mode === "signup" && phase === 2 && (
+            <div className="space-y-5">
+              <div className="space-y-3">
+                <label className={labelCls}>Choose Your Avatar</label>
+                <div className="grid grid-cols-5 gap-3">
+                  {AVATAR_URLS.map((url, i) => (
+                    <button key={i} type="button" onClick={() => setSelectedAvatar(url)}
+                      className={`w-full aspect-square rounded-full overflow-hidden border-2 transition-all duration-300 hover:scale-105 ${selectedAvatar === url ? "border-white ring-2 ring-white/30 scale-105" : "border-white/15 hover:border-white/30"}`}>
+                      <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full" />
+                    </button>
+                  ))}
+                  {/* Upload your own */}
+                  <button type="button" onClick={() => fileInputRef.current?.click()}
+                    className={`w-full aspect-square rounded-full overflow-hidden border-2 border-dashed flex items-center justify-center transition-all duration-300 hover:scale-105 ${customAvatar && selectedAvatar === customAvatar ? "border-white ring-2 ring-white/30 scale-105" : "border-white/20 hover:border-white/40"}`}>
+                    {customAvatar ? (
+                      <img src={customAvatar} alt="Your photo" className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={20} className="text-white/50" />
+                    )}
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                </div>
+              </div>
 
-        <div className="w-full max-w-xl relative z-10">
-          <Suspense fallback={
-            <div className="flex items-center justify-center h-64">
-              <div className="w-8 h-8 border-2 border-accent-green/20 border-t-accent-green rounded-full animate-spin" />
+              <div className="grid grid-cols-2 gap-x-5 gap-y-5">
+                {/* Occupation — dropdown (frosted) */}
+                <div className="space-y-2">
+                  <label className={labelCls}>Occupation</label>
+                  <div className="relative">
+                    <div className={fieldIcon}><Briefcase size={16} /></div>
+                    <select value={occupation} onChange={(e) => setOccupation(e.target.value)}
+                      className="w-full appearance-none border-0 border-b border-white/15 rounded-none h-12 pl-11 pr-10 text-white text-sm outline-none focus:border-white/40 transition-all duration-200"
+                      style={{ background: "rgba(255,255,255,0.04)" }}>
+                      <option value="" disabled className="bg-[#0A0A0A]">Select your role</option>
+                      <option value="Designer" className="bg-[#0A0A0A]">Designer</option>
+                      <option value="Developer" className="bg-[#0A0A0A]">Developer</option>
+                      <option value="Engineer" className="bg-[#0A0A0A]">Engineer</option>
+                      <option value="Founder / CEO" className="bg-[#0A0A0A]">Founder / CEO</option>
+                      <option value="Product Manager" className="bg-[#0A0A0A]">Product Manager</option>
+                      <option value="Content Creator" className="bg-[#0A0A0A]">Content Creator</option>
+                      <option value="Student" className="bg-[#0A0A0A]">Student</option>
+                      <option value="Other" className="bg-[#0A0A0A]">Other</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none">▾</div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className={labelCls}>Phone Number</label>
+                  <div className="relative">
+                    <div className={fieldIcon}><Phone size={16} /></div>
+                    <input type="tel" placeholder="+977 98XXXXXXXX" value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className={inputCls} />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className={labelCls}>Who you are</label>
+                  <div className="relative">
+                    <div className={fieldIcon}><MessageSquare size={16} /></div>
+                    <input type="text" placeholder="A short bio about yourself" value={whoYouAre}
+                      onChange={(e) => setWhoYouAre(e.target.value)}
+                      className={inputCls} />
+                  </div>
+                </div>
+
+                {/* Where did you find us — dropdown (frosted) */}
+                <div className="space-y-2">
+                  <label className={labelCls}>Where did you find us?</label>
+                  <div className="relative">
+                    <div className={fieldIcon}><Globe size={16} /></div>
+                    <select value={findUs} onChange={(e) => setFindUs(e.target.value)}
+                      className="w-full appearance-none border-0 border-b border-white/15 rounded-none h-12 pl-11 pr-10 text-white text-sm outline-none focus:border-white/40 transition-all duration-200"
+                      style={{ background: "rgba(255,255,255,0.04)" }}>
+                      <option value="" disabled className="bg-[#0A0A0A]">Choose an option</option>
+                      <option value="Google" className="bg-[#0A0A0A]">Google</option>
+                      <option value="Friend" className="bg-[#0A0A0A]">Friend</option>
+                      <option value="Social Media" className="bg-[#0A0A0A]">Social Media</option>
+                      <option value="Newsletter" className="bg-[#0A0A0A]">Newsletter</option>
+                      <option value="Event" className="bg-[#0A0A0A]">Event</option>
+                      <option value="Other" className="bg-[#0A0A0A]">Other</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 pointer-events-none">▾</div>
+                  </div>
+                </div>
+              </div>
+
+              {error && (
+                <div className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
+                  <p className="text-sm text-[#E45D5D]">{error}</p>
+                </div>
+              )}
+
+              <button type="button" onClick={handleSaveProfile} disabled={loading}
+                className="w-full h-12 bg-black text-white font-semibold rounded-2xl border-0 hover:bg-black/80 active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                {loading ? <Spinner /> : "Continue"}
+              </button>
             </div>
-          }>
-            <LoginForm onPhaseChange={handlePhaseChange} />
-          </Suspense>
+          )}
+
+          {/* ── SIGNUP PHASE 3 ── */}
+          {mode === "signup" && phase === 3 && (
+            <div className="space-y-6 pt-2 text-center">
+              <div className="w-24 h-24 rounded-full overflow-hidden mx-auto border-2 border-white/30 ring-4 ring-white/10">
+                <img src={selectedAvatar} alt="Your avatar" className="w-full h-full" />
+              </div>
+              <div>
+                <p className="text-white text-lg font-semibold">Profile Complete</p>
+                <p className="text-white/50 text-sm mt-1">
+                  {firstName} {lastName} &middot; {occupation || "Member"}
+                </p>
+              </div>
+              <button type="button" onClick={() => (window.location.href = redirectTo)}
+                className="w-full h-12 bg-black text-white font-semibold rounded-2xl border-0 hover:bg-black/80 active:scale-[0.98] transition-all duration-250 flex items-center justify-center gap-2">
+                Go to Dashboard
+              </button>
+            </div>
+          )}
+
+          <p className="text-center text-sm text-white/50 mt-6">
+            {mode === "login" ? (
+              <>
+                Don&apos;t have an account?{" "}
+                <a href="/register" className="text-white/80 hover:text-white font-medium transition-colors">Create one</a>
+              </>
+            ) : (
+              <>
+                Already have an account?{" "}
+                <a href="/login" className="text-white/80 hover:text-white font-medium transition-colors">Sign in</a>
+              </>
+            )}
+          </p>
         </div>
       </div>
     </main>

@@ -19,14 +19,14 @@ function StepIndicator({ step, total }: { step: number; total: number }) {
         return (
           <div key={i} className="flex-1 flex flex-col items-center gap-1.5">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
-              isActive ? "bg-gradient-to-br from-accent-green to-primary-green text-white shadow-lg shadow-accent-green/25" :
+              isActive ? "bg-gradient-to-br from-accent to-accent text-white shadow-lg shadow-accent/25" :
               isDone ? "bg-success/20 text-success" :
               "bg-white/5 text-white/25"
             }`}>
               {isDone ? <Check size={14} /> : i + 1}
             </div>
             <div className={`h-0.5 w-full rounded-full transition-all duration-300 ${
-              isDone ? "bg-success/40" : isActive ? "bg-accent-green/40" : "bg-white/10"
+              isDone ? "bg-success/40" : isActive ? "bg-[#4F8CFF]/40" : "bg-white/10"
             }`} />
           </div>
         );
@@ -190,7 +190,7 @@ function ResetPasswordForm() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-white/80">Email</label>
             <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent-green transition-colors z-10">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent transition-colors z-10">
                 <Mail size={16} />
               </div>
               <input
@@ -199,7 +199,7 @@ function ResetPasswordForm() {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError(null); }}
                 autoFocus
-                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl h-12 pl-11 pr-4 text-white placeholder:text-white/20 focus:border-accent-green/40 focus:ring-2 focus:ring-accent-green/10 outline-none text-sm transition-all duration-200"
+                className="w-full bg-[#0A0A0A] border border-white/[0.06] rounded-2xl h-12 pl-11 pr-4 text-white placeholder:text-[#8A8A8A] focus:border-[#4F8CFF] focus:ring-[4px] focus:ring-[#4F8CFF]/15 outline-none text-sm transition-all duration-200"
               />
             </div>
           </div>
@@ -207,14 +207,14 @@ function ResetPasswordForm() {
           {error && (
             <div className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
-              <p className="text-sm text-error">{error}</p>
+              <p className="text-sm text-danger">{error}</p>
             </div>
           )}
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent-green/20 hover:shadow-accent-green/30"
+            className="w-full h-14 bg-[#111111] border border-white/[0.08] text-white font-medium rounded-2xl hover:bg-[#1A1A1A] hover:border-white/[0.12] hover:shadow-[0_0_30px_rgba(79,140,255,0.12)] active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Send Reset Code"}
           </button>
@@ -226,7 +226,7 @@ function ResetPasswordForm() {
           <div className="space-y-2">
             <label className="text-sm font-medium text-white/80">Verification Code</label>
             <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent-green transition-colors z-10">
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent transition-colors z-10">
                 <KeyRound size={16} />
               </div>
               <input
@@ -236,19 +236,19 @@ function ResetPasswordForm() {
                 value={code}
                 onChange={(e) => { setCode(e.target.value.replace(/\D/g, "").slice(0, 6)); setError(null); }}
                 autoFocus
-                className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl h-12 pl-11 pr-4 text-white placeholder:text-white/20 focus:border-accent-green/40 focus:ring-2 focus:ring-accent-green/10 outline-none text-sm tracking-[0.3em] font-mono transition-all duration-200"
+                className="w-full bg-[#0A0A0A] border border-white/[0.06] rounded-2xl h-12 pl-11 pr-4 text-white placeholder:text-[#8A8A8A] focus:border-[#4F8CFF] focus:ring-[4px] focus:ring-[#4F8CFF]/15 outline-none text-sm tracking-[0.3em] font-mono transition-all duration-200"
               />
             </div>
           </div>
 
           {devCode && process.env.NODE_ENV === 'development' && (
-            <div className="p-4 rounded-2xl bg-accent-green/10 border border-accent-green/20">
-              <p className="text-xs font-medium text-accent-green">Dev Mode &mdash; Your code: <span className="font-bold text-sm">{devCode}</span></p>
+            <div className="p-4 rounded-2xl bg-[#111111] border border-white/[0.06]">
+              <p className="text-xs font-medium text-accent">Dev Mode &mdash; Your code: <span className="font-bold text-sm">{devCode}</span></p>
             </div>
           )}
 
           <div className="text-center">
-            <button type="button" onClick={handleRequestReset} disabled={loading} className="text-sm text-accent-green/80 underline hover:text-accent-green transition-colors">
+            <button type="button" onClick={handleRequestReset} disabled={loading} className="text-sm text-accent/80 underline hover:text-accent transition-colors">
               Resend code
             </button>
           </div>
@@ -256,14 +256,14 @@ function ResetPasswordForm() {
           {error && (
             <div className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
-              <p className="text-sm text-error">{error}</p>
+              <p className="text-sm text-danger">{error}</p>
             </div>
           )}
 
           <button
             type="submit"
             disabled={loading || code.length < 4}
-            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent-green/20 hover:shadow-accent-green/30"
+            className="w-full h-14 bg-[#111111] border border-white/[0.08] text-white font-medium rounded-2xl hover:bg-[#1A1A1A] hover:border-white/[0.12] hover:shadow-[0_0_30px_rgba(79,140,255,0.12)] active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify Code"}
           </button>
@@ -288,20 +288,20 @@ function ResetPasswordForm() {
             <p className="text-xs text-white/30">Password must be at least 8 characters.</p>
           )}
           {newPassword && confirmPassword && newPassword !== confirmPassword && (
-            <p className="text-xs text-error/80">Passwords do not match.</p>
+            <p className="text-xs text-danger/80">Passwords do not match.</p>
           )}
 
           {error && (
             <div className="p-4 rounded-2xl bg-error/10 border border-error/20 flex items-center gap-3">
               <div className="w-2 h-2 rounded-full bg-error flex-shrink-0" />
-              <p className="text-sm text-error">{error}</p>
+              <p className="text-sm text-danger">{error}</p>
             </div>
           )}
 
           <button
             type="submit"
             disabled={loading || newPassword.length < 8 || newPassword !== confirmPassword}
-            className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent-green/20 hover:shadow-accent-green/30"
+            className="w-full h-14 bg-[#111111] border border-white/[0.08] text-white font-medium rounded-2xl hover:bg-[#1A1A1A] hover:border-white/[0.12] hover:shadow-[0_0_30px_rgba(79,140,255,0.12)] active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30"
           >
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Reset Password"}
           </button>
@@ -319,7 +319,7 @@ function ResetPasswordForm() {
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.5, delay: 0.2, type: "spring", bounce: 0.4 }}
-            className="w-24 h-24 rounded-full bg-gradient-to-br from-accent-green to-primary-green flex items-center justify-center mx-auto shadow-2xl shadow-accent-green/30"
+            className="w-24 h-24 rounded-full bg-[#111111] border border-white/[0.08] flex items-center justify-center mx-auto shadow-[0_0_40px_rgba(79,140,255,0.12)]"
           >
             <Check size={40} className="text-white" strokeWidth={3} />
           </motion.div>
@@ -343,7 +343,7 @@ function ResetPasswordForm() {
           >
             <a
               href="/login"
-              className="w-full h-14 bg-gradient-to-r from-accent-green to-primary-green text-white font-semibold rounded-2xl hover:from-accent-green hover:to-primary-green/80 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-accent-green/20 hover:shadow-accent-green/30"
+              className="w-full h-14 bg-gradient-to-r from-accent to-accent text-white font-semibold rounded-2xl hover:from-accent hover:to-accent/80 active:scale-[0.98] transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-accent/20 hover:shadow-accent/30"
             >
               Go to Login
             </a>
@@ -362,7 +362,7 @@ function PasswordInput({ label, placeholder, value, onChange }: { label: string;
     <div className="space-y-2">
       <label className="text-sm font-medium text-white/80">{label}</label>
       <div className="relative group">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent-green transition-colors z-10">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-accent transition-colors z-10">
           <Lock size={16} />
         </div>
         <input
@@ -370,7 +370,7 @@ function PasswordInput({ label, placeholder, value, onChange }: { label: string;
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full bg-white/[0.03] border border-white/[0.08] rounded-2xl h-12 pl-11 pr-11 text-white placeholder:text-white/20 focus:border-accent-green/40 focus:ring-2 focus:ring-accent-green/10 outline-none text-sm transition-all duration-200"
+          className="w-full bg-[#0A0A0A] border border-white/[0.06] rounded-2xl h-12 pl-11 pr-11 text-white placeholder:text-[#8A8A8A] focus:border-[#4F8CFF] focus:ring-[4px] focus:ring-[#4F8CFF]/15 outline-none text-sm transition-all duration-200"
         />
         <button type="button" onClick={() => setShow(!show)} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition-colors">
           {show ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -381,7 +381,7 @@ function PasswordInput({ label, placeholder, value, onChange }: { label: string;
 }
 
 function ConfettiDots() {
-  const colors = ["#569578", "#275d46", "#D8B36A", "#F5EFE7", "#5F7352"];
+  const colors = ["#4F8CFF", "#275d46", "#D8B36A", "#F5EFE7", "#5F7352"];
   const dots = Array.from({ length: 24 }, (_, i) => ({
     id: i,
     color: colors[i % colors.length],
@@ -408,17 +408,17 @@ function ConfettiDots() {
 
 export default function ResetPasswordPage() {
   return (
-    <main className="flex min-h-screen w-full selection:bg-accent-green/30 transition-all duration-500 items-center justify-center" style={{ background: "#08150F" }}>
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent-green/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 w-64 h-64 bg-primary-green/8 rounded-full blur-3xl" />
-        <div className="absolute top-0 right-1/4 w-48 h-48 bg-accent-green/5 rounded-full blur-3xl" />
-      </div>
+    <main
+      className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 lg:p-8 selection:bg-accent/30"
+      style={{ background: "#0A0A0B" }}
+    >
+      <div className="noise-overlay" />
+      <div className="vignette" />
 
-      <div className="w-full max-w-xl relative z-10 px-4 sm:px-6 py-12">
+      <div className="relative z-10 w-full max-w-md">
         <Suspense fallback={
           <div className="flex items-center justify-center h-64">
-            <div className="w-8 h-8 border-2 border-accent-green/20 border-t-accent-green rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
           </div>
         }>
           <ResetPasswordForm />
