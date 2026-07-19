@@ -1,8 +1,12 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { appUrl } from "@tirbeo/utils";
-import { Chrome, Github, Eye, EyeOff, Loader2, Shield, Mail, User, Briefcase, Phone, Globe, MessageSquare } from "lucide-react";
+import { createClient } from "@tirbeo/database/client";
+import { Chrome, Github, Eye, EyeOff, Shield, Mail, User, Briefcase, Phone, Globe, MessageSquare, Check, Upload, AlertCircle, X } from "lucide-react";
+
+const DRAFT_KEY = "tirbeo_signup_draft";
+const LOGO_BUCKET = "LOGOS";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -13,8 +17,52 @@ const AVATAR_URLS = AVATAR_SEEDS.map(s => `https://api.dicebear.com/7.x/adventur
 type Mode = "login" | "signup";
 type SignupPhase = 1 | 1.5 | 2 | 3;
 
-function Spinner() {
-  return <Loader2 className="w-5 h-5 animate-spin" />;
+function Spinner({ size = 20, dark = false }: { size?: number; dark?: boolean }) {
+  return (
+    <span
+      className="ring-spinner"
+      style={{
+        width: size,
+        height: size,
+        borderColor: dark ? "rgba(0,0,0,0.15)" : "rgba(255,255,255,0.2)",
+        borderTopColor: dark ? "#0A0A0A" : "#ffffff",
+      }}
+    />
+  );
+}
+
+function FullLoader({ label }: { label?: string }) {
+  return (
+    <div className="full-loader" role="status" aria-live="polite">
+      <span className="full-loader__ring" />
+      {label && <p className="full-loader__label">{label}</p>}
+    </div>
+  );
+}
+
+function Bird({ onDone }: { onDone?: () => void }) {
+  useEffect(() => {
+    const t = setTimeout(() => onDone?.(), 2400);
+    return () => clearTimeout(t);
+  }, [onDone]);
+  return (
+    <div className="bird-layer" aria-hidden>
+      <div className="bird-trail" />
+      <div className="bird">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M21.5 2.5L1.5 10.2l6.9 2.7L11 19.5l3.1-6.6L21.5 2.5z" fill="url(#planeGrad)" stroke="rgba(255,255,255,0.55)" strokeWidth="0.5" strokeLinejoin="round" />
+          <path d="M8.4 12.9L21.5 2.5" stroke="rgba(255,255,255,0.45)" strokeWidth="0.6" strokeLinecap="round" />
+          <path d="M11 19.5l-1.4-4.4 4.4 1.4" fill="rgba(255,255,255,0.18)" />
+          <defs>
+            <linearGradient id="planeGrad" x1="1.5" y1="2.5" x2="21.5" y2="19.5" gradientUnits="userSpaceOnUse">
+              <stop stopColor="#C4B5FD" />
+              <stop offset="1" stopColor="#7C3AED" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  );
 }
 
 export default function LoginPage() {
@@ -22,6 +70,8 @@ export default function LoginPage() {
     (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("mode") === "signup") ? "signup" : "login"
   );
   const [phase, setPhase] = useState<SignupPhase>(1);
+  const [switching, setSwitching] = useState(false);
+  const [switchDir, setSwitchDir] = useState<"to-signup" | "to-login">("to-signup");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,31 +81,207 @@ export default function LoginPage() {
   const [phone, setPhone] = useState("");
   const [whoYouAre, setWhoYouAre] = useState("");
   const [findUs, setFindUs] = useState("");
-  const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_URLS[0]);
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
   const [customAvatar, setCustomAvatar] = useState<string | null>(null);
+  const [agreeTerms, setAgreeTerms] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [showPwd, setShowPwd] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [resuming, setResuming] = useState(true);
   const submittedRef = useRef(false);
 
-  const handleAvatarUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  // Login one-time-code flow (separate from signup phases).
+  const [loginPhase, setLoginPhase] = useState<"form" | "code">("form");
+  const [birding, setBirding] = useState(false);
+  const [sentStamp, setSentStamp] = useState(false);
+
+  // Rate-limit: ignore repeated submits within this window (ms).
+  const cooldownRef = useRef(0);
+  const COOLDOWN_MS = 1200;
+
+  // Auto-dismiss the floating "sent" toast after a few seconds.
+  useEffect(() => {
+    if (!sentStamp) return;
+    const t = setTimeout(() => setSentStamp(false), 3500);
+    return () => clearTimeout(t);
+  }, [sentStamp]);
+
+  // Vibrate the card on every failed attempt (continuous shake on repeated clicks).
+  const [shakeKey, setShakeKey] = useState(0);
+  const [cardShake, setCardShake] = useState(false);
+  useEffect(() => {
+    if (!error) return;
+    setShakeKey((k) => k + 1);
+    setCardShake(true);
+    const t = setTimeout(() => setCardShake(false), 480);
+    return () => clearTimeout(t);
+  }, [error]);
+
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [noAccount, setNoAccount] = useState(false);
+
+  // Animated switch between login <-> signup. Clearing the draft + URL param
+  // is what stops the "stuck on Create Account / re-redirect" glitch.
+  const switchMode = useCallback((next: Mode) => {
+    setSwitchDir(next === "signup" ? "to-signup" : "to-login");
+    setSwitching(true);
+    setError(null);
+    setNotice(null);
+    setTimeout(() => {
+       if (next === "login") {
+        try { localStorage.removeItem(DRAFT_KEY); } catch {}
+        setPhase(1);
+        setLoginPhase("form");
+      } else {
+        setPhase(1);
+      }
+      setMode(next);
+      // Keep the URL in sync so a refresh doesn't fight the chosen mode.
+      try {
+        const url = new URL(window.location.href);
+        if (next === "signup") url.searchParams.set("mode", "signup");
+        else url.searchParams.delete("mode");
+        window.history.replaceState({}, "", url.toString());
+      } catch {}
+      setSwitching(false);
+    }, 220);
+  }, []);
+
+  // ── RESUME: server session first, then localStorage draft ──
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      // 1) If already authenticated, jump straight to the dashboard.
+      //    Guard with a timeout so a slow/unreachable API never freezes the loader.
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 6000);
+        const res = await fetch(`${API}/api/users/me`, {
+          credentials: "include",
+          signal: ctrl.signal,
+        });
+        clearTimeout(t);
+        if (!cancelled && res.ok) {
+          window.location.href = appUrl("dashboard");
+          return;
+        }
+      } catch {}
+
+      // 2) Only restore a signup draft when the URL explicitly asks for signup.
+      //    (Prevents a stale draft from forcing Create Account on /login.)
+      const wantsSignup =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("mode") === "signup";
+
+      try {
+        const raw = localStorage.getItem(DRAFT_KEY);
+        if (!cancelled && raw && wantsSignup) {
+          const d = JSON.parse(raw);
+          if (d.email) setEmail(d.email);
+          if (d.firstName) setFirstName(d.firstName);
+          if (d.lastName) setLastName(d.lastName);
+          if (d.occupation) setOccupation(d.occupation);
+          if (d.phone) setPhone(d.phone);
+          if (d.whoYouAre) setWhoYouAre(d.whoYouAre);
+          if (d.findUs) setFindUs(d.findUs);
+          if (d.selectedAvatar) setSelectedAvatar(d.selectedAvatar);
+          if (d.customAvatar) setCustomAvatar(d.customAvatar);
+          if (typeof d.agreeTerms === "boolean") setAgreeTerms(d.agreeTerms);
+          setMode("signup");
+          if (d.phase) setPhase(d.phase);
+        } else if (!cancelled && !wantsSignup) {
+          // Landed on /login without ?mode=signup → force clean login view.
+          setMode("login");
+          setPhase(1);
+        }
+      } catch {}
+      if (!cancelled) setResuming(false);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist signup draft as the user progresses (login mode never persists).
+  useEffect(() => {
+    if (resuming) return;
+    if (mode !== "signup") { try { localStorage.removeItem(DRAFT_KEY); } catch {} return; }
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        phase, email, firstName, lastName, occupation, phone,
+        whoYouAre, findUs, selectedAvatar, customAvatar, agreeTerms,
+      }));
+    } catch {}
+  }, [resuming, mode, phase, email, firstName, lastName, occupation, phone, whoYouAre, findUs, selectedAvatar, customAvatar, agreeTerms]);
+
+  // Upload a custom avatar to the Supabase "LOGOS" bucket → returns a public URL.
+  // Accepts either a File or a data URL (re-upload the bytes to storage).
+  const uploadAvatarToStorage = useCallback(
+    async (file: File | string, fileExt = "png"): Promise<string> => {
+      let bytes: Blob;
+      let contentType = "image/png";
+      if (typeof file === "string") {
+        const res = await fetch(file);
+        bytes = await res.blob();
+        contentType = bytes.type || contentType;
+      } else {
+        bytes = file;
+        contentType = file.type || contentType;
+      }
+      const ext = (typeof file === "string" ? fileExt : (file.name.split(".").pop() || "png")).toLowerCase();
+      const supabase = createClient();
+      const path = `avatars/${Date.now()}-${Math.random().toString(36).slice(2, 9)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from(LOGO_BUCKET)
+        .upload(path, bytes, { cacheControl: "3600", upsert: false, contentType });
+      if (upErr) throw upErr;
+      const { data } = supabase.storage.from(LOGO_BUCKET).getPublicUrl(path);
+      if (!data?.publicUrl) throw new Error("Could not get public URL");
+      return data.publicUrl;
+    },
+    [],
+  );
+
+  const handleAvatarUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const url = reader.result as string;
-      setCustomAvatar(url);
-      setSelectedAvatar(url);
-    };
-    reader.readAsDataURL(file);
-  }, []);
+    if (file.size > 5 * 1024 * 1024) { setError("Image must be under 5 MB"); return; }
+    if (!file.type.startsWith("image/")) { setError("Please choose an image file"); return; }
+
+    setError(null);
+    setUploadingAvatar(true);
+
+    // Instant local preview while the upload runs.
+    const previewReader = new FileReader();
+    previewReader.onload = () => setCustomAvatar(previewReader.result as string);
+    previewReader.readAsDataURL(file);
+
+    try {
+      const publicUrl = await uploadAvatarToStorage(file);
+      setCustomAvatar(publicUrl);
+      setSelectedAvatar(publicUrl);
+    } catch (err: any) {
+      // Fall back to the local data URL so the user can still continue.
+      const reader = new FileReader();
+      reader.onload = () => {
+        const url = reader.result as string;
+        setCustomAvatar(url);
+        setSelectedAvatar(url);
+      };
+      reader.readAsDataURL(file);
+      setError(err?.message ? `Upload failed (${err.message}). Using local preview — will retry on save.` : "Upload failed. Using local preview — will retry on save.");
+    } finally {
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }, [uploadAvatarToStorage]);
 
   const redirectTo = appUrl("dashboard");
 
-  const apiFetch = useCallback(async (path: string, body: Record<string, unknown>) => {
+  const apiFetch = useCallback(async (path: string, body: Record<string, unknown>, attempt = 0) => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
@@ -70,10 +296,15 @@ export default function LoginPage() {
       return res;
     } catch (err: any) {
       clearTimeout(timeout);
+      // Retry once on a transient network blip before surfacing the error.
+      if (attempt < 1 && err?.name !== "AbortError") {
+        await new Promise((r) => setTimeout(r, 600));
+        return apiFetch(path, body, attempt + 1);
+      }
       if (err?.name === "AbortError") throw new Error("Request timed out. Check your connection.");
-      throw new Error(err?.message || "Network request failed");
+      throw new Error("Couldn't reach the server. Check your connection and try again.");
     }
-  }, []);
+  }, [API]);
 
   const handleGoogleLogin = useCallback(() => { window.location.href = `${API}/auth/google`; }, []);
   const handleGithubLogin = useCallback(() => { window.location.href = `${API}/auth/github`; }, []);
@@ -89,7 +320,9 @@ export default function LoginPage() {
     try {
       const res = await apiFetch("/api/auth/login", { email, password });
       if (res.ok) { window.location.href = redirectTo; return; }
-      setError(await res.text() || "Invalid credentials");
+      const msg = (await res.text()) || "Invalid credentials";
+      setError(msg);
+      if (res.status === 404) setNoAccount(true);
     } catch (err: any) {
       setError(err?.message || "Connection error. Please try again.");
     } finally {
@@ -109,6 +342,8 @@ export default function LoginPage() {
     const liveLast = (fd.get("lastName") as string) || lastName;
     if (!EMAIL_RE.test(liveEmail)) { setError("Enter a valid email address"); return; }
     if (livePassword.length < 8) { setError("Password must be at least 8 characters"); return; }
+    if (!agreeTerms) { setError("Please accept the Terms & Privacy Policy to continue"); return; }
+    setEmail(liveEmail); setPassword(livePassword); setFirstName(liveFirst); setLastName(liveLast);
     submittedRef.current = true;
     setError(null);
     setLoading(true);
@@ -126,7 +361,7 @@ export default function LoginPage() {
       setLoading(false);
       submittedRef.current = false;
     }
-  }, [email, password, firstName, lastName, apiFetch]);
+  }, [email, password, firstName, lastName, agreeTerms, apiFetch]);
 
   const handleResendOtp = useCallback(async () => {
     if (submittedRef.current) return;
@@ -174,12 +409,25 @@ export default function LoginPage() {
 
   const handleSaveProfile = useCallback(async () => {
     if (submittedRef.current) return;
+    if (!selectedAvatar) { setError("Choose an avatar to continue"); return; }
     submittedRef.current = true;
+    setError(null);
     setLoading(true);
     try {
-      // Only send a remote URL for the avatar; custom data-URL uploads are
-      // kept client-side so we never hit the storage bucket / Cloudflare limit.
-      const photoUrl = selectedAvatar.startsWith("http") ? selectedAvatar : undefined;
+      // Resolve the avatar to a remote URL the DB can persist.
+      let photoUrl: string | undefined;
+      if (selectedAvatar.startsWith("http")) {
+        photoUrl = selectedAvatar;
+      } else if (selectedAvatar.startsWith("data:")) {
+        // Upload never completed (or failed) — retry now so the link is stored.
+        try {
+          photoUrl = await uploadAvatarToStorage(selectedAvatar, "png");
+          setSelectedAvatar(photoUrl);
+          setCustomAvatar(photoUrl);
+        } catch (err: any) {
+          console.warn("[PROFILE] avatar re-upload failed:", err?.message);
+        }
+      }
       const res = await fetch(`${API}/api/users/me`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -200,11 +448,12 @@ export default function LoginPage() {
       setLoading(false);
       submittedRef.current = false;
       // Account is already created — never trap the user on this step.
+      try { localStorage.removeItem(DRAFT_KEY); } catch {}
       setPhase(3);
     }
-  }, [firstName, lastName, phone, occupation, whoYouAre, selectedAvatar, API]);
+  }, [firstName, lastName, phone, occupation, whoYouAre, selectedAvatar, API, uploadAvatarToStorage]);
 
-  const handleOtpLogin = useCallback(async () => {
+  const handleOtpLoginRequest = useCallback(async () => {
     if (submittedRef.current) return;
     if (!EMAIL_RE.test(email)) { setError("Enter a valid email address"); return; }
     submittedRef.current = true;
@@ -212,7 +461,18 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await apiFetch("/api/auth/login-otp/request", { email });
-      if (res.ok) { window.location.href = redirectTo; return; }
+      if (res.ok) {
+        try {
+          const j = await res.json().catch(() => ({}));
+          if (j.devCode) setNotice(`Dev code: ${j.devCode}`);
+          else setNotice("Code sent to your email");
+        } catch { setNotice("Code sent to your email"); }
+        setBirding(true);
+        setSentStamp(false);
+        setLoginPhase("code");
+        setOtpCode("");
+        return;
+      }
       setError(await res.text() || "Failed to send code");
     } catch (err: any) {
       setError(err?.message || "Connection error. Please try again.");
@@ -220,7 +480,68 @@ export default function LoginPage() {
       setLoading(false);
       submittedRef.current = false;
     }
-  }, [email, redirectTo, apiFetch]);
+  }, [email, apiFetch]);
+
+  const handleOtpLoginResend = useCallback(async () => {
+    if (submittedRef.current) return;
+    const now = Date.now();
+    if (now < cooldownRef.current) return;
+    cooldownRef.current = now + COOLDOWN_MS;
+    if (!EMAIL_RE.test(email)) { setError("Enter a valid email address"); return; }
+    submittedRef.current = true;
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/auth/login-otp/request", { email });
+      if (res.ok) {
+        try {
+          const j = await res.json().catch(() => ({}));
+          if (j.devCode) setNotice(`Dev code: ${j.devCode}`);
+          else setNotice("A new code has been sent to your email.");
+        } catch { setNotice("A new code has been sent to your email."); }
+        setBirding(true);
+        setSentStamp(true);
+        setOtpCode("");
+        return;
+      }
+      setError(await res.text() || "Failed to resend code");
+    } catch (err: any) {
+      setError(err?.message || "Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+      submittedRef.current = false;
+    }
+  }, [email, apiFetch]);
+
+  const handleOtpLoginVerify = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submittedRef.current) return;
+    const now = Date.now();
+    if (now < cooldownRef.current) return;
+    cooldownRef.current = now + COOLDOWN_MS;
+    if (otpCode.length < 6) { setError("Enter the 6-digit code"); return; }
+    submittedRef.current = true;
+    setError(null);
+    setNotice(null);
+    setSentStamp(false);
+    setLoading(true);
+    try {
+      const res = await apiFetch("/api/auth/login-otp/verify", { email, otpCode });
+      if (res.ok) {
+        // Backend sets the session cookie, then sends us to the dashboard.
+        setNotice("Verified! Taking you in…");
+        setSentStamp(false);
+        setTimeout(() => { window.location.href = redirectTo; }, 900);
+        return;
+      }
+      setError(await res.text() || "Invalid or expired code");
+    } catch (err: any) {
+      setError(err?.message || "Connection error. Please try again.");
+    } finally {
+      setLoading(false);
+      submittedRef.current = false;
+    }
+  }, [email, otpCode, redirectTo, apiFetch]);
 
   const handleMagicLink = useCallback(async () => {
     if (submittedRef.current) return;
@@ -230,7 +551,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = await apiFetch("/api/auth/magic-link/request", { email });
-      if (res.ok) { alert("Magic link sent to your email."); return; }
+      if (res.ok) { setNotice("Magic link sent to your email."); return; }
       setError(await res.text() || "Failed to send magic link");
     } catch (err: any) {
       setError(err?.message || "Connection error. Please try again.");
@@ -240,10 +561,13 @@ export default function LoginPage() {
     }
   }, [email, apiFetch]);
 
-  const inputCls =
-    "w-full bg-transparent border-0 border-b border-white/15 rounded-none h-12 pl-11 pr-4 text-white placeholder:text-white/30 focus:border-white/40 focus:ring-0 outline-none text-sm transition-all duration-200";
+  const inputCls = "field-underline";
   const labelCls = "text-sm font-medium text-white/70";
   const fieldIcon = "absolute left-4 top-1/2 -translate-y-1/2 text-white/40";
+
+  if (resuming) {
+    return <FullLoader label="Loading your session…" />;
+  }
 
   return (
     <main
@@ -258,9 +582,29 @@ export default function LoginPage() {
       <div className="noise-overlay" />
       <div className="pointer-events-none fixed inset-0" style={{ background: "rgba(0,0,0,0.55)" }} />
 
-      <div className="relative z-10 w-full max-w-xl">
+      {birding && <Bird onDone={() => setBirding(false)} />}
+
+      {error && (
+        <div key={shakeKey} className="error-banner" role="alert">
+          <X />
+          <span>{error}</span>
+          {noAccount && (
+            <button type="button" onClick={() => switchMode("signup")}>Create one</button>
+          )}
+        </div>
+      )}
+
+      {notice && (
+        <div key={shakeKey} className="success-banner" role="status">
+          <Check />
+          <span>{notice}</span>
+        </div>
+      )}
+
+      <div className="relative z-[9999] w-full max-w-xl">
         <div
-          className="relative p-10 overflow-y-auto rounded-[28px]"
+          key={shakeKey}
+          className={`relative p-10 overflow-y-auto rounded-[28px] ${cardShake ? "card-shake" : ""}`}
           style={{
             background: "rgba(255,255,255,0.08)",
             backdropFilter: "blur(30px)",
@@ -270,6 +614,7 @@ export default function LoginPage() {
             maxHeight: "92vh",
           }}
         >
+          <div key={mode} className={`phase-fade dir-${switchDir} ${switching ? "is-switching" : ""}`}>
           <div className="mb-8">
             <h1 className="text-2xl font-semibold tracking-tight text-white">
               {mode === "login" ? "Welcome to Tirbeo" : phase === 1.5 ? "Verify Your Email" : phase === 2 ? "Configure Your Studio" : phase === 3 ? "Finalize Your Profile" : "Create an Account"}
@@ -288,15 +633,13 @@ export default function LoginPage() {
           </div>
 
           {/* ── LOGIN ── */}
-          {mode === "login" && (
+          {mode === "login" && loginPhase === "form" && (
             <>
               <div className="grid grid-cols-2 gap-3">
-                <button type="button" onClick={handleGoogleLogin} disabled={loading}
-                  className="flex items-center justify-center gap-2.5 bg-black rounded-2xl px-4 py-3 text-sm font-medium text-white hover:bg-black/80 transition-all duration-250 disabled:opacity-40">
+                <button type="button" onClick={handleGoogleLogin} disabled={loading} className="btn-glass-ac">
                   <Chrome className="w-5 h-5" /> Google
                 </button>
-                <button type="button" onClick={handleGithubLogin} disabled={loading}
-                  className="flex items-center justify-center gap-2.5 bg-black rounded-2xl px-4 py-3 text-sm font-medium text-white hover:bg-black/80 transition-all duration-250 disabled:opacity-40">
+                <button type="button" onClick={handleGithubLogin} disabled={loading} className="btn-glass-ac">
                   <Github className="w-5 h-5" /> GitHub
                 </button>
               </div>
@@ -313,7 +656,7 @@ export default function LoginPage() {
                   <div className="relative">
                     <div className={fieldIcon}><Mail size={16} /></div>
                     <input type="email" placeholder="hello@example.com" value={email}
-                      onChange={(e) => { setEmail(e.target.value); setError(null); }}
+                      onChange={(e) => { setEmail(e.target.value); setError(null); setNotice(null); setSentStamp(false); setNoAccount(false); }}
                       className={inputCls} />
                   </div>
                 </div>
@@ -332,26 +675,23 @@ export default function LoginPage() {
                   </div>
                 </div>
 
-                {error && (
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
-                    <p className="text-sm text-[#E45D5D]">{error}</p>
-                  </div>
+                {noAccount && (
+                  <button type="button" onClick={() => switchMode("signup")}
+                    className="text-sm text-white/90 underline underline-offset-2 hover:text-white">
+                    Create one
+                  </button>
                 )}
 
-                <button type="submit" disabled={loading}
-                  className="w-full h-12 bg-black text-white font-semibold rounded-2xl border-0 hover:bg-black/80 active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                  {loading ? <Spinner /> : "Sign In"}
+                <button type="submit" disabled={loading} className="btn-primary-ac">
+                  {loading ? <Spinner dark /> : "Sign In"}
                 </button>
 
                 <div className="grid grid-cols-2 gap-3 pt-1">
-                  <button type="button" onClick={handleOtpLogin} disabled={loading}
-                    className="w-full h-11 rounded-2xl bg-black text-sm font-medium text-white/80 hover:bg-black/80 transition-all disabled:opacity-50">
+                  <button type="button" onClick={handleOtpLoginRequest} disabled={loading} className="btn-ghost-ac">
                     Send one-time code
                   </button>
-                  <button type="button" onClick={handleMagicLink} disabled={loading}
-                    className="w-full h-11 rounded-2xl bg-black text-sm font-medium text-white/80 hover:bg-black/80 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
-                    <Mail size={14} /> Sign in with magic link
+                  <button type="button" onClick={handleMagicLink} disabled={loading} className="btn-ghost-ac">
+                    <Mail size={14} /> Magic link
                   </button>
                 </div>
               </form>
@@ -360,6 +700,71 @@ export default function LoginPage() {
                 <a href="/reset-password" className="text-sm text-white/45 hover:text-white/70 transition-colors">Forgot your password?</a>
               </div>
             </>
+          )}
+
+          {/* ── LOGIN: ONE-TIME CODE ── */}
+          {mode === "login" && loginPhase === "code" && (
+            <form onSubmit={handleOtpLoginVerify} className="space-y-5" noValidate>
+              <p className="text-white/60 text-sm">
+                We sent a 6-digit code to <span className="text-white/90">{email}</span>. Enter it below to sign in.
+              </p>
+              <div className="flex gap-3 justify-center" onPaste={(e) => {
+                const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+                if (text) {
+                  e.preventDefault();
+                  setOtpCode(text);
+                  setError(null);
+                  const inputs = (e.currentTarget as HTMLDivElement).querySelectorAll("input");
+                  inputs?.[Math.min(text.length, 5)]?.focus();
+                }
+              }}>
+                {Array.from({ length: 6 }, (_, i) => (
+                  <input
+                    key={i}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={otpCode[i] || ""}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "").slice(-1);
+                      const next = otpCode.split("");
+                      next[i] = v;
+                      const joined = next.join("").slice(0, 6);
+                      setOtpCode(joined);
+                      setError(null);
+                      if (v && i < 5) {
+                        const inputs = (e.target as HTMLInputElement).parentElement?.querySelectorAll("input");
+                        inputs?.[i + 1]?.focus();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Backspace" && !otpCode[i] && i > 0) {
+                        const inputs = (e.target as HTMLInputElement).parentElement?.querySelectorAll("input");
+                        inputs?.[i - 1]?.focus();
+                      }
+                    }}
+                    className="otp-box"
+                  />
+                ))}
+              </div>
+
+
+              <button type="submit" disabled={loading} className="btn-primary-ac">
+                {loading ? <Spinner dark /> : "Verify & Sign In"}
+              </button>
+
+              <div className="flex items-center justify-center gap-4 pt-1">
+                <button type="button" onClick={() => { setLoginPhase("form"); setOtpCode(""); setError(null); setNotice(null); setSentStamp(false); }}
+                  disabled={loading} className="text-sm text-white/50 hover:text-white/80 transition-colors">
+                  Use password instead
+                </button>
+                <span className="text-white/15">|</span>
+                <button type="button" onClick={handleOtpLoginResend} disabled={loading}
+                  className="text-sm text-white/50 hover:text-white/80 transition-colors disabled:opacity-50">
+                  Resend code
+                </button>
+              </div>
+            </form>
           )}
 
           {/* ── SIGNUP PHASE 1 ── */}
@@ -372,7 +777,7 @@ export default function LoginPage() {
                     <div className={fieldIcon}><User size={16} /></div>
                     <input type="text" name="firstName" placeholder="John" value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="w-full bg-transparent border-0 border-b border-white/15 rounded-none h-12 pl-11 pr-4 text-white placeholder:text-white/30 focus:border-white/40 focus:ring-0 outline-none text-sm transition-all duration-200" />
+                      className="field-underline" />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -381,7 +786,7 @@ export default function LoginPage() {
                     <div className={fieldIcon}><User size={16} /></div>
                     <input type="text" name="lastName" placeholder="Doe" value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="w-full bg-transparent border-0 border-b border-white/15 rounded-none h-12 pl-11 pr-4 text-white placeholder:text-white/30 focus:border-white/40 focus:ring-0 outline-none text-sm transition-all duration-200" />
+                      className="field-underline" />
                   </div>
                 </div>
               </div>
@@ -410,16 +815,23 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {error && (
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
-                  <p className="text-sm text-[#E45D5D]">{error}</p>
-                </div>
-              )}
+              <label className="flex items-start gap-3 cursor-pointer select-none pt-1">
+                <button type="button" role="checkbox" aria-checked={agreeTerms}
+                  onClick={() => { setAgreeTerms((v) => !v); setError(null); }}
+                  className={`check-pill mt-0.5 ${agreeTerms ? "is-checked" : ""}`}>
+                  {agreeTerms && <Check size={13} strokeWidth={3} />}
+                </button>
+                <span className="text-xs leading-relaxed text-white/55">
+                  I agree to the{" "}
+                   <a href="https://docs.tirbeo.app/terms" target="_blank" rel="noreferrer" className="text-white/85 underline underline-offset-2 hover:text-white">Terms of Service</a>{" "}
+                   and{" "}
+                   <a href="https://docs.tirbeo.app/privacy" target="_blank" rel="noreferrer" className="text-white/85 underline underline-offset-2 hover:text-white">Privacy Policy</a>.
+                </span>
+              </label>
 
-              <button type="submit" disabled={loading}
-                className="w-full h-12 bg-black text-white font-semibold rounded-2xl border-0 hover:bg-black/80 active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                {loading ? <Spinner /> : "Create Account"}
+
+              <button type="submit" disabled={loading || !agreeTerms} className="btn-primary-ac">
+                {loading ? <Spinner dark /> : "Create Account"}
               </button>
             </form>
           )}
@@ -462,21 +874,14 @@ export default function LoginPage() {
                         inputs?.[i - 1]?.focus();
                       }
                     }}
-                    className="w-12 h-14 rounded-xl border border-white/15 bg-transparent text-white text-xl font-semibold text-center outline-none focus:border-white/40 transition-all duration-200"
+                    className="otp-box"
                   />
                 ))}
               </div>
 
-              {error && (
-                <div className="flex items-center gap-3 justify-center">
-                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
-                  <p className="text-sm text-[#E45D5D]">{error}</p>
-                </div>
-              )}
 
-              <button type="submit" disabled={loading}
-                className="w-full h-12 bg-black text-white font-semibold rounded-2xl border-0 hover:bg-black/80 active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                {loading ? <Spinner /> : "Verify & Continue"}
+              <button type="submit" disabled={loading} className="btn-primary-ac">
+                {loading ? <Spinner dark /> : "Verify & Continue"}
               </button>
 
               <button type="button" onClick={handleResendOtp} disabled={loading}
@@ -490,21 +895,30 @@ export default function LoginPage() {
           {mode === "signup" && phase === 2 && (
             <div className="space-y-5">
               <div className="space-y-3">
-                <label className={labelCls}>Choose Your Avatar</label>
+                <div className="flex items-center justify-between">
+                  <label className={labelCls}>Choose Your Avatar</label>
+                  {!selectedAvatar && <span className="text-xs text-white/40">Required</span>}
+                </div>
                 <div className="grid grid-cols-5 gap-3">
                   {AVATAR_URLS.map((url, i) => (
-                    <button key={i} type="button" onClick={() => setSelectedAvatar(url)}
-                      className={`w-full aspect-square rounded-full overflow-hidden border-2 transition-all duration-300 hover:scale-105 ${selectedAvatar === url ? "border-white ring-2 ring-white/30 scale-105" : "border-white/15 hover:border-white/30"}`}>
+                    <button key={i} type="button" onClick={() => { setSelectedAvatar(url); setError(null); }}
+                      className={`avatar-tile ${selectedAvatar === url ? "is-selected" : ""}`}>
                       <img src={url} alt={`Avatar ${i + 1}`} className="w-full h-full" />
+                      {selectedAvatar === url && <span className="avatar-check"><Check size={12} strokeWidth={3} /></span>}
                     </button>
                   ))}
                   {/* Upload your own */}
-                  <button type="button" onClick={() => fileInputRef.current?.click()}
-                    className={`w-full aspect-square rounded-full overflow-hidden border-2 border-dashed flex items-center justify-center transition-all duration-300 hover:scale-105 ${customAvatar && selectedAvatar === customAvatar ? "border-white ring-2 ring-white/30 scale-105" : "border-white/20 hover:border-white/40"}`}>
-                    {customAvatar ? (
+                  <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploadingAvatar}
+                    className={`avatar-tile is-upload ${customAvatar && selectedAvatar === customAvatar ? "is-selected" : ""}`}>
+                    {uploadingAvatar ? (
+                      <Spinner size={18} />
+                    ) : customAvatar ? (
                       <img src={customAvatar} alt="Your photo" className="w-full h-full object-cover" />
                     ) : (
-                      <User size={20} className="text-white/50" />
+                      <Upload size={18} className="text-white/50" />
+                    )}
+                    {selectedAvatar && selectedAvatar === customAvatar && !uploadingAvatar && (
+                      <span className="avatar-check"><Check size={12} strokeWidth={3} /></span>
                     )}
                   </button>
                   <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
@@ -575,16 +989,9 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {error && (
-                <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-[#E45D5D] flex-shrink-0" />
-                  <p className="text-sm text-[#E45D5D]">{error}</p>
-                </div>
-              )}
 
-              <button type="button" onClick={handleSaveProfile} disabled={loading}
-                className="w-full h-12 bg-black text-white font-semibold rounded-2xl border-0 hover:bg-black/80 active:scale-[0.98] transition-all duration-250 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                {loading ? <Spinner /> : "Continue"}
+              <button type="button" onClick={handleSaveProfile} disabled={loading || uploadingAvatar || !selectedAvatar} className="btn-primary-ac">
+                {loading ? <Spinner dark /> : uploadingAvatar ? <Spinner dark /> : "Continue"}
               </button>
             </div>
           )}
@@ -593,7 +1000,7 @@ export default function LoginPage() {
           {mode === "signup" && phase === 3 && (
             <div className="space-y-6 pt-2 text-center">
               <div className="w-24 h-24 rounded-full overflow-hidden mx-auto border-2 border-white/30 ring-4 ring-white/10">
-                <img src={selectedAvatar} alt="Your avatar" className="w-full h-full" />
+                {selectedAvatar && <img src={selectedAvatar} alt="Your avatar" className="w-full h-full" />}
               </div>
               <div>
                 <p className="text-white text-lg font-semibold">Profile Complete</p>
@@ -601,26 +1008,28 @@ export default function LoginPage() {
                   {firstName} {lastName} &middot; {occupation || "Member"}
                 </p>
               </div>
-              <button type="button" onClick={() => (window.location.href = redirectTo)}
-                className="w-full h-12 bg-black text-white font-semibold rounded-2xl border-0 hover:bg-black/80 active:scale-[0.98] transition-all duration-250 flex items-center justify-center gap-2">
+              <button type="button" onClick={() => (window.location.href = redirectTo)} className="btn-primary-ac">
                 Go to Dashboard
               </button>
             </div>
           )}
 
-          <p className="text-center text-sm text-white/50 mt-6">
-            {mode === "login" ? (
-              <>
-                Don&apos;t have an account?{" "}
-                <a href="/register" className="text-white/80 hover:text-white font-medium transition-colors">Create one</a>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <a href="/login" className="text-white/80 hover:text-white font-medium transition-colors">Sign in</a>
-              </>
-            )}
-          </p>
+          {(mode === "login" || phase === 1) && (
+            <p className="text-center text-sm text-white/50 mt-6">
+              {mode === "login" ? (
+                <>
+                  Don&apos;t have an account?{" "}
+                  <button type="button" onClick={() => switchMode("signup")} className="text-white/85 hover:text-white font-medium transition-colors">Create one</button>
+                </>
+              ) : (
+                <>
+                  Already have an account?{" "}
+                  <button type="button" onClick={() => switchMode("login")} className="text-white/85 hover:text-white font-medium transition-colors">Sign in</button>
+                </>
+              )}
+            </p>
+          )}
+          </div>
         </div>
       </div>
     </main>

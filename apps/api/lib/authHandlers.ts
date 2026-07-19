@@ -5,7 +5,7 @@ import { generateOtpCode, storeOtp, verifyOtpCode, sendEmailOtp, sendPhoneOtp } 
 import { generateOtpCode as genSignupOtp, storeSignupOtp, verifySignupOtp, sendSignupOtpEmail } from './auth/signup-otp';
 import { hashPassword, verifyPassword } from './auth/password';
 import { createSession, setSessionCookie, clearSessionCookie, revokeSession, getSession } from './session';
-import { signTemp2faToken, verifyTemp2faToken, signMagicLinkToken, verifyMagicLinkToken } from './auth/jwt';
+import { signTemp2faToken, verifyTemp2faToken, signMagicLinkToken, verifyMagicLinkToken, signOauthStateToken, verifyOauthStateToken } from './auth/jwt';
 import { verifyTotp } from './auth/totp';
 import { sendTemplateEmail } from './email';
 import { requestPasswordReset, verifyPasswordReset, confirmPasswordReset } from './auth/password-reset';
@@ -20,6 +20,28 @@ function isAllowedRedirect(url: string): boolean {
     if (host.endsWith('.vercel.app') && host.startsWith('tirbeo')) return true;
     return false;
   } catch { return false; }
+}
+
+const OAUTH_STATE_COOKIE = '__oauth_state';
+
+function setOauthStateCookie(res: NextResponse, nonce: string) {
+  res.cookies.set(OAUTH_STATE_COOKIE, nonce, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 600,
+  });
+}
+
+function clearOauthStateCookie(res: NextResponse) {
+  res.cookies.set(OAUTH_STATE_COOKIE, '', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  });
 }
 
 const loginSchema = z.object({
@@ -37,13 +59,13 @@ export async function loginHandler(request: NextRequest) {
 
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      return new NextResponse('Invalid email or password', { status: 401 });
+      return new NextResponse("This account doesn't exist. Please sign up first.", { status: 404 });
     }
     if (!user.passwordHash) {
       return new NextResponse('This account uses social login. Please sign in with Google or GitHub.', { status: 401 });
     }
     if (!(await verifyPassword(user.passwordHash, password))) {
-      return new NextResponse('Invalid email or password', { status: 401 });
+      return new NextResponse('Incorrect password. Please try again.', { status: 401 });
     }
 
     if (user.is2FAEnabled) {
@@ -349,6 +371,8 @@ export async function googleAuthRedirectHandler(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
   const redirectTo = sp.get('redirect');
   const safeRedirect = redirectTo && isAllowedRedirect(redirectTo) ? redirectTo : undefined;
+  const nonce = crypto.randomUUID();
+  const stateToken = await signOauthStateToken(nonce, safeRedirect);
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -356,10 +380,12 @@ export async function googleAuthRedirectHandler(request: NextRequest) {
     scope: 'openid email profile',
     access_type: 'offline',
     prompt: 'consent',
+    state: stateToken,
   });
-  if (safeRedirect) params.set('state', safeRedirect);
   const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-  return NextResponse.redirect(googleAuthUrl);
+  const res = NextResponse.redirect(googleAuthUrl);
+  setOauthStateCookie(res, nonce);
+  return res;
 }
 
 // Google OAuth callback handler
@@ -371,8 +397,13 @@ export async function googleAuthCallbackHandler(request: NextRequest) {
     return new NextResponse('Google OAuth not configured', { status: 500 });
   }
   const code = request.nextUrl.searchParams.get('code');
-  const rawRedirect = request.nextUrl.searchParams.get('state');
-  const redirectTo = rawRedirect && isAllowedRedirect(rawRedirect) ? rawRedirect : undefined;
+  const stateParam = request.nextUrl.searchParams.get('state');
+  const cookieNonce = request.cookies.get(OAUTH_STATE_COOKIE)?.value;
+  const state = stateParam ? await verifyOauthStateToken(stateParam) : null;
+  if (!state || !cookieNonce || state.nonce !== cookieNonce) {
+    return new NextResponse('Invalid OAuth state', { status: 400 });
+  }
+  const redirectTo = state.redirect && isAllowedRedirect(state.redirect) ? state.redirect : undefined;
   if (!code) {
     return new NextResponse('Missing code', { status: 400 });
   }
@@ -447,6 +478,7 @@ export async function googleAuthCallbackHandler(request: NextRequest) {
   const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
   const res = NextResponse.redirect(redirectTo || `https://dashboard.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}`);
   setSessionCookie(res, token);
+  clearOauthStateCookie(res);
   return res;
 }
 
@@ -460,14 +492,18 @@ export async function githubAuthRedirectHandler(request: NextRequest) {
   const sp = request.nextUrl.searchParams;
   const redirectTo = sp.get('redirect');
   const safeRedirect = redirectTo && isAllowedRedirect(redirectTo) ? redirectTo : undefined;
+  const nonce = crypto.randomUUID();
+  const stateToken = await signOauthStateToken(nonce, safeRedirect);
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
     scope: 'read:user user:email',
+    state: stateToken,
   });
-  if (safeRedirect) params.set('state', safeRedirect);
   const githubAuthUrl = `https://github.com/login/oauth/authorize?${params.toString()}`;
-  return NextResponse.redirect(githubAuthUrl);
+  const res = NextResponse.redirect(githubAuthUrl);
+  setOauthStateCookie(res, nonce);
+  return res;
 }
 
 // GitHub OAuth callback handler
@@ -479,6 +515,12 @@ export async function githubAuthCallbackHandler(request: NextRequest) {
     return new NextResponse('GitHub OAuth not configured', { status: 500 });
   }
   const code = request.nextUrl.searchParams.get('code');
+  const stateParam = request.nextUrl.searchParams.get('state');
+  const cookieNonce = request.cookies.get(OAUTH_STATE_COOKIE)?.value;
+  const state = stateParam ? await verifyOauthStateToken(stateParam) : null;
+  if (!state || !cookieNonce || state.nonce !== cookieNonce) {
+    return new NextResponse('Invalid OAuth state', { status: 400 });
+  }
   if (!code) {
     return new NextResponse('Missing code', { status: 400 });
   }
@@ -552,12 +594,12 @@ export async function githubAuthCallbackHandler(request: NextRequest) {
     create: { userId: user.id, provider: 'github', connected: true, metadata: { githubId, email } },
   });
 
-  const rawRedirect = request.nextUrl.searchParams.get('state') || request.nextUrl.searchParams.get('redirect');
-  const redirectTo = rawRedirect && isAllowedRedirect(rawRedirect) ? rawRedirect : undefined;
+  const redirectTo = state.redirect && isAllowedRedirect(state.redirect) ? state.redirect : undefined;
   const ip = request.headers.get('x-forwarded-for') || '';
   const { token } = await createSession(user.id, request.headers.get('user-agent') || undefined, ip);
   const res = NextResponse.redirect(redirectTo || `https://dashboard.${process.env.NEXT_PUBLIC_APP_DOMAIN || 'tirbeo.app'}`);
   setSessionCookie(res, token);
+  clearOauthStateCookie(res);
   return res;
 }
 

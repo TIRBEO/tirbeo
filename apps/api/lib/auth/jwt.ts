@@ -83,3 +83,23 @@ export async function verifyMagicLinkToken(token: string): Promise<string | null
     return null;
   }
 }
+
+export async function signOauthStateToken(nonce: string, redirect?: string): Promise<string> {
+  return new SignJWT({ purpose: 'oauth-state', nonce, redirect: redirect || '' })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('10m')
+    .sign(SECRET);
+}
+
+export async function verifyOauthStateToken(
+  token: string,
+): Promise<{ nonce: string; redirect: string } | null> {
+  try {
+    const { payload } = await jwtVerify(token, SECRET, { algorithms: ['HS256'] });
+    if (payload.purpose !== 'oauth-state' || !payload.nonce) return null;
+    return { nonce: payload.nonce as string, redirect: (payload.redirect as string) || '' };
+  } catch {
+    return null;
+  }
+}
