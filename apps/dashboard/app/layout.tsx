@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 
 export default function DashboardRootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" data-theme="dark">
+      <body style={{ background: "#000" }}>
         <ThemeProvider>
           {children}
         </ThemeProvider>
