@@ -205,34 +205,52 @@ NEXT_PUBLIC_COOKIE_DOMAIN=.tirbeo.app
 11. **Adding new subdomain apps**: Create new folder in `apps/`, add to
      `Subdomain` type in `packages/utils/src/domains.ts`, update DNS.
 
-## Brand Style
+## Brand Style (Dark Developer Tools)
 
-### Primary Colors (Landing / Consumer Apps)
+> Full design system reference: `apps/tirbeo/DESIGN.md`
 
-| Name | Hex | Usage |
-|------|-----|-------|
-| Rich Black | `#0B0B0D` | Deep backgrounds |
-| Dark Surface | `#121417` | Section gradients |
-| Surface | `#16181C` | Card containers |
-| Elevated | `#252B31` | Elevated cards |
-| Off White | `#F2EEE8` | Primary text |
+### Surface Ladder (4-step depth, no shadows)
+| Token | Hex | Use |
+|-------|-----|-----|
+| `canvas` | `#07080a` | Page background (pure near-black) |
+| `surface` | `#0d0d0d` | Card backgrounds |
+| `surface-elevated` | `#101111` | Button tertiary, inputs, pill active |
+| `surface-card` | `#121212` | App icon tiles, keycaps |
 
-### Accent Palette
+### Text Hierarchy
+| Token | Hex | Use |
+|-------|-----|-----|
+| `ink` | `#f4f4f6` | Headlines |
+| `body` | `#cdcdcd` | Paragraphs |
+| `mute` | `#9c9c9d` | Metadata, captions |
+| `ash` | `#6a6b6c` | Disabled |
+| `on-dark` | `#ffffff` | Interactive text |
 
-Warm Gold `#D8B36A`, Moss Green `#5F7352`, Olive `#7D8461`, Cream `#F5EFE7`, Dusty Rose `#D98A9D`
+### Borders
+| Token | Value | Use |
+|-------|-------|-----|
+| `hairline` | `#242728` | Universal 1px card border |
+| `hairline-strong` | `rgba(255,255,255,0.16)` | Focused inputs, dividers |
 
-### Design Language
+### CTA
+- **White pill** (`#ffffff` bg, `#000000` text) is the universal primary action
+- At most one white CTA per viewport fold
 
-- **Background**: Dark charcoal (`#0B0B0D`) with gradient: `#090909 → #121417 → #16181C → #0B0B0D`
-- **Typography**: Inter (300-900), Inter Tight (500 for landing), white/gray hierarchy
-- **Components**: Liquid glass morphism — `rgba(28,31,35,0.55)` backdrop-blur(24px) with gradient border pseudo-element
-- **Cards**: Glass with backdrop blur, gradient border via `::before`, large border-radius
-- **Glows**: Large blurred circles in gold/moss for ambient depth
-- **Buttons**: `.btn-gold` (gold gradient pill, `#D8B36A`), `.btn-ghost`/`.btn-glass` (transparent with border)
-- **Mood**: Brutalist/luxury — dark, architectural, editorial, timeless
-- **Admin**: Separate GitHub Dark style (`apps/admin`): `#0d1117` canvas, `#151b23` surface, `#2f81f7` accent
+### Typography
+- **Inter** with `font-feature-settings: "calt", "kern", "liga", "ss03"` site-wide
+- ss03 alternate `g` is the brand's signature detail
+- Scale: display-xl (64px) down to caption-sm (12px)
 
-Apply these styles to `apps/landing`, `apps/accounts`, `apps/dashboard`, and consumer-facing apps.
+### Key Principles
+1. No drop shadows - elevation from surface-color ladder only
+2. One dark mode - continuous tonal continuity
+3. Hairline 1px borders carry every card edge
+4. Accent colors only inside illustrations, never on chrome
+5. Hero stripe gradient (red diagonal) once per page max
+6. Section rhythm: 96px vertical gap
+7. Radius: xs(4) sm(6) md(8) lg(10) xl(16) full(9999)
+
+Apply to: `apps/tirbeo` (landing), `apps/accounts`, `apps/dashboard`, consumer-facing apps.
 
 ## Build & Dev Commands
 
