@@ -6,13 +6,13 @@
 }
 
 :root {
-  /* Raycast Surface Ladder */
-  --bg: #07080a;
-  --bg-surface: #0d0d0d;
-  --bg-card: #101111;
-  --bg-elevated: #121212;
-  --bg-hover: #161717;
-  --bg-active: #1a1b1b;
+  /* Raycast Surface Ladder — Pure Black Glass */
+  --bg: #050507;
+  --bg-surface: #0a0a0c;
+  --bg-card: #0e0e10;
+  --bg-elevated: #121214;
+  --bg-hover: #161618;
+  --bg-active: #1a1a1c;
 
   /* Text Hierarchy */
   --text: #f4f4f6;
@@ -52,7 +52,7 @@
 body {
   font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
   font-feature-settings: "calt", "kern", "liga", "ss03";
-  background: #07080a;
+  background: #050507;
   color: #f4f4f6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -68,18 +68,19 @@ body {
 
 /* ═══ GLASS — Raycast-Style Frosted Panels ═══ */
 .glass {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--blur));
-  -webkit-backdrop-filter: blur(var(--blur));
-  border: 1px solid var(--glass-border);
+  background: rgba(8,8,10,0.72);
+  backdrop-filter: blur(40px) saturate(1.4);
+  -webkit-backdrop-filter: blur(40px) saturate(1.4);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 16px;
   position: relative;
   overflow: hidden;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .glass:hover {
-  border-color: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 0 0 0.5px rgba(255,255,255,0.04), 0 8px 40px -12px rgba(0,0,0,0.5);
 }
 
 .glass::before {
@@ -88,11 +89,11 @@ body {
   border-radius: inherit;
   padding: 0.5px;
   background: linear-gradient(180deg,
-    rgba(255,255,255,0.08) 0%,
-    rgba(255,255,255,0.02) 40%,
+    rgba(255,255,255,0.1) 0%,
+    rgba(255,255,255,0.02) 35%,
     rgba(255,255,255,0) 50%,
-    rgba(255,255,255,0.02) 60%,
-    rgba(255,255,255,0.08) 100%);
+    rgba(255,255,255,0.02) 65%,
+    rgba(255,255,255,0.06) 100%);
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -100,9 +101,16 @@ body {
 }
 
 .glass-subtle {
-  background: rgba(13,13,13,0.5);
-  border: 1px solid #242728;
+  background: rgba(8,8,10,0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255,255,255,0.05);
   border-radius: 12px;
+  transition: border-color 0.2s ease;
+}
+
+.glass-subtle:hover {
+  border-color: rgba(255,255,255,0.1);
 }
 
 /* ═══ SIDEBAR ═══ */
@@ -134,8 +142,8 @@ body {
   width: 100%;
   height: 42px;
   padding: 0 14px;
-  background: #121212;
-  border: 1px solid #242728;
+  background: rgba(8,8,10,0.8);
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 8px;
   color: #f4f4f6;
   font-size: 13px;
@@ -146,7 +154,8 @@ body {
 
 .input-field:focus {
   border-color: rgba(255,255,255,0.16);
-  background: #161717;
+  background: rgba(12,12,14,0.9);
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.04);
 }
 
 .input-field::placeholder { color: #6a6b6c; }
@@ -217,7 +226,8 @@ select.input-field {
 .btn-secondary {
   background: rgba(255,255,255,0.06);
   color: #f4f4f6;
-  border: 1px solid #242728;
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
 }
 
 .btn-secondary:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.16); }
@@ -225,15 +235,15 @@ select.input-field {
 .btn-ghost {
   background: transparent;
   color: #cdcdcd;
-  border: 1px solid #242728;
+  border: 1px solid rgba(255,255,255,0.08);
 }
 
-.btn-ghost:hover { color: #f4f4f6; border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.04); }
+.btn-ghost:hover { color: #f4f4f6; border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.06); }
 
 .btn-danger {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.04);
   color: #cdcdcd;
-  border: 1px solid #242728;
+  border: 1px solid rgba(255,255,255,0.06);
 }
 
 .btn-danger:hover { background: rgba(255,97,97,0.12); border-color: rgba(255,97,97,0.3); color: #ff6161; }
@@ -355,18 +365,18 @@ select.input-field {
   font-weight: 500;
   z-index: 1000;
   animation: toastIn 0.25s ease, toastOut 0.25s ease 2.5s forwards;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(40px) saturate(1.5);
+  -webkit-backdrop-filter: blur(40px) saturate(1.5);
 }
 
 .toast-success {
-  background: rgba(13,13,13,0.9);
+  background: rgba(8,8,10,0.92);
   color: #59d499;
   border: 1px solid rgba(89,212,153,0.25);
 }
 
 .toast-error {
-  background: rgba(13,13,13,0.9);
+  background: rgba(8,8,10,0.92);
   color: #ff6161;
   border: 1px solid rgba(255,97,97,0.25);
 }
@@ -429,10 +439,10 @@ select.input-field {
   width: 100%;
   max-width: 620px;
   margin: 0 16px;
-  background: rgba(13, 13, 13, 0.92);
-  backdrop-filter: blur(80px);
-  -webkit-backdrop-filter: blur(80px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(8,8,10,0.92);
+  backdrop-filter: blur(80px) saturate(1.5);
+  -webkit-backdrop-filter: blur(80px) saturate(1.5);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 20px;
   overflow: hidden;
   box-shadow:
@@ -490,13 +500,16 @@ select.input-field {
 .stat-card {
   padding: 18px 20px;
   border-radius: 14px;
-  background: rgba(13,13,13,0.5);
-  border: 1px solid #242728;
-  transition: border-color 0.2s ease;
+  background: rgba(8,8,10,0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255,255,255,0.06);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .stat-card:hover {
   border-color: rgba(255,255,255,0.12);
+  box-shadow: 0 4px 24px -8px rgba(0,0,0,0.4);
 }
 
 /* ═══ RING PROGRESS ═══ */

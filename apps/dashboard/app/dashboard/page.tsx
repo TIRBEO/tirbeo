@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   User, Shield, Bell, Clock, Zap, Settings, Activity, ArrowUpRight,
   CheckCircle2, XCircle, MapPin, Globe, TrendingUp, Eye, Calendar,
+  Smartphone,
 } from "lucide-react";
 import { HomeSkeleton } from "../components/Skeleton";
 
@@ -79,7 +80,7 @@ export default function DashboardHome() {
   const [activity, setActivity] = useState<ActivityLog[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
-  const [lastLoginInfo, setLastLoginInfo] = useState<{ location?: string; ip?: string; device?: string } | null>(null);
+  const [lastLoginInfo] = useState<{ location?: string; ip?: string; device?: string } | null>(null);
   const fetched = useRef(false);
 
   useEffect(() => {
@@ -87,8 +88,7 @@ export default function DashboardHome() {
     fetched.current = true;
     fetch(`${API}/api/profile`, { credentials: "include" }).then(r => r.ok ? r.json() : null).then(setUser).catch(() => {});
     fetch(`${API}/api/user/activity?limit=50`, { credentials: "include" }).then(r => r.ok ? r.json() : []).then(setActivity).catch(() => {});
-    fetch(`${API}/api/security/sessions`, { credentials: "include" }).then(r => r.ok ? r.json() : null).then(d => { if (d?.sessions) setSessions(d.sessions); }).catch(() => {});
-    fetch(`${API}/api/user/last-login`, { credentials: "include" }).then(r => r.ok ? r.json() : null).then(setLastLoginInfo).catch(() => {}).finally(() => setLoading(false));
+    fetch(`${API}/api/security/sessions`, { credentials: "include" }).then(r => r.ok ? r.json() : []).then(d => { if (Array.isArray(d)) setSessions(d); else if (d?.sessions) setSessions(d.sessions); }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
   if (loading || !user) return <HomeSkeleton />;
