@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Save, Shield, KeyRound, Camera, ExternalLink } from "lucide-react";
+import { Save, Shield, KeyRound, Camera } from "lucide-react";
+import { ProfileSkeleton } from "../../components/Skeleton";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 
@@ -22,7 +23,7 @@ function Field({ label, value, onChange, type = "text", disabled, placeholder }:
 }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#7B7E84" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>{label}</label>
       <input
         type={type}
         value={value || ""}
@@ -30,7 +31,7 @@ function Field({ label, value, onChange, type = "text", disabled, placeholder }:
         disabled={disabled}
         placeholder={placeholder || ""}
         className="input-field"
-        style={disabled ? { opacity: 0.5, cursor: "not-allowed" } : {}}
+        style={disabled ? { opacity: 0.4, cursor: "not-allowed" } : {}}
       />
     </div>
   );
@@ -97,9 +98,7 @@ export default function ProfilePage() {
 
   const requestOtp = async () => {
     try {
-      const res = await fetch(`${API}/api/profile/request-edit-otp`, {
-        method: "POST", credentials: "include",
-      });
+      const res = await fetch(`${API}/api/profile/request-edit-otp`, { method: "POST", credentials: "include" });
       if (res.ok) { setOtpSent(true); setToast("Code sent to your email"); }
       else setToast("Failed to send code");
     } catch { setToast("Connection error"); }
@@ -127,7 +126,7 @@ export default function ProfilePage() {
         body: JSON.stringify({ password: newPassword, otpCode }),
       });
       if (res.ok) {
-        setToast("Password set! You can now login with email + password");
+        setToast("Password set!");
         setP(prev => prev ? { ...prev, hasPassword: true } : prev);
         setShowSetPassword(false);
         setNewPassword(""); setOtpCode(""); setOtpSent(false); setOtpVerified(false);
@@ -139,58 +138,58 @@ export default function ProfilePage() {
     setSettingPassword(false);
   };
 
-  if (!p) return null;
+  if (!p) return <ProfileSkeleton />;
 
   const isOAuth = !p.hasPassword && (p.hasGoogle || p.hasGithub);
   const initials = p.name ? p.name.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() : p.email[0].toUpperCase();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-12">
+      <div className="section-header flex items-center justify-between" style={{ marginBottom: 0 }}>
         <div>
-          <h1 className="text-xl font-bold" style={{ color: "#F2EEE8" }}>Profile</h1>
-          <p className="text-sm mt-0.5" style={{ color: "#7B7E84" }}>Manage your personal information</p>
+          <h1>Profile</h1>
+          <p>Manage your personal information</p>
         </div>
         <button onClick={save} disabled={saving} className="btn btn-primary">
-          <Save size={14} />{saving ? "Saving..." : "Save"}
+          <Save size={13} />{saving ? "Saving..." : "Save"}
         </button>
       </div>
 
       {isOAuth && !p.hasPassword && (
-        <div className="glass card-section" style={{ borderLeft: "3px solid #D8B36A" }}>
+        <div className="glass card-section" style={{ borderLeft: "3px solid rgba(255,255,255,0.2)" }}>
           <div className="flex items-start gap-3">
-            <Shield size={20} style={{ color: "#D8B36A", marginTop: 2, flexShrink: 0 }} />
+            <Shield size={18} style={{ color: "rgba(255,255,255,0.6)", marginTop: 2, flexShrink: 0 }} />
             <div className="flex-1">
-              <p className="text-sm font-medium" style={{ color: "#F2EEE8" }}>
+              <p style={{ fontSize: 13, fontWeight: 500, color: "#ffffff" }}>
                 Signed in with {p.hasGoogle ? "Google" : "GitHub"}
               </p>
-              <p className="text-xs mt-1" style={{ color: "#7B7E84" }}>
-                You don&apos;t have a password yet. Set one to enable email + password login as a backup.
+              <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 4 }}>
+                No password set. Set one to enable email + password login as a backup.
               </p>
               {!showSetPassword ? (
-                <button onClick={() => setShowSetPassword(true)} className="btn btn-ghost mt-3" style={{ fontSize: 12, padding: "6px 14px" }}>
-                  <KeyRound size={13} /> Set Password
+                <button onClick={() => setShowSetPassword(true)} className="btn btn-ghost" style={{ fontSize: 12, height: 32, marginTop: 10 }}>
+                  <KeyRound size={12} /> Set Password
                 </button>
               ) : (
-                <div className="mt-3 space-y-3" style={{ maxWidth: 360 }}>
+                <div className="mt-3 space-y-2.5" style={{ maxWidth: 340 }}>
                   {!otpSent ? (
-                    <button onClick={requestOtp} className="btn btn-ghost" style={{ fontSize: 12, padding: "6px 14px" }}>
+                    <button onClick={requestOtp} className="btn btn-ghost" style={{ fontSize: 12, height: 32 }}>
                       Send verification code
                     </button>
                   ) : !otpVerified ? (
                     <div className="flex gap-2">
                       <input value={otpCode} onChange={e => setOtpCode(e.target.value)}
-                        placeholder="Enter 6-digit code" maxLength={6}
+                        placeholder="6-digit code" maxLength={6}
                         className="input-field" style={{ flex: 1, fontSize: 13 }} />
-                      <button onClick={verifyOtp} className="btn btn-primary" style={{ fontSize: 12, padding: "6px 14px" }}>
+                      <button onClick={verifyOtp} className="btn btn-primary" style={{ fontSize: 12, height: 32 }}>
                         Verify
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-2">
                       <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                        placeholder="New password (8+ characters)" className="input-field" style={{ fontSize: 13 }} />
-                      <button onClick={setPassword} disabled={settingPassword} className="btn btn-primary" style={{ fontSize: 12, padding: "6px 14px" }}>
+                        placeholder="New password (8+ chars)" className="input-field" style={{ fontSize: 13 }} />
+                      <button onClick={setPassword} disabled={settingPassword} className="btn btn-primary" style={{ fontSize: 12, height: 32 }}>
                         {settingPassword ? "Setting..." : "Set Password"}
                       </button>
                     </div>
@@ -205,16 +204,16 @@ export default function ProfilePage() {
       <Section title="Personal Information">
         <div className="flex items-center gap-4">
           <div style={{ position: "relative" }}>
-            <div className="avatar" style={{ width: 64, height: 64, fontSize: 22, cursor: "pointer" }}
+            <div className="avatar" style={{ width: 56, height: 56, fontSize: 20, borderRadius: 14, cursor: "pointer" }}
               onClick={() => document.getElementById('avatar-input')?.click()}>
               {p.photoUrl ? <img src={p.photoUrl} alt="" /> : initials}
             </div>
             <div style={{
-              position: "absolute", bottom: 0, right: 0, width: 22, height: 22,
-              borderRadius: "50%", background: "#1E2328", border: "2px solid #0B0B0D",
+              position: "absolute", bottom: -2, right: -2, width: 22, height: 22,
+              borderRadius: 7, background: "rgba(255,255,255,0.06)", border: "1.5px solid rgba(255,255,255,0.1)",
               display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
             }} onClick={() => document.getElementById('avatar-input')?.click()}>
-              <Camera size={10} style={{ color: "#A6A6A6" }} />
+              <Camera size={10} style={{ color: "var(--text-muted)" }} />
             </div>
             <input id="avatar-input" type="file" accept="image/*" style={{ display: "none" }}
               onChange={async (e) => {
@@ -223,30 +222,25 @@ export default function ProfilePage() {
                 const fd = new FormData();
                 fd.append("avatar", file);
                 try {
-                  const res = await fetch(`${API}/api/profile/avatar`, {
-                    method: "POST", credentials: "include", body: fd,
-                  });
+                  const res = await fetch(`${API}/api/profile/avatar`, { method: "POST", credentials: "include", body: fd });
                   if (res.ok) {
                     const d = await res.json();
                     setP(prev => prev ? { ...prev, photoUrl: d.photoUrl } : prev);
                     setToast("Avatar updated");
-                  } else {
-                    const msg = await res.text();
-                    setToast(msg || "Upload failed");
-                  }
+                  } else { setToast("Upload failed"); }
                 } catch { setToast("Upload failed"); }
               }}
             />
           </div>
           <div>
-            <p className="text-sm font-medium" style={{ color: "#F2EEE8" }}>{p.name || "No name set"}</p>
-            <p className="text-xs" style={{ color: "#7B7E84" }}>{p.email}</p>
-            <p className="text-xs mt-1" style={{ color: "#7B7E84" }}>
-              {isOAuth ? `Connected via ${p.hasGoogle ? "Google" : "GitHub"}` : "Email + Password account"}
+            <p style={{ fontSize: 14, fontWeight: 600, color: "#ffffff" }}>{p.name || "No name set"}</p>
+            <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{p.email}</p>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+              {isOAuth ? `Connected via ${p.hasGoogle ? "Google" : "GitHub"}` : "Email + Password"}
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Full Name" value={p.name} onChange={v => update("name", v)} placeholder="Your name" />
           <Field label="Occupation" value={p.occupation} onChange={v => update("occupation", v)} placeholder="Software Engineer" />
           <Field label="Email" value={p.email} disabled />
@@ -259,11 +253,11 @@ export default function ProfilePage() {
 
       <Section title="About">
         <div>
-          <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#7B7E84" }}>Bio</label>
+          <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>Bio</label>
           <textarea value={p.bio || ""} onChange={e => update("bio", e.target.value)} rows={3}
-            className="input-field" style={{ height: "auto", padding: "10px 14px", resize: "vertical" }} placeholder="Tell us about yourself..." />
+            className="input-field" placeholder="Tell us about yourself..." />
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Website" value={p.website} onChange={v => update("website", v)} type="url" placeholder="https://yoursite.com" />
           <Field label="LinkedIn" value={p.linkedin} onChange={v => update("linkedin", v)} placeholder="linkedin.com/in/you" />
           <Field label="GitHub" value={p.github} onChange={v => update("github", v)} placeholder="github.com/you" />
@@ -272,7 +266,7 @@ export default function ProfilePage() {
       </Section>
 
       <Section title="Company">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="Company Name" value={p.companyName} onChange={v => update("companyName", v)} placeholder="Acme Inc." />
           <Field label="Role" value={p.companyRole} onChange={v => update("companyRole", v)} placeholder="Engineering Lead" />
           <Field label="Industry" value={p.industry} onChange={v => update("industry", v)} placeholder="Technology" />
@@ -280,7 +274,7 @@ export default function ProfilePage() {
         </div>
       </Section>
 
-      {toast && <div className={`toast ${toast.includes("saved") || toast.includes("Verified") || toast.includes("set") || toast.includes("Password") ? "toast-success" : "toast-error"}`}>{toast}</div>}
+      {toast && <div className={`toast ${toast.includes("saved") || toast.includes("Verified") || toast.includes("set") || toast.includes("Password") || toast.includes("Avatar") ? "toast-success" : "toast-error"}`}>{toast}</div>}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Home, User, Shield, Building2, Bell, Plug, Settings, Activity,
-  HelpCircle, LogOut, Search, Menu, X, ChevronRight,
+  HelpCircle, LogOut, Search, Menu, X, ChevronRight, Clock,
 } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
@@ -118,10 +118,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="flex-1 flex flex-col min-h-screen" style={{ marginLeft: "var(--sidebar-w)" }}>
         <header className="sticky top-0 z-30 h-14 flex items-center justify-between px-4 md:px-6"
           style={{ background: "rgba(11,11,13,0.8)", backdropFilter: "blur(24px)", borderBottom: "1px solid var(--border)" }}>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button onClick={() => setSidebarOpen(true)} className="md:hidden" style={{ color: "var(--text-secondary)" }}>
               <Menu size={20} />
             </button>
+            <span className="hidden md:inline text-sm" style={{ color: "var(--text-secondary)" }}>
+              Welcome, <span style={{ color: "#fff", fontWeight: 600 }}>{user?.name?.split(" ")[0] || "there"}</span>
+            </span>
             <button onClick={() => setSearchOpen(true)} className="flex items-center gap-2 px-3 h-8 rounded-lg text-sm"
               style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
               <Search size={14} />
@@ -130,6 +133,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
           </div>
           <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-1.5 px-2.5 h-8 rounded-lg text-xs font-medium"
+              style={{ background: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-muted)" }}>
+              <Clock size={12} />
+              <span>{new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}</span>
+            </div>
             <div className="avatar" style={{ width: 30, height: 30, fontSize: 11 }}>
               {user?.photoUrl ? <img src={user.photoUrl} alt="" /> : initials}
             </div>

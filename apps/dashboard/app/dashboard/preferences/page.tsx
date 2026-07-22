@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Moon, Sun, Monitor, Type } from "lucide-react";
+import { PreferencesSkeleton } from "../../components/Skeleton";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 
@@ -15,8 +16,8 @@ function Toggle({ label, desc, value, onChange }: { label: string; desc: string;
   return (
     <div className="table-row">
       <div>
-        <p className="text-sm font-medium" style={{ color: "#F2EEE8" }}>{label}</p>
-        <p className="text-xs" style={{ color: "#7B7E84" }}>{desc}</p>
+        <p style={{ fontSize: 13, fontWeight: 500, color: "#ffffff" }}>{label}</p>
+        <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 1 }}>{desc}</p>
       </div>
       <div className={`toggle ${value ? "active" : ""}`} onClick={() => onChange(!value)} />
     </div>
@@ -26,7 +27,7 @@ function Toggle({ label, desc, value, onChange }: { label: string; desc: string;
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
   return (
     <div>
-      <label className="block text-xs font-medium mb-1.5 uppercase tracking-wider" style={{ color: "#7B7E84" }}>{label}</label>
+      <label className="block text-xs font-medium mb-1.5" style={{ color: "var(--text-muted)" }}>{label}</label>
       <select value={value || ""} onChange={e => onChange(e.target.value)} className="input-field" style={{ cursor: "pointer" }}>
         {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
@@ -65,34 +66,36 @@ export default function PreferencesPage() {
     setTimeout(() => setToast(null), 3000);
   }, [prefs]);
 
-  if (!prefs) return null;
+  if (!prefs) return <PreferencesSkeleton />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="section-header flex items-center justify-between" style={{ marginBottom: 0 }}>
         <div>
-          <h1 className="text-xl font-bold" style={{ color: "#F2EEE8" }}>Preferences</h1>
-          <p className="text-sm mt-0.5" style={{ color: "#7B7E84" }}>Customize your experience</p>
+          <h1>Preferences</h1>
+          <p>Customize your experience</p>
         </div>
-        <button onClick={save} disabled={saving} className="btn btn-primary">{saving ? "Saving..." : "Save"}</button>
+        <button onClick={save} disabled={saving} className="btn btn-primary" style={{ fontSize: 12 }}>
+          {saving ? "Saving..." : "Save"}
+        </button>
       </div>
 
       <div className="glass card-section space-y-4">
-        <div className="flex items-center gap-2"><Moon size={16} style={{ color: "#7B7E84" }} /><h3 style={{ marginBottom: 0 }}>General</h3></div>
+        <div className="flex items-center gap-2"><Moon size={14} style={{ color: "var(--text-muted)" }} /><h3 style={{ marginBottom: 0 }}>General</h3></div>
         <div>
-          <label className="block text-xs font-medium mb-2 uppercase tracking-wider" style={{ color: "#7B7E84" }}>Theme</label>
+          <label className="block text-xs font-medium mb-2" style={{ color: "var(--text-muted)" }}>Theme</label>
           <div className="flex gap-2">
             {["light", "dark", "system"].map(t => (
               <button key={t} onClick={() => update("theme", t)}
                 className={`btn ${prefs.theme === t ? "btn-primary" : "btn-ghost"}`}
-                style={{ flex: 1, height: 40, textTransform: "capitalize" }}>
-                {t === "light" ? <Sun size={14} /> : t === "dark" ? <Moon size={14} /> : <Monitor size={14} />}
+                style={{ flex: 1, height: 36, textTransform: "capitalize", fontSize: 12 }}>
+                {t === "light" ? <Sun size={13} /> : t === "dark" ? <Moon size={13} /> : <Monitor size={13} />}
                 {t}
               </button>
             ))}
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Select label="Language" value={prefs.language || "en"} onChange={v => update("language", v)} options={["en", "es", "fr", "de", "ne", "hi"]} />
           <Select label="Timezone" value={prefs.timezone || "UTC"} onChange={v => update("timezone", v)} options={["UTC", "America/New_York", "America/Los_Angeles", "Europe/London", "Asia/Kathmandu", "Asia/Kolkata", "Asia/Tokyo"]} />
           <Select label="Date Format" value={prefs.dateFormat || "MM/DD/YYYY"} onChange={v => update("dateFormat", v)} options={["MM/DD/YYYY", "DD/MM/YYYY", "YYYY-MM-DD"]} />
@@ -101,10 +104,10 @@ export default function PreferencesPage() {
       </div>
 
       <div className="glass card-section space-y-4">
-        <div className="flex items-center gap-2"><Type size={16} style={{ color: "#7B7E84" }} /><h3 style={{ marginBottom: 0 }}>Accessibility</h3></div>
+        <div className="flex items-center gap-2"><Type size={14} style={{ color: "var(--text-muted)" }} /><h3 style={{ marginBottom: 0 }}>Accessibility</h3></div>
         <Select label="Font Size" value={prefs.fontSize || "default"} onChange={v => update("fontSize", v)} options={["small", "default", "large"]} />
-        <Toggle label="Reduce Motion" desc="Minimize animations throughout the interface" value={prefs.reduceMotion} onChange={v => update("reduceMotion", v)} />
-        <Toggle label="High Contrast" desc="Increase contrast for better visibility" value={prefs.highContrast} onChange={v => update("highContrast", v)} />
+        <Toggle label="Reduce Motion" desc="Minimize animations" value={prefs.reduceMotion} onChange={v => update("reduceMotion", v)} />
+        <Toggle label="High Contrast" desc="Increase contrast for visibility" value={prefs.highContrast} onChange={v => update("highContrast", v)} />
       </div>
 
       {toast && <div className={`toast ${toast.includes("saved") ? "toast-success" : "toast-error"}`}>{toast}</div>}

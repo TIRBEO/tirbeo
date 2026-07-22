@@ -21,7 +21,7 @@ tirbeo/
 ├── apps/
 │   ├── accounts/      # accounts.tirbeo.app — SSO login hub
 │   ├── admin/         # admin.tirbeo.app — staff god panel
-│   ├── app/           # app.tirbeo.app — chat/feed (legacy, will split)
+│   ├── app/           # app.tirbeo.app — collab/feed (legacy, will split)
 │   ├── dashboard/     # dashboard.tirbeo.app — central account management
 │   ├── landing/       # tirbeo.app — company/marketing site
 │   └── support/       # support.tirbeo.app — help desk + /contact
@@ -49,7 +49,7 @@ All apps share authentication via Supabase cross-subdomain cookies.
 | tirbeo.app | landing | Company site, marketing, SEO |
 | accounts.tirbeo.app | accounts | SSO login, OAuth callback, password reset |
 | dashboard.tirbeo.app | dashboard | Central account management (profile, settings) |
-| chat.tirbeo.app | app (future) | Real-time direct messaging |
+| collab.tirbeo.app | app (future) | Real-time direct messaging |
 | admin.tirbeo.app | admin | Staff panel, user/content moderation |
 | support.tirbeo.app | support | Help desk, FAQ, /contact form |
 
@@ -58,7 +58,7 @@ All apps share authentication via Supabase cross-subdomain cookies.
 1. User logs in at any subdomain (e.g., `accounts.tirbeo.app/login`)
 2. Supabase sets auth cookie with `Domain=.tirbeo.app` — shared across all
    subdomains
-3. Navigating to `dashboard.tirbeo.app` or `chat.tirbeo.app` — user is already
+3. Navigating to `dashboard.tirbeo.app` or `collab.tirbeo.app` — user is already
    authenticated
 4. Logging out from one subdomain logs out from all subdomains
 
@@ -199,9 +199,9 @@ NEXT_PUBLIC_COOKIE_DOMAIN=.tirbeo.app
 8. **BS Date**: Bikram Sambat utility covers years 2000–2009 BS. Extend
    `BS_MONTHS_DAYS` map as needed.
 9. **Phone validation**: Supports +977, mobile (98/97/96), landline.
-10. **Chat app login flow**: User visits `chat.tirbeo.app` → redirected to
-    `accounts.tirbeo.app/login?redirect=https://chat.tirbeo.app/dashboard` →
-    after auth, redirected back to `chat.tirbeo.app/dashboard`.
+10. **Collab app login flow**: User visits `collab.tirbeo.app` → redirected to
+    `accounts.tirbeo.app/login?redirect=https://collab.tirbeo.app/dashboard` →
+    after auth, redirected back to `collab.tirbeo.app/dashboard`.
 11. **Adding new subdomain apps**: Create new folder in `apps/`, add to
      `Subdomain` type in `packages/utils/src/domains.ts`, update DNS.
 
@@ -289,7 +289,7 @@ pnpm --filter @tirbeo/support dev     # support.tirbeo.app
 | `www.tirbeo.app` | `cname.vercel-dns.com` |
 | `accounts.tirbeo.app` | `cname.vercel-dns.com` |
 | `dashboard.tirbeo.app` | `cname.vercel-dns.com` |
-| `chat.tirbeo.app` | `cname.vercel-dns.com` |
+| `collab.tirbeo.app` | `cname.vercel-dns.com` |
 | `admin.tirbeo.app` | `cname.vercel-dns.com` |
 | `support.tirbeo.app` | `cname.vercel-dns.com` |
 
@@ -301,7 +301,7 @@ it serves.
 
 - **Phase 2**: Build apps/admin — user management, content moderation, domain
   config, audit log viewer
-- **Phase 3**: Build apps/app — react chat, feeds, district servers, server
+- **Phase 3**: Build apps/app — react collab, feeds, district servers, server
   creation, real-time messaging with Supabase Realtime
 - **Phase 4**: Mobile app (React Native / Expo, reusing `@tirbeo/database`)
 
@@ -464,7 +464,7 @@ Unified design language across all consumer-facing apps with brutalist/luxury ae
 - Stat cards grid (Karma, Status, Role, District)
 - Profile + Account info sections with glass morphism
 - Gold accent (#D8B36A) highlights, moss green (#5F7352) accents
-- Service cards linking to Chat, Admin, Support, Tirbeo
+- Service cards linking to collab, Admin, Support, Tirbeo
 - Auto-redirect to accounts login if no session
 
 #### API Fix — `apps/api`

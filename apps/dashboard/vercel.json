@@ -1,5 +1,6 @@
 {
-  "installCommand": "npx pnpm@latest install --ignore-scripts",
+  "installCommand": "npx pnpm@10.10.0 install --ignore-scripts",
   "buildCommand": "npx next build",
-  "outputDirectory": ".next"
+  "outputDirectory": ".next",
+  "framework": "nextjs"
 }

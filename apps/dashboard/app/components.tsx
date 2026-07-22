@@ -9,11 +9,11 @@ const ThemeCtx = createContext<ThemeContextType>({ colors: {}, brand: { name: 'T
 export function useThemeConfig() { return useContext(ThemeCtx); }
 
 const DEFAULT_COLORS: ThemeColors = {
-  '--bg': '#08150F', '--bg-surface': '#101c13', '--bg-card': '#12271D', '--bg-elevated': '#1a3326',
-  '--text': '#F2EEE8', '--text-secondary': '#B7C6BE', '--text-muted': '#6b8a7a',
-  '--accent': '#569578', '--accent-hover': '#6aab8d', '--accent-muted': '#275d46',
-  '--success': '#59C173', '--warning': '#F4B942', '--danger': '#E45D5D',
-  '--border': 'rgba(255,255,255,0.08)', '--border-hover': 'rgba(255,255,255,0.14)',
+  '--bg': '#000000', '--bg-surface': 'rgba(255,255,255,0.03)', '--bg-card': 'rgba(255,255,255,0.04)', '--bg-elevated': 'rgba(255,255,255,0.06)',
+  '--text': '#ffffff', '--text-secondary': 'rgba(255,255,255,0.55)', '--text-muted': 'rgba(255,255,255,0.3)',
+  '--accent': '#ffffff', '--accent-hover': 'rgba(255,255,255,0.85)', '--accent-muted': 'rgba(255,255,255,0.08)',
+  '--success': 'rgba(255,255,255,0.8)', '--warning': 'rgba(255,255,255,0.6)', '--danger': 'rgba(255,255,255,0.5)',
+  '--border': 'rgba(255,255,255,0.08)', '--border-hover': 'rgba(255,255,255,0.15)',
 };
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -22,27 +22,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const API = process.env.NEXT_PUBLIC_API_URL || 'https://api.tirbeo.app';
-    fetch(`${API}/api/public/theme`, { cache: 'no-store' })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.colors) setColors(data.colors);
-        if (data?.brand) setBrand(data.brand);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-
-    fetch(`${API}/api/profile`, { credentials: 'include' })
-      .then(r => r.ok ? r.json() : null)
-      .then(user => {
-        const pref = user?.theme || localStorage.getItem('tirbeo-theme') || 'dark';
-        const resolved = pref === 'system' ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : pref;
-        document.documentElement.setAttribute('data-theme', resolved);
-      })
-      .catch(() => {
-        const saved = localStorage.getItem('tirbeo-theme') || 'dark';
-        document.documentElement.setAttribute('data-theme', saved);
-      });
+    document.documentElement.setAttribute('data-theme', 'dark');
+    setLoading(false);
   }, []);
 
   useEffect(() => {

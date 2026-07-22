@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
   User, Shield, Bell, Clock, Zap,
-  Settings, Activity, ArrowUpRight, CheckCircle2, XCircle,
+  Settings, Activity, ArrowUpRight, CheckCircle2, XCircle, MapPin,
 } from "lucide-react";
 import { HomeSkeleton } from "../components/Skeleton";
 
@@ -19,8 +19,6 @@ type Me = {
 };
 
 type ActivityLog = { id: string; action: string; createdAt: string };
-
-const API = process.env.NEXT_PUBLIC_API_URL || "https://api.tirbeo.app";
 
 export default function DashboardHome() {
   const [user, setUser] = useState<Me | null>(null);
@@ -49,7 +47,8 @@ export default function DashboardHome() {
     { label: "Phone verified", ok: user.phoneVerified },
     { label: "Occupation set", ok: !!user.occupation },
     { label: "Bio added", ok: !!user.bio },
-  ];n  const completedChecks = checks.filter(c => c.ok).length;
+  ];
+  const completedChecks = checks.filter(c => c.ok).length;
   const completionPct = Math.round((completedChecks / checks.length) * 100);
 
   return (

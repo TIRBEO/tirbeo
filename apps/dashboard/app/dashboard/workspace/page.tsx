@@ -23,22 +23,12 @@ export default function WorkspacePage() {
   const loadWorkspaces = useCallback(async () => {
     try {
       const r = await fetch(`${API}/api/workspaces`, { credentials: "include" });
-      if (r.ok) {
-        const data = await r.json();
-        setWorkspaces(Array.isArray(data) ? data : []);
-      } else {
-        setWorkspaces([]);
-      }
-    } catch {
-      setWorkspaces([]);
-    }
+      if (r.ok) { const data = await r.json(); setWorkspaces(Array.isArray(data) ? data : []); }
+      else setWorkspaces([]);
+    } catch { setWorkspaces([]); }
   }, []);
 
-  useEffect(() => {
-    if (fetched.current) return;
-    fetched.current = true;
-    loadWorkspaces();
-  }, [loadWorkspaces]);
+  useEffect(() => { if (!fetched.current) { fetched.current = true; loadWorkspaces(); } }, [loadWorkspaces]);
 
   const create = useCallback(async () => {
     if (!name || !slug) return;
@@ -49,110 +39,76 @@ export default function WorkspacePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, slug }),
       });
-      if (res.ok) {
-        setShowCreate(false); setName(""); setSlug("");
-        setToast("Workspace created");
-        await loadWorkspaces();
-      } else {
-        const text = await res.text();
-        setToast(text || "Failed to create workspace");
-      }
-    } catch {
-      setToast("Connection error");
-    }
+      if (res.ok) { setShowCreate(false); setName(""); setSlug(""); setToast("Workspace created"); await loadWorkspaces(); }
+      else { const text = await res.text(); setToast(text || "Failed"); }
+    } catch { setToast("Connection error"); }
     setLoading(false);
     setTimeout(() => setToast(null), 3000);
   }, [name, slug, loadWorkspaces]);
 
   const handleDelete = useCallback(async (id: string) => {
-    if (!confirm("Delete this workspace? This cannot be undone.")) return;
+    if (!confirm("Delete this workspace?")) return;
     try {
-      const res = await fetch(`${API}/api/workspaces/${id}`, {
-        method: "DELETE", credentials: "include",
-      });
-      if (res.ok) {
-        setWorkspaces(prev => prev.filter(w => w.id !== id));
-        setToast("Workspace deleted");
-      } else {
-        setToast("Failed to delete");
-      }
-    } catch {
-      setToast("Connection error");
-    }
+      const res = await fetch(`${API}/api/workspaces/${id}`, { method: "DELETE", credentials: "include" });
+      if (res.ok) { setWorkspaces(prev => prev.filter(w => w.id !== id)); setToast("Deleted"); }
+      else setToast("Failed to delete");
+    } catch { setToast("Connection error"); }
     setTimeout(() => setToast(null), 3000);
   }, []);
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-8">
+      <div className="section-header flex items-center justify-between" style={{ marginBottom: 0 }}>
         <div>
-          <h1 className="text-xl font-bold" style={{ color: "#F2EEE8" }}>Workspaces</h1>
-          <p className="text-sm mt-0.5" style={{ color: "#6b8a7a" }}>Manage your organizations and teams</p>
+          <h1>Workspaces</h1>
+          <p>Manage your organizations and teams</p>
         </div>
         <button onClick={() => setShowCreate(!showCreate)} className="btn btn-primary">
-          <Plus size={14} /> New Workspace
+          <Plus size={13} /> New
         </button>
       </div>
 
       {showCreate && (
-        <div className="glass card-section space-y-4 animate-in">
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: "#F2EEE8", margin: 0 }}>Create Workspace</h3>
-          <input
-            placeholder="Workspace name"
-            value={name}
-            onChange={e => {
-              setName(e.target.value);
-              setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
-            }}
-            className="input-field"
-          />
-          <input
-            placeholder="workspace-slug"
-            value={slug}
-            onChange={e => setSlug(e.target.value)}
-            className="input-field"
-          />
-          <div className="flex gap-2" style={{ display: "flex", gap: 8 }}>
-            <button onClick={create} disabled={loading} className="btn btn-primary">
-              {loading ? "Creating..." : "Create"}
-            </button>
+        <div className="glass card-section space-y-3 animate-in">
+          <h3 style={{ fontSize: 14, fontWeight: 600, color: "#ffffff", margin: 0 }}>Create Workspace</h3>
+          <input placeholder="Workspace name" value={name}
+            onChange={e => { setName(e.target.value); setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")); }}
+            className="input-field" />
+          <input placeholder="workspace-slug" value={slug} onChange={e => setSlug(e.target.value)} className="input-field" />
+          <div className="flex gap-2">
+            <button onClick={create} disabled={loading} className="btn btn-primary">{loading ? "Creating..." : "Create"}</button>
             <button onClick={() => setShowCreate(false)} className="btn btn-ghost">Cancel</button>
           </div>
         </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <div className="space-y-2.5">
         {workspaces.length === 0 && (
-          <div className="glass" style={{ padding: "40px 24px", textAlign: "center" }}>
-            <Building2 size={32} style={{ color: "#6b8a7a", margin: "0 auto 12px" }} />
-            <p style={{ fontSize: 14, color: "#6b8a7a" }}>No workspaces yet. Create one to get started.</p>
+          <div className="glass" style={{ padding: "36px 20px", textAlign: "center" }}>
+            <Building2 size={28} style={{ color: "var(--text-muted)", margin: "0 auto 10px" }} />
+            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>No workspaces yet</p>
           </div>
         )}
         {workspaces.map(ws => (
-          <div key={ws.id} className="glass" style={{ padding: "18px 20px" }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div className="avatar" style={{ width: 40, height: 40, fontSize: 14 }}>
+          <div key={ws.id} className="glass" style={{ padding: "14px 18px" }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="avatar" style={{ width: 36, height: 36, fontSize: 13, borderRadius: 10 }}>
                   {ws.name[0]?.toUpperCase() || "W"}
                 </div>
                 <div>
-                  <p style={{ fontSize: 14, fontWeight: 600, color: "#F2EEE8" }}>{ws.name}</p>
-                  <p style={{ fontSize: 12, color: "#6b8a7a" }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: "#ffffff" }}>{ws.name}</p>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
                     /{ws.slug} · {ws._count?.memberships ?? 0} member{(ws._count?.memberships ?? 0) !== 1 ? "s" : ""}
-                    {ws.owner && <span> · Owner: {ws.owner.name || ws.owner.email}</span>}
                   </p>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <div className="flex items-center gap-2">
                 <span className="badge badge-default">
-                  <Users size={11} style={{ marginRight: 4 }} />
+                  <Users size={10} style={{ marginRight: 3 }} />
                   {ws._count?.memberships ?? 0}
                 </span>
-                <button
-                  onClick={() => handleDelete(ws.id)}
-                  className="btn btn-danger"
-                  style={{ height: 32, padding: "0 10px", fontSize: 12 }}
-                >
+                <button onClick={() => handleDelete(ws.id)} className="btn btn-danger" style={{ height: 30, padding: "0 8px" }}>
                   <Trash2 size={12} />
                 </button>
               </div>
@@ -161,11 +117,7 @@ export default function WorkspacePage() {
         ))}
       </div>
 
-      {toast && (
-        <div className={`toast ${toast.includes("created") || toast.includes("deleted") ? "toast-success" : "toast-error"}`}>
-          {toast}
-        </div>
-      )}
+      {toast && <div className={`toast ${toast.includes("created") || toast.includes("Deleted") ? "toast-success" : "toast-error"}`}>{toast}</div>}
     </div>
   );
 }
